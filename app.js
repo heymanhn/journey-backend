@@ -8,6 +8,7 @@ var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 
 var routes = require('./routes/index');
+var entries = require('./routes/entries');
 var app = express();
 
 // uncomment after placing your favicon in /public
@@ -22,6 +23,7 @@ var port = normalizePort(process.env.PORT || '3000');
 app.set('port', port);
 
 app.use('/', routes);
+app.use('/entries', entries);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

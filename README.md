@@ -4,10 +4,21 @@ Journey helps you chronicle everything you do, wherever you go. Use the app to r
 
 The core datum for Journey is an Entry, and it can take multiple types: photo, video, audio, or text. The first version of this product includes an iOS app that allows you to submit entries and retrieve your entries in reverse chronological order. The app communicates with the backend (this repository) to store your journeys in the cloud.
 
+## Set-up
+TBD
+
+## Model
+
+### Journey Entry Schema
+Each journey entry includes the following:
+* timestamp
+* location (lat/lng coordinates)
+* entry type
+* entry contents (multi-part)
 
 ## HTTP API
 
-### Journal Entries
+### Journey Entries
 Add an entry to your journey, or view your past entries. You can add entries of the following types:
 
 * Text

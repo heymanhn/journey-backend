@@ -27,7 +27,11 @@
     "cookie-parser": "~1.4.3",
     "debug": "^2.2.0",
     "express": "^4.14.0",
+    "mongoose": "^4.5.2",
     "morgan": "~1.7.0",
     "serve-favicon": "~2.3.0"
+  },
+  "devDependencies": {
+    "nodemon": "^1.9.2"
   }
 }
