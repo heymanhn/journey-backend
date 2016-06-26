@@ -1,0 +1,33 @@
+{
+  "name": "journey-backend",
+  "version": "0.0.1",
+  "description": "Backend APIs for the Journey app",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "devstart": "DEBUG=journey-backend node app.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/heymanhn/journey-backend.git"
+  },
+  "keywords": [
+    "journey",
+    "app"
+  ],
+  "author": "Herman Ng",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/heymanhn/journey-backend/issues"
+  },
+  "homepage": "https://github.com/heymanhn/journey-backend#readme",
+  "dependencies": {
+    "body-parser": "~1.15.1",
+    "cookie-parser": "~1.4.3",
+    "debug": "^2.2.0",
+    "express": "^4.14.0",
+    "morgan": "~1.7.0",
+    "serve-favicon": "~2.3.0"
+  }
+}
