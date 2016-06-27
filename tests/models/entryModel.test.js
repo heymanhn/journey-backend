@@ -1,21 +1,9 @@
-var mongoose = require('mongoose');
-var db = 'mongodb://localhost:27017/journey-test';
-var clearDB = require('mocha-mongoose')(db);
 var should = require('chai').should();
 var Entry = require('../../models/entryModel');
-
-// Workaround to ensure that `mocha --watch` works on subsequent file saves
-mongoose.models = {};
-mongoose.modelSchemas = {};
+var utils = require('./utils');
 
 describe('Entry Model', function() {
-  before(function(done) {
-    if (mongoose.connection.db) {
-      return done();
-    }
-
-    mongoose.connect(db, done);
-  });
+  before(utils.connect);
 
   describe('#create:', function() {
     it('should create a new Entry with the right fields', function(done) {
