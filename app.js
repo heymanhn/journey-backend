@@ -1,16 +1,27 @@
+var bodyParser = require('body-parser');
+var cookieParser = require('cookie-parser');
 var debug = require('debug')('journey-backend');
 var express = require('express');
 var http = require('http');
+var mongoose = require('mongoose');
 var path = require('path');
 var favicon = require('serve-favicon');
 var logger = require('morgan');
-var cookieParser = require('cookie-parser');
-var bodyParser = require('body-parser');
+var passport = require('passport');
+var session = require('express-session');
 
-var routes = require('./routes/index');
+var db = require('./config/database');
+var auth = require('./routes/auth');
+var users = require('./routes/users');
 var entries = require('./routes/entries');
-var app = express();
+var routes = require('./routes/index');
 
+/*
+ * Connect to Mongo
+ */
+mongoose.connect(db.development.url);
+
+var app = express();
 // uncomment after placing your favicon in /public
 //app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
 app.use(logger('dev'));
@@ -19,20 +30,40 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
+/*
+ * Passport initialization
+ */
+app.use(require('express-session')({
+  secret: 'journey to galaxy',
+  resave: true,
+  saveUninitialized: true
+}));
+app.use(passport.initialize());
+app.use(passport.session());
+
 var port = normalizePort(process.env.PORT || '3000');
 app.set('port', port);
 
+/*
+ * Route configuration
+ */
 app.use('/', routes);
 app.use('/entries', entries);
+app.use('/auth', auth);
+app.use('/users', users);
 
-// catch 404 and forward to error handler
+/*
+ * catch 404 and forward to error handler
+ */
 app.use(function(req, res, next) {
   var err = new Error('Not Found');
   err.status = 404;
   next(err);
 });
 
-// error handlers
+/*
+ * error handlers
+ */
 
 // development error handler
 // will print stacktrace
@@ -56,20 +87,19 @@ app.use(function(err, req, res, next) {
   });
 });
 
-/**
- * Create HTTP server.
+/*
+ * Create HTTP server
  */
-
 var server = http.createServer(app);
 
-/**
+/*
  * Listen on provided port, on all network interfaces.
  */
 server.listen(port);
 server.on('error', onError);
 server.on('listening', onListening);
 
-/**
+/*
  * Event listener for HTTP server "error" event.
  */
 function onError(error) {
@@ -96,7 +126,7 @@ function onError(error) {
   }
 }
 
-/**
+/*
  * Event listener for HTTP server "listening" event.
  */
 function onListening() {
@@ -107,7 +137,7 @@ function onListening() {
   debug('Listening on ' + bind);
 }
 
-/**
+/*
  * Normalize a port into a number, string, or false.
  */
 function normalizePort(val) {

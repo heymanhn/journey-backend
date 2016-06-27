@@ -1,9 +1,7 @@
 var express = require('express');
-var mongoose = require('mongoose');
 var Entry = require('../models/entryModel');
 
 var app = express.Router();
-mongoose.connect('mongodb://localhost:27017/journey');
 
 app.get('/', function(req, res, next) {
   Entry.find(function(err, entries) {
