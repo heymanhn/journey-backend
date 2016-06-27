@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node app.js",
     "devstart": "DEBUG=journey-backend node app.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha tests --recursive --watch"
   },
   "repository": {
     "type": "git",
@@ -32,6 +32,9 @@
     "serve-favicon": "~2.3.0"
   },
   "devDependencies": {
+    "chai": "^3.5.0",
+    "mocha": "^2.5.3",
+    "mocha-mongoose": "^1.2.0",
     "nodemon": "^1.9.2"
   }
 }

@@ -2,8 +2,8 @@ var mongoose = require('mongoose');
 
 var entrySchema = new mongoose.Schema({
   date: { type: Date, default: Date.now },
-  type: String,
-  contents: String,
+  type: { type: String, required: true },
+  contents: { type: String, required: true },
   lat: Number,
   lng: Number
 });
