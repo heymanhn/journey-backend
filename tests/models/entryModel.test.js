@@ -2,7 +2,7 @@ var mongoose = require('mongoose');
 var db = 'mongodb://localhost:27017/journey-test';
 var clearDB = require('mocha-mongoose')(db);
 var should = require('chai').should();
-var Entry = require('../models/entryModel');
+var Entry = require('../../models/entryModel');
 
 // Workaround to ensure that `mocha --watch` works on subsequent file saves
 mongoose.models = {};
@@ -40,8 +40,9 @@ describe('Entry Model', function() {
           contents: 'This is a test entry'
         });
 
-        testEntry.save(function(err) {
+        testEntry.validate(function(err) {
           should.exist(err);
+          err.name.should.equal('ValidationError');
           done();
         });
       });
@@ -51,8 +52,9 @@ describe('Entry Model', function() {
           type: 'text'
         });
 
-        testEntry.save(function(err) {
+        testEntry.validate(function(err) {
           should.exist(err);
+          err.name.should.equal('ValidationError');
           done();
         });
       });
