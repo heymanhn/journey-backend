@@ -1,9 +1,12 @@
 var _ = require('underscore');
+var bcrypt = require('bcrypt');
 var express = require('express');
 var passport = require('passport');
 
 var User = require('../models/userModel');
 var app = express.Router();
+
+const saltRounds = 10;
 
 /*
  * Requires:
@@ -34,14 +37,23 @@ app.post('/', function(req, res, next) {
     return res.status(400).send({error: 'Params missing: ' + missingKeys});
   }
 
-  var newUser = new User(params);
-  newUser.save(function(err, user) {
+  // Hash the password
+  bcrypt.hash(params.password, saltRounds, function(err, hash) {
     if (err) {
       console.log(err);
       return next(err);
     }
 
-    res.status(200).json({ success: true });
+    params.password = hash;
+    var newUser = new User(params);
+    newUser.save(function(err, user) {
+      if (err) {
+        console.log(err);
+        return next(err);
+      }
+
+      res.status(200).json({ success: true });
+    });
   });
 });
 
