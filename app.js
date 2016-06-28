@@ -21,6 +21,7 @@ var routes = require('./routes/index');
  * Connect to Mongo
  */
 mongoose.connect(db.development.url);
+mongoose.Promise = Promise;
 
 var app = express();
 // uncomment after placing your favicon in /public

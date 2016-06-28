@@ -47,25 +47,42 @@ app.post('/', function(req, res, next) {
     });
   }
 
-  // TODO: Need to check if the user already exists
-
-  // Hash the password
-  bcrypt.hash(params.password, saltRounds, function(err, hash) {
+  // Check if the username or email already exists
+  User.find({
+    $or: [
+      { username: params.username },
+      { email: params.email }
+    ]
+  }, function(err, users) {
     if (err) {
       console.log(err);
       return next(err);
     }
 
-    params.password = hash;
-    var newUser = new User(params);
-    newUser.save(function(err, user) {
-      if (err) {
-        console.log(err);
-        return next(err);
-      }
+    if (users && users.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Username or email already exists'
+      });
+    } else {
+      bcrypt.hash(params.password, saltRounds, function(err, hash) {
+        if (err) {
+          console.log(err);
+          return next(err);
+        }
 
-      res.status(200).json({ success: true });
-    });
+        params.password = hash;
+        var newUser = new User(params);
+        newUser.save(function(err, user) {
+          if (err) {
+            console.log(err);
+            return next(err);
+          }
+
+          res.status(200).json({ success: true });
+        });
+      });
+    }
   });
 });
 
