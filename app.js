@@ -2,7 +2,8 @@ var bodyParser = require('body-parser');
 var cookieParser = require('cookie-parser');
 var debug = require('debug')('journey-backend');
 var express = require('express');
-var http = require('http');
+var fs = require('fs');
+var https = require('https');
 var mongoose = require('mongoose');
 var path = require('path');
 var favicon = require('serve-favicon');
@@ -70,7 +71,7 @@ app.use(function(req, res, next) {
 if (app.get('env') === 'development') {
   app.use(function(err, req, res, next) {
     res.status(err.status || 500);
-    res.render('error', {
+    res.json({
       message: err.message,
       error: err
     });
@@ -81,20 +82,21 @@ if (app.get('env') === 'development') {
 // no stacktraces leaked to user
 app.use(function(err, req, res, next) {
   res.status(err.status || 500);
-  res.render('error', {
+  res.json({
     message: err.message,
     error: {}
   });
 });
 
 /*
- * Create HTTP server
+ * Create HTTPS server
  */
-var server = http.createServer(app);
+var options = {
+  key: fs.readFileSync('key.pem'),
+  cert: fs.readFileSync('cert.pem')
+};
 
-/*
- * Listen on provided port, on all network interfaces.
- */
+var server = https.createServer(options, app);
 server.listen(port);
 server.on('error', onError);
 server.on('listening', onListening);
