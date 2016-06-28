@@ -1,7 +1,9 @@
 var _ = require('underscore');
 var express = require('express');
-var passport = require('passport');
+var jwt = require('jsonwebtoken');
 
+var ensureAuth = require('../utils/auth');
+var config = require('../config/config');
 var User = require('../models/userModel');
 var app = express.Router();
 
@@ -13,6 +15,8 @@ var app = express.Router();
  *
  * Optional:
  * - Name
+ *
+ * Doesn't require authentication
  */
 app.post('/', function(req, res, next) {
   var params = {
@@ -76,21 +80,54 @@ app.post('/', function(req, res, next) {
             return next(err);
           }
 
-          // Log the user in once account created
-          res.status(200).json({ success: true });
+          // Generate JWT once account is created successfully
+          var token = jwt.sign(
+            user._doc,
+            config.secrets.jwt,
+            { expiresIn: '90 days' }
+          );
+
+          res.status(200).json({
+            success: true,
+            message: 'Account created successfully',
+            user: user,
+            token: 'JWT ' + token
+          });
         });
       });
     }
   });
 });
 
-app.get('/:id', function(req, res, next) {
-  User.findOne({ '_id': req.params.id }, function(err, user) {
+/*
+ * For now, only allow the currently authenticated user to get information
+ * about him/herself.
+ */
+app.get('/:id', ensureAuth, function(req, res, next) {
+  var userId = req.params.id;
+  if (userId !== req.user._id) {
+    return res.status(401).json({
+      success: false,
+      message: 'Cannot get information about another user'
+    });
+  }
+
+  User.findOne({ '_id': userId }, function(err, user) {
     if (err) {
       return next(err);
     }
 
-    res.status(200).json({ user: user });
+    if (!user) {
+      res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    } else {
+      res.status(200).json({
+        success: true,
+        user: user
+      });
+    }
   });
 });
 

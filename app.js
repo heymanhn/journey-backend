@@ -2,25 +2,24 @@ var bodyParser = require('body-parser');
 var cookieParser = require('cookie-parser');
 var debug = require('debug')('journey-backend');
 var express = require('express');
+var favicon = require('serve-favicon');
 var fs = require('fs');
 var https = require('https');
-var mongoose = require('mongoose');
-var path = require('path');
-var favicon = require('serve-favicon');
 var logger = require('morgan');
+var mongoose = require('mongoose');
 var passport = require('passport');
-var session = require('express-session');
+var path = require('path');
 
-var db = require('./config/database');
 var auth = require('./routes/auth');
-var users = require('./routes/users');
+var config = require('./config/config');
 var entries = require('./routes/entries');
 var routes = require('./routes/index');
+var users = require('./routes/users');
 
 /*
  * Connect to Mongo
  */
-mongoose.connect(db.development.url);
+mongoose.connect(config.database.development.url);
 mongoose.Promise = Promise;
 
 var app = express();
@@ -35,13 +34,8 @@ app.use(express.static(path.join(__dirname, 'public')));
 /*
  * Passport initialization
  */
-app.use(require('express-session')({
-  secret: 'journey to galaxy',
-  resave: true,
-  saveUninitialized: true
-}));
+require('./utils/passport-jwt')(passport);
 app.use(passport.initialize());
-app.use(passport.session());
 
 var port = normalizePort(process.env.PORT || '3000');
 app.set('port', port);

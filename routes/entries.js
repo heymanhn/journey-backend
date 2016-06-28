@@ -1,9 +1,10 @@
 var express = require('express');
-var Entry = require('../models/entryModel');
 
+var ensureAuth = require('../utils/auth');
+var Entry = require('../models/entryModel');
 var app = express.Router();
 
-app.get('/', function(req, res, next) {
+app.get('/', ensureAuth, function(req, res, next) {
   Entry.find(function(err, entries) {
     if (err) {
       return next(err);
@@ -13,7 +14,7 @@ app.get('/', function(req, res, next) {
   });
 });
 
-app.post('/', function(req, res, next) {
+app.post('/', ensureAuth, function(req, res, next) {
   var type = req.body.type;
   var contents = req.body.contents;
 

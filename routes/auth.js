@@ -1,10 +1,12 @@
+var config = require('../config/config');
 var express = require('express');
-var passport = require('passport');
+var jwt = require('jsonwebtoken');
 
+var ensureAuth = require('../utils/auth');
 var User = require('../models/userModel');
 var app = express.Router();
 
-app.post('/login', /*passport.authenticate('local'),*/ function(req, res, next) {
+app.post('/login', function(req, res, next) {
   var username = req.body.username;
   var email = req.body.email;
   var password = req.body.password;
@@ -54,15 +56,20 @@ app.post('/login', /*passport.authenticate('local'),*/ function(req, res, next) 
           message: 'Incorrect password'
         });
       } else {
-        res.status(200).json({ user: user });
+        var token = jwt.sign(
+          user._doc,
+          config.secrets.jwt,
+          { expiresIn: '90 days' }
+        );
+
+        res.status(200).json({
+          success: true,
+          user: user,
+          token: 'JWT ' + token
+        });
       }
     });
   }
-});
-
-app.post('/logout', passport.authenticate('local'), function(req, res, next) {
-  // req.logout();
-  res.json({ success: false });
 });
 
 module.exports = app;
