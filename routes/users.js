@@ -1,12 +1,9 @@
 var _ = require('underscore');
-var bcrypt = require('bcrypt');
 var express = require('express');
 var passport = require('passport');
 
 var User = require('../models/userModel');
 var app = express.Router();
-
-const saltRounds = 10;
 
 /*
  * Requires:
@@ -65,7 +62,7 @@ app.post('/', function(req, res, next) {
         message: 'Username or email already exists'
       });
     } else {
-      bcrypt.hash(params.password, saltRounds, function(err, hash) {
+      User.generateHash(params.password, function(err, hash) {
         if (err) {
           console.log(err);
           return next(err);
@@ -79,6 +76,7 @@ app.post('/', function(req, res, next) {
             return next(err);
           }
 
+          // Log the user in once account created
           res.status(200).json({ success: true });
         });
       });

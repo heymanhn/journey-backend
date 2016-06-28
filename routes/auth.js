@@ -1,4 +1,3 @@
-var bcrypt = require('bcrypt');
 var express = require('express');
 var passport = require('passport');
 
@@ -43,8 +42,9 @@ app.post('/login', /*passport.authenticate('local'),*/ function(req, res, next) 
     }
 
     // Check if password is correct
-    bcrypt.compare(password, user.password, function(err, result) {
+    User.checkPassword(password, user.password, function(err, result) {
       if (err) {
+        console.log(err);
         return next(err);
       }
 
