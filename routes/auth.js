@@ -4,12 +4,13 @@ var passport = require('passport');
 var User = require('../models/userModel');
 var app = express.Router();
 
-app.post('/register', function(req, res, next) {
-  res.json('OK');
+app.post('/login', passport.authenticate('local'), function(req, res, next) {
+  res.json({ success: false });
 });
 
-app.post('/login', passport.authenticate('local'), function(req, res, next) {
-  res.json('OK');
+app.post('/logout', passport.authenticate('local'), function(req, res, next) {
+  // req.logout();
+  res.json({ success: false });
 });
 
 module.exports = app;
