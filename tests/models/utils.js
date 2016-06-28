@@ -12,6 +12,6 @@ module.exports = {
       return done();
     }
 
-    mongoose.connect(db, done);
+    mongoose.connect(db.test.url, done);
   }
 };
