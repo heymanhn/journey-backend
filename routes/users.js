@@ -34,8 +34,20 @@ app.post('/', function(req, res, next) {
   });
 
   if (missingKeys.length > 0) {
-    return res.status(400).send({error: 'Params missing: ' + missingKeys});
+    return res.status(400).json({
+      success: false,
+      error: 'Params missing: ' + missingKeys
+    });
   }
+
+  if (params.password.length < 6) {
+    return res.status(400).json({
+      success: false,
+      message: 'Password needs to be at least 6 characters long'
+    });
+  }
+
+  // TODO: Need to check if the user already exists
 
   // Hash the password
   bcrypt.hash(params.password, saltRounds, function(err, hash) {
