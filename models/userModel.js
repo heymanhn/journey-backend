@@ -1,6 +1,6 @@
 var bcrypt = require('bcrypt');
 var mongoose = require('mongoose');
-const saltRounds = 10;
+const saltRounds = 8;
 
 var userSchema = new mongoose.Schema({
   signupDate: { type: Date, default: Date.now },
