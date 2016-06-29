@@ -52,7 +52,7 @@ app.post('/login', function(req, res, next) {
         });
       } else {
         var token = jwt.sign(
-          user,
+          user._doc,
           config.secrets.jwt,
           { expiresIn: '90 days' }
         );
