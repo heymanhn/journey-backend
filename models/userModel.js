@@ -11,6 +11,10 @@ var userSchema = new mongoose.Schema({
 });
 
 userSchema.pre('save', function(next) {
+  if (!this.isModified('password')) {
+    return next();
+  }
+
   bcrypt.hash(this.password, saltRounds, function(err, hash) {
     if (err) {
       console.log(err);
@@ -22,8 +26,15 @@ userSchema.pre('save', function(next) {
   }.bind(this));
 });
 
-userSchema.statics.checkPassword = function(password, hashedPassword, cb) {
-  bcrypt.compare(password, hashedPassword, cb);
+userSchema.methods.checkPassword = function(password, cb) {
+  bcrypt.compare(password, this.password, function(err, result) {
+    if (err) {
+      console.log(err);
+      return next(err);
+    }
+
+    cb(result);
+  });
 };
 
 module.exports = mongoose.model('User', userSchema);

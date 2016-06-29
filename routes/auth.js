@@ -44,12 +44,7 @@ app.post('/login', function(req, res, next) {
     }
 
     // Check if password is correct
-    User.checkPassword(password, user.password, function(err, result) {
-      if (err) {
-        console.log(err);
-        return next(err);
-      }
-
+    user.checkPassword(password, function(result) {
       if (!result) {
         res.status(401).json({
           success: false,

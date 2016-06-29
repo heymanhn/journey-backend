@@ -22,22 +22,5 @@ module.exports = {
       req.user._id = req.user._id.toString();
       next();
     })(req, res, next);
-  },
-
-  /*
-   * Only allows requests where the user in the JSON Web Token matches the user
-   * that the operation is intended for.
-   *
-   * Assumes that the URI includes req.params.id
-   */
-  isCurrentUser: function(req, res, next) {
-    if (req.params.id !== req.user._id) {
-      return res.status(401).json({
-        success: false,
-        message: 'Cannot perform this action on another user'
-      });
-    }
-
-    next();
   }
 };

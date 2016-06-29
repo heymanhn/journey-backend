@@ -3,7 +3,8 @@ var express = require('express');
 var jwt = require('jsonwebtoken');
 
 var ensureAuth = require('../utils/auth').ensureAuth;
-var isCurrentUser = require('../utils/auth').isCurrentUser;
+var isCurrentUser = require('../utils/users').isCurrentUser;
+var userIDExists = require('../utils/users').userIDExists;
 var config = require('../config/config');
 var User = require('../models/userModel');
 var app = express.Router();
@@ -96,37 +97,35 @@ app.post('/', function(req, res, next) {
  * For now, only allow the currently authenticated user to get information
  * about him/herself.
  */
-app.get('/:id', ensureAuth, isCurrentUser, function(req, res, next) {
-  User.findOne({ '_id': req.params.id }, function(err, user) {
-    if (err) {
-      return next(err);
-    }
-
-    if (!user) {
-      res.status(404).json({
-        success: false,
-        message: 'User not found'
-      });
-    } else {
-      res.status(200).json({
-        success: true,
-        user: user
-      });
-    }
-  });
-});
+app.get('/:id', ensureAuth, isCurrentUser, userIDExists,
+  function(req, res, next) {
+    res.status(200).json({
+      success: true,
+      user: req.userDoc
+    });
+  }
+);
 
 /*
  * PUT /users/:id
  *
  * Updates the user. Only allowed on currently authenticated user.
+ *
+ * Fields that can be updated:
+ * - username
+ * - email
+ * - password
+ * - name
+ *
  */
-app.put('/:id', ensureAuth, isCurrentUser, function(req, res, next) {
-  User.findOne({ '_id': req.params.id }, function(err, user) {
+app.put('/:id', ensureAuth, isCurrentUser, userIDExists,
+  function(req, res, next) {
+    var user = req.userDoc;
 
-  });
-  res.status(400).json({ success: false });
-});
+    // TODO
+    res.status(400).json({ success: false });
+  }
+);
 
 /*
  * DELETE /users/:id
