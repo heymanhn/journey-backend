@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node app.js",
     "devstart": "DEBUG=journey-backend node app.js",
-    "test": "mocha tests --recursive --watch"
+    "test": "mocha tests --recursive",
+    "testmon": "mocha tests --recursive --watch"
   },
   "repository": {
     "type": "git",
