@@ -14,9 +14,7 @@ module.exports = function(passport) {
   };
 
   passport.use(new JwtStrategy(options, function(jwt_payload, cb) {
-    debugger;
     User.findOne({'_id': jwt_payload._id}, function(err, user) {
-      debugger;
       if (err) {
         return cb(err, false);
       }
