@@ -80,7 +80,7 @@ app.post('/', function(req, res, next) {
  * For now, only allow the currently authenticated user to get information
  * about him/herself.
  */
-app.get('/:id', ensureAuth, isCurrentUser, userIDExists,
+app.get('/:id', ensureAuth, userIDExists, isCurrentUser,
   function(req, res, next) {
     res.status(200).json({
       success: true,
@@ -101,7 +101,7 @@ app.get('/:id', ensureAuth, isCurrentUser, userIDExists,
  * - name
  *
  */
-app.put('/:id', ensureAuth, isCurrentUser, userIDExists,
+app.put('/:id', ensureAuth, userIDExists, isCurrentUser,
   function(req, res, next) {
     var user = req.userDoc;
     var newParams = {
@@ -142,9 +142,22 @@ app.put('/:id', ensureAuth, isCurrentUser, userIDExists,
  *
  * Deletes the user. Only allowed on currently authenticated user.
  */
-app.delete('/:id', ensureAuth, isCurrentUser, function(req, res, next) {
-  res.status(400).json({ success: false });
-});
+app.delete('/:id', ensureAuth, userIDExists, isCurrentUser,
+  function(req, res, next) {
+    var user = req.userDoc;
+    user.remove(function (err, user) {
+      if (err) {
+        console.log(err);
+        next(err);
+      }
+
+      res.status(200).json({
+        success: true,
+        message: 'User deleted.'
+      });
+    });
+  }
+);
 
 /*
  * Helper functions
