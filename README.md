@@ -1,4 +1,6 @@
 # journey-backend
+[![Build Status](https://travis-ci.org/heymanhn/journey-backend.svg?branch=master)](https://travis-ci.org/heymanhn/journey-backend)
+
 Journey helps you chronicle everything you do, wherever you go. Use the app to record your commute routes. Quickly jot down notes for ideas. Record an audio reminder for yourself. It's there when you need to look back at a day in the past. It’s as if you have instant access to your mind at all times.
 
 The core datum for Journey is an Entry, and it can take multiple types: photo, video, audio, or text. The first version of this product includes an iOS app that allows you to submit entries and retrieve your entries in reverse chronological order. The app communicates with the backend (this repository) to store your journeys in the cloud.
