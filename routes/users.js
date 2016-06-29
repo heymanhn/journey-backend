@@ -50,46 +50,29 @@ app.post('/', function(req, res, next) {
     });
   }
 
-  // Check if the username or email already exists
-  User.find({
-    $or: [
-      { username: params.username },
-      { email: params.email }
-    ]
-  }, function(err, users) {
-    if (err) {
-      console.log(err);
-      return next(err);
-    }
+  // Only create the user if the username or email doesn't exist
+  duplicateUserCheck(params, res, next, function() {
+    var newUser = new User(params);
+    newUser.save(function(err, user) {
+      if (err) {
+        console.log(err);
+        return next(err);
+      }
 
-    if (users && users.length > 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'Username or email already exists'
+      // Generate JWT once account is created successfully
+      var token = jwt.sign(
+        user._doc,
+        config.secrets.jwt,
+        { expiresIn: '90 days' }
+      );
+
+      res.status(200).json({
+        success: true,
+        message: 'User created successfully.',
+        user: user,
+        token: 'JWT ' + token
       });
-    } else {
-      var newUser = new User(params);
-      newUser.save(function(err, user) {
-        if (err) {
-          console.log(err);
-          return next(err);
-        }
-
-        // Generate JWT once account is created successfully
-        var token = jwt.sign(
-          user._doc,
-          config.secrets.jwt,
-          { expiresIn: '90 days' }
-        );
-
-        res.status(200).json({
-          success: true,
-          message: 'Account created successfully',
-          user: user,
-          token: 'JWT ' + token
-        });
-      });
-    }
+    });
   });
 });
 
@@ -121,9 +104,36 @@ app.get('/:id', ensureAuth, isCurrentUser, userIDExists,
 app.put('/:id', ensureAuth, isCurrentUser, userIDExists,
   function(req, res, next) {
     var user = req.userDoc;
+    var newParams = {
+      username: req.body.username,
+      password: req.body.password,
+      email: req.body.email,
+      name: req.body.name
+    };
 
-    // TODO
-    res.status(400).json({ success: false });
+    // Only keep the params that need to be modified
+    newParams = _.pick(newParams, function(value, key) {
+      return value !== undefined && value !== user[key];
+    });
+
+    duplicateUserCheck(newParams, res, next, function() {
+      _.each(newParams, function(value, key) {
+        user[key] = value;
+      });
+
+      user.save(function(err, newUser) {
+        if (err) {
+          console.log(err);
+          return next(err);
+        }
+
+        res.status(200).json({
+          success: true,
+          message: 'User updated successfully.',
+          user: newUser
+        });
+      });
+    });
   }
 );
 
@@ -135,5 +145,36 @@ app.put('/:id', ensureAuth, isCurrentUser, userIDExists,
 app.delete('/:id', ensureAuth, isCurrentUser, function(req, res, next) {
   res.status(400).json({ success: false });
 });
+
+/*
+ * Helper functions
+ */
+
+/*
+ * Checks if there already exists a user with the specified username or email.
+ *
+ */
+function duplicateUserCheck(params, res, next, success) {
+  User.find({
+    $or: [
+      { username: params.username },
+      { email: params.email }
+    ]
+  }, function(err, users) {
+    if (err) {
+      console.log(err);
+      return next(err);
+    }
+
+    if (users && users.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Username or email already exists'
+      });
+    } else {
+      return success();
+    }
+  });
+}
 
 module.exports = app;
