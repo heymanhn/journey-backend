@@ -2,7 +2,8 @@ var _ = require('underscore');
 var express = require('express');
 var jwt = require('jsonwebtoken');
 
-var ensureAuth = require('../utils/auth');
+var ensureAuth = require('../utils/auth').ensureAuth;
+var isCurrentUser = require('../utils/auth').isCurrentUser;
 var config = require('../config/config');
 var User = require('../models/userModel');
 var app = express.Router();
@@ -95,16 +96,8 @@ app.post('/', function(req, res, next) {
  * For now, only allow the currently authenticated user to get information
  * about him/herself.
  */
-app.get('/:id', ensureAuth, function(req, res, next) {
-  var userId = req.params.id;
-  if (userId !== req.user._id) {
-    return res.status(401).json({
-      success: false,
-      message: 'Cannot get information about another user'
-    });
-  }
-
-  User.findOne({ '_id': userId }, function(err, user) {
+app.get('/:id', ensureAuth, isCurrentUser, function(req, res, next) {
+  User.findOne({ '_id': req.params.id }, function(err, user) {
     if (err) {
       return next(err);
     }
@@ -128,8 +121,10 @@ app.get('/:id', ensureAuth, function(req, res, next) {
  *
  * Updates the user. Only allowed on currently authenticated user.
  */
-app.put('/:id', ensureAuth, function(req, res, next) {
+app.put('/:id', ensureAuth, isCurrentUser, function(req, res, next) {
+  User.findOne({ '_id': req.params.id }, function(err, user) {
 
+  });
   res.status(400).json({ success: false });
 });
 
@@ -138,7 +133,7 @@ app.put('/:id', ensureAuth, function(req, res, next) {
  *
  * Deletes the user. Only allowed on currently authenticated user.
  */
-app.delete('/:id', ensureAuth, function(req, res, next) {
+app.delete('/:id', ensureAuth, isCurrentUser, function(req, res, next) {
   res.status(400).json({ success: false });
 });
 

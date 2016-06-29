@@ -1,6 +1,6 @@
 var express = require('express');
 
-var ensureAuth = require('../utils/auth');
+var ensureAuth = require('../utils/auth').ensureAuth;
 var Entry = require('../models/entryModel');
 var app = express.Router();
 
