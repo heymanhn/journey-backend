@@ -1,4 +1,6 @@
+var mongoose = require('mongoose');
 var should = require('chai').should();
+
 var Entry = require('../../models/entryModel');
 var utils = require('./utils');
 
@@ -8,6 +10,7 @@ describe('Entry Model', function() {
   describe('#create:', function() {
     it('should create a new Entry with the right fields', function(done) {
       var testEntry = new Entry({
+        creator: mongoose.Types.ObjectId('577371f00000000000000000'),
         type: 'text',
         contents: 'This is a test entry'
       });
@@ -17,6 +20,7 @@ describe('Entry Model', function() {
         (typeof entry).should.equal('object');
         entry.type.should.equal(testEntry.type);
         entry.contents.should.equal(testEntry.contents);
+        entry.creator.should.equal(testEntry.creator);
 
         done();
       });
