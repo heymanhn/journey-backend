@@ -18,8 +18,7 @@ module.exports = {
         });
       }
 
-      req.user = user._doc;
-      req.user._id = req.user._id.toString();
+      req.user = user;
       next();
     })(req, res, next);
   }

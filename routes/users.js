@@ -2,12 +2,19 @@ var _ = require('underscore');
 var express = require('express');
 var jwt = require('jsonwebtoken');
 
+var config = require('../config/config');
 var ensureAuth = require('../utils/auth').ensureAuth;
+var Entry = require('../models/entryModel');
 var isCurrentUser = require('../utils/users').isCurrentUser;
 var userIDExists = require('../utils/users').userIDExists;
-var config = require('../config/config');
 var User = require('../models/userModel');
+
 var app = express.Router();
+
+/*
+ * User management endpoints
+ * =========================
+ */
 
 /*
  * Requires:
@@ -61,7 +68,7 @@ app.post('/', function(req, res, next) {
 
       // Generate JWT once account is created successfully
       var token = jwt.sign(
-        user._doc,
+        user,
         config.secrets.jwt,
         { expiresIn: '90 days' }
       );
@@ -80,7 +87,7 @@ app.post('/', function(req, res, next) {
  * For now, only allow the currently authenticated user to get information
  * about him/herself.
  */
-app.get('/:id', ensureAuth, userIDExists, isCurrentUser,
+app.get('/:userId', ensureAuth, userIDExists, isCurrentUser,
   function(req, res, next) {
     res.status(200).json({
       success: true,
@@ -90,7 +97,7 @@ app.get('/:id', ensureAuth, userIDExists, isCurrentUser,
 );
 
 /*
- * PUT /users/:id
+ * PUT /users/:userId
  *
  * Updates the user. Only allowed on currently authenticated user.
  *
@@ -101,7 +108,7 @@ app.get('/:id', ensureAuth, userIDExists, isCurrentUser,
  * - name
  *
  */
-app.put('/:id', ensureAuth, userIDExists, isCurrentUser,
+app.put('/:userId', ensureAuth, userIDExists, isCurrentUser,
   function(req, res, next) {
     var user = req.userDoc;
     var newParams = {
@@ -138,14 +145,14 @@ app.put('/:id', ensureAuth, userIDExists, isCurrentUser,
 );
 
 /*
- * DELETE /users/:id
+ * DELETE /users/:userId
  *
  * Deletes the user. Only allowed on currently authenticated user.
  */
-app.delete('/:id', ensureAuth, userIDExists, isCurrentUser,
+app.delete('/:userId', ensureAuth, userIDExists, isCurrentUser,
   function(req, res, next) {
     var user = req.userDoc;
-    user.remove(function (err, user) {
+    user.remove(function(err, user) {
       if (err) {
         console.log(err);
         next(err);
@@ -158,6 +165,33 @@ app.delete('/:id', ensureAuth, userIDExists, isCurrentUser,
     });
   }
 );
+
+
+/*
+ * User state endpoints
+ * =========================
+ */
+
+/*
+ * GET /users/:userId/entries
+ *
+ * Get all journey entries created by this user
+ */
+app.get('/:userId/entries', ensureAuth, userIDExists, isCurrentUser,
+  function(req, res, next) {
+    Entry.find({ creator: req.params.userId }, function(err, entries) {
+      if (err) {
+        return next(err);
+      }
+
+      res.status(200).json({
+        success: true,
+        entries: entries
+      });
+    });
+  }
+);
+
 
 /*
  * Helper functions
