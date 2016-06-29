@@ -66,33 +66,25 @@ app.post('/', function(req, res, next) {
         message: 'Username or email already exists'
       });
     } else {
-      User.generateHash(params.password, function(err, hash) {
+      var newUser = new User(params);
+      newUser.save(function(err, user) {
         if (err) {
           console.log(err);
           return next(err);
         }
 
-        params.password = hash;
-        var newUser = new User(params);
-        newUser.save(function(err, user) {
-          if (err) {
-            console.log(err);
-            return next(err);
-          }
+        // Generate JWT once account is created successfully
+        var token = jwt.sign(
+          user._doc,
+          config.secrets.jwt,
+          { expiresIn: '90 days' }
+        );
 
-          // Generate JWT once account is created successfully
-          var token = jwt.sign(
-            user._doc,
-            config.secrets.jwt,
-            { expiresIn: '90 days' }
-          );
-
-          res.status(200).json({
-            success: true,
-            message: 'Account created successfully',
-            user: user,
-            token: 'JWT ' + token
-          });
+        res.status(200).json({
+          success: true,
+          message: 'Account created successfully',
+          user: user,
+          token: 'JWT ' + token
         });
       });
     }
@@ -129,6 +121,25 @@ app.get('/:id', ensureAuth, function(req, res, next) {
       });
     }
   });
+});
+
+/*
+ * PUT /users/:id
+ *
+ * Updates the user. Only allowed on currently authenticated user.
+ */
+app.put('/:id', ensureAuth, function(req, res, next) {
+
+  res.status(400).json({ success: false });
+});
+
+/*
+ * DELETE /users/:id
+ *
+ * Deletes the user. Only allowed on currently authenticated user.
+ */
+app.delete('/:id', ensureAuth, function(req, res, next) {
+  res.status(400).json({ success: false });
 });
 
 module.exports = app;

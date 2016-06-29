@@ -10,9 +10,17 @@ var userSchema = new mongoose.Schema({
   name: { type: String }
 });
 
-userSchema.statics.generateHash = function(password, cb) {
-  bcrypt.hash(password, saltRounds, cb);
-};
+userSchema.pre('save', function(next) {
+  bcrypt.hash(this.password, saltRounds, function(err, hash) {
+    if (err) {
+      console.log(err);
+      return next(err);
+    }
+
+    this.password = hash;
+    next();
+  }.bind(this));
+});
 
 userSchema.statics.checkPassword = function(password, hashedPassword, cb) {
   bcrypt.compare(password, hashedPassword, cb);
