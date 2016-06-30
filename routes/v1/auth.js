@@ -1,9 +1,9 @@
-var config = require('../config/config');
 var express = require('express');
 var jwt = require('jsonwebtoken');
 
-var ensureAuth = require('../utils/auth');
-var User = require('../models/userModel');
+var config = require('../../config/config');
+var ensureAuth = require('../../utils/auth');
+var User = require('../../models/userModel');
 var app = express.Router();
 
 app.post('/login', function(req, res, next) {

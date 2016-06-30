@@ -10,11 +10,13 @@ var mongoose = require('mongoose');
 var passport = require('passport');
 var path = require('path');
 
-var auth = require('./routes/auth');
 var config = require('./config/config');
-var entries = require('./routes/entries');
-var routes = require('./routes/index');
-var users = require('./routes/users');
+
+/*
+ * API Versioning
+ */
+var indexRoute = require('./routes/index');
+var apiV1Routes = require('./routes/v1/index');
 
 /*
  * Connect to Mongo
@@ -43,10 +45,8 @@ app.set('port', port);
 /*
  * Route configuration
  */
-app.use('/', routes);
-app.use('/entries', entries);
-app.use('/auth', auth);
-app.use('/users', users);
+app.use('/v1', apiV1Routes);
+app.use('/', indexRoute);
 
 /*
  * catch 404 and forward to error handler

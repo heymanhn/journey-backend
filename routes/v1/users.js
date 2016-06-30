@@ -2,12 +2,12 @@ var _ = require('underscore');
 var express = require('express');
 var jwt = require('jsonwebtoken');
 
-var config = require('../config/config');
-var ensureAuth = require('../utils/auth').ensureAuth;
-var Entry = require('../models/entryModel');
-var isCurrentUser = require('../utils/users').isCurrentUser;
-var userIDExists = require('../utils/users').userIDExists;
-var User = require('../models/userModel');
+var config = require('../../config/config');
+var ensureAuth = require('../../utils/auth').ensureAuth;
+var Entry = require('../../models/entryModel');
+var isCurrentUser = require('../../utils/users').isCurrentUser;
+var userIDExists = require('../../utils/users').userIDExists;
+var User = require('../../models/userModel');
 
 var app = express.Router();
 
