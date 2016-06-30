@@ -1,3 +1,6 @@
+/*jslint node: true, mocha: true */
+'use strict';
+
 var should = require('chai').should();
 var User = require('../../models/userModel');
 var utils = require('./utils');

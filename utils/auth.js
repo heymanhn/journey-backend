@@ -1,3 +1,6 @@
+/*jslint node: true */
+'use strict';
+
 var passport = require('passport');
 
 module.exports = {
@@ -6,7 +9,7 @@ module.exports = {
      * This custom implementation of the authenticate() sets req.user to the
      * user object every time, overriding the default session-based behavior.
      */
-    passport.authenticate('jwt', function(err, user, info) {
+    passport.authenticate('jwt', function(err, user) {
       if (err) {
         return next(err);
       }

@@ -1,3 +1,6 @@
+/*jslint node: true, mocha: true */
+'use strict';
+
 var mongoose = require('mongoose');
 var should = require('chai').should();
 

@@ -1,8 +1,10 @@
+/*jslint node: true */
+'use strict';
+
 var bodyParser = require('body-parser');
 var cookieParser = require('cookie-parser');
 var debug = require('debug')('journey-backend');
 var express = require('express');
-var favicon = require('serve-favicon');
 var fs = require('fs');
 var https = require('https');
 var logger = require('morgan');
@@ -25,8 +27,6 @@ mongoose.connect(config.database.development.url);
 mongoose.Promise = Promise;
 
 var app = express();
-// uncomment after placing your favicon in /public
-//app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
 app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -64,7 +64,7 @@ app.use(function(req, res, next) {
 // development error handler
 // will print stacktrace
 if (app.get('env') === 'development') {
-  app.use(function(err, req, res, next) {
+  app.use(function(err, req, res) {
     res.status(err.status || 500);
     res.json({
       message: err.message,
@@ -75,7 +75,7 @@ if (app.get('env') === 'development') {
 
 // production error handler
 // no stacktraces leaked to user
-app.use(function(err, req, res, next) {
+app.use(function(err, req, res) {
   res.status(err.status || 500);
   res.json({
     message: err.message,
@@ -104,9 +104,7 @@ function onError(error) {
     throw error;
   }
 
-  var bind = typeof port === 'string'
-    ? 'Pipe ' + port
-    : 'Port ' + port;
+  var bind = typeof port === 'string' ? 'Pipe ' + port : 'Port ' + port;
 
   // handle specific listen errors with friendly messages
   switch (error.code) {
@@ -128,9 +126,7 @@ function onError(error) {
  */
 function onListening() {
   var addr = server.address();
-  var bind = typeof addr === 'string'
-    ? 'pipe ' + addr
-    : 'port ' + addr.port;
+  var bind = typeof addr === 'string' ? 'pipe ' + addr : 'port ' + addr.port;
   debug('Listening on ' + bind);
 }
 

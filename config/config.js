@@ -1,3 +1,6 @@
+/*jslint node: true */
+'use strict';
+
 var database = require('./database');
 var secrets = require('./secrets');
 

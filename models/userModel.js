@@ -1,3 +1,6 @@
+/*jslint node: true */
+'use strict';
+
 var bcrypt = require('bcrypt');
 var mongoose = require('mongoose');
 const saltRounds = 8;
@@ -27,14 +30,7 @@ userSchema.pre('save', function(next) {
 });
 
 userSchema.methods.checkPassword = function(password, cb) {
-  bcrypt.compare(password, this.password, function(err, result) {
-    if (err) {
-      console.log(err);
-      return next(err);
-    }
-
-    cb(result);
-  });
+  bcrypt.compare(password, this.password, cb);
 };
 
 module.exports = mongoose.model('User', userSchema);

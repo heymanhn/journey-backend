@@ -1,3 +1,6 @@
+/*jslint node: true */
+'use strict';
+
 var User = require('../models/userModel');
 
 module.exports = {
@@ -42,4 +45,4 @@ module.exports = {
       }
     });
   }
-}
+};

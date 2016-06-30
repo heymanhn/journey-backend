@@ -1,4 +1,7 @@
-  /*
+/*jslint node: true */
+'use strict';
+
+/*
  * JSON Web Token strategy for passport
  */
 var JwtStrategy = require('passport-jwt').Strategy;

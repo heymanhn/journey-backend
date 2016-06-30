@@ -1,8 +1,10 @@
+/*jslint node: true */
+'use strict';
+
 var express = require('express');
 var jwt = require('jsonwebtoken');
 
 var config = require('../../config/config');
-var ensureAuth = require('../../utils/auth');
 var User = require('../../models/userModel');
 var app = express.Router();
 
@@ -44,7 +46,12 @@ app.post('/login', function(req, res, next) {
     }
 
     // Check if password is correct
-    user.checkPassword(password, function(result) {
+    user.checkPassword(password, function(err, result) {
+      if (err) {
+        console.log(err);
+        return next(err);
+      }
+
       if (!result) {
         res.status(401).json({
           success: false,

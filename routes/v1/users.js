@@ -1,3 +1,6 @@
+/*jslint node: true */
+'use strict';
+
 var _ = require('underscore');
 var express = require('express');
 var jwt = require('jsonwebtoken');
@@ -88,7 +91,7 @@ app.post('/', function(req, res, next) {
  * about him/herself.
  */
 app.get('/:userId', ensureAuth, userIDExists, isCurrentUser,
-  function(req, res, next) {
+  function(req, res) {
     res.status(200).json({
       success: true,
       user: req.userDoc
@@ -152,7 +155,7 @@ app.put('/:userId', ensureAuth, userIDExists, isCurrentUser,
 app.delete('/:userId', ensureAuth, userIDExists, isCurrentUser,
   function(req, res, next) {
     var user = req.userDoc;
-    user.remove(function(err, user) {
+    user.remove(function(err) {
       if (err) {
         console.log(err);
         next(err);

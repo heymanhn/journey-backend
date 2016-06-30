@@ -1,5 +1,7 @@
-var express = require('express');
+/*jslint node: true */
+'use strict';
 
+var express = require('express');
 var ensureAuth = require('../../utils/auth').ensureAuth;
 var Entry = require('../../models/entryModel');
 var app = express.Router();
@@ -31,7 +33,7 @@ app.post('/', ensureAuth, function(req, res, next) {
       return next(err);
     }
 
-    res.redirect('/users/' + req.user.id + '/entries');
+    res.redirect('/v1/users/' + creator + '/entries');
   });
 });
 
@@ -42,8 +44,6 @@ app.post('/', ensureAuth, function(req, res, next) {
  * current user
  */
 app.delete('/:entryId', ensureAuth, function(req, res, next) {
-  var user = req.userDoc;
-
   Entry.findOne({ '_id': req.params.entryId }, function(err, entry) {
     if (err) {
       console.log(err);
@@ -56,7 +56,14 @@ app.delete('/:entryId', ensureAuth, function(req, res, next) {
         message: 'Entry not found.'
       });
     } else {
-      entry.remove(function(err, entry) {
+      if (entry.creator !== req.user._id) {
+        return res.status(401).json({
+          success: false,
+          message: 'Not Authorized.'
+        });
+      }
+
+      entry.remove(function(err) {
         if (err) {
           console.log(err);
           next(err);
@@ -66,7 +73,7 @@ app.delete('/:entryId', ensureAuth, function(req, res, next) {
           success: true,
           message: 'Entry deleted.'
         });
-      })
+      });
     }
   });
 });
