@@ -6,8 +6,7 @@
   "scripts": {
     "start": "node app.js",
     "devstart": "DEBUG=journey-backend node app.js",
-    "test": "mocha tests --recursive",
-    "testmon": "mocha tests --recursive --watch"
+    "test": "node node_modules/istanbul/lib/cli.js cover _mocha -- --recursive tests/"
   },
   "repository": {
     "type": "git",
@@ -41,6 +40,7 @@
   },
   "devDependencies": {
     "chai": "^3.5.0",
+    "istanbul": "^0.4.4",
     "jshint": "^2.9.2",
     "mocha": "^2.5.3",
     "mocha-mongoose": "^1.2.0",
