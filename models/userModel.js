@@ -3,6 +3,7 @@
 
 var bcrypt = require('bcrypt');
 var mongoose = require('mongoose');
+var preSaveHook = require('./userUtils').preSaveHook;
 const saltRounds = 8;
 
 var userSchema = new mongoose.Schema({
@@ -13,22 +14,7 @@ var userSchema = new mongoose.Schema({
   name: { type: String }
 });
 
-userSchema.pre('save', function(next) {
-  if (!this.isModified('password')) {
-    return next();
-  }
-
-  bcrypt.hash(this.password, saltRounds, function(err, hash) {
-    if (err) {
-      console.log(err);
-      return next(err);
-    }
-
-    this.password = hash;
-    next();
-  }.bind(this));
-});
-
+userSchema.pre('save', preSaveHook);
 userSchema.methods.checkPassword = function(password, cb) {
   bcrypt.compare(password, this.password, cb);
 };
