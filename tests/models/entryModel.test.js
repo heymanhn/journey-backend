@@ -53,7 +53,7 @@ describe('Entry Model', function() {
       });
     });
 
-    context('Validation:', function() {
+    context('#validation:', function() {
       it('should fail if "type" is not provided', function(done) {
         var testEntry = new Entry({
           contents: 'This is a test entry',

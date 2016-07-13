@@ -7,7 +7,7 @@ var sinon = require('sinon');
 var Entry = require('../../models/entryModel');
 var mongoose = require('mongoose');
 
-describe('Entry routes', function() {
+describe('Entry Routes', function() {
   var sandbox;
   var router;
 
