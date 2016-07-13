@@ -23,8 +23,8 @@ describe('Entry Model', function() {
       contents: 'Entry 2'
     });
 
-    entry1.save(function(err1, entry1) {
-      entry2.save(function(err2, entry2) {
+    entry1.save(function() {
+      entry2.save(function() {
         done();
       });
     });

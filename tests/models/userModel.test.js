@@ -5,21 +5,42 @@ var bcrypt = require('bcrypt');
 var should = require('chai').should();
 var sinon = require('sinon');
 
-var utils = require('./utils');
+var testUtils = require('./utils');
 var User = require('../../models/userModel');
-var preSaveHook = require('../../models/userUtils').preSaveHook;
+var utils = require('../../models/userUtils');
 
 describe('User Model', function() {
   var sandbox;
+  var next;
 
-  before(utils.connect);
+  before(testUtils.connect);
 
-  beforeEach(function() {
+  beforeEach(function(done) {
     sandbox = sinon.sandbox.create();
+    next = sandbox.spy();
+
+    var user1 = new User({
+      username: 'amy',
+      email: 'amy@journey.com',
+      password: 'abc123'
+    });
+
+    var user2 = new User({
+      username: 'alex',
+      email: 'alex@journey.com',
+      password: 'abc123'
+    });
+
+    user1.save(function() {
+      user2.save(function() {
+        done();
+      });
+    });
   });
 
-  afterEach(function() {
+  afterEach(function(done) {
     sandbox.restore();
+    User.remove({}, done);
   });
 
   describe('#create:', function() {
@@ -27,7 +48,8 @@ describe('User Model', function() {
       var testUser = new User({
         username: 'herman',
         password: 'abc123',
-        email: 'herman@journey.com'
+        email: 'herman@journey.com',
+        name: 'Herman Ng'
       });
 
       testUser.save(function(err, user) {
@@ -35,17 +57,117 @@ describe('User Model', function() {
         (typeof user).should.equal('object');
         user.username.should.equal(testUser.username);
         user.email.should.equal(testUser.email);
+        user.name.should.equal(testUser.name);
+        should.exist(user.signupDate);
 
         done();
       });
     });
+  });
 
-    context('#save pre-processing:', function() {
+  describe('#pre-save checks:', function() {
+    context('#duplicate field checking:', function() {
+      var field = 'foo';
+      var value = 'bar';
       var stubModel;
-      var next;
 
       beforeEach(function() {
-        next = sandbox.spy();
+        stubModel = { isModified: function() { return true; } };
+      });
+
+      it('calls Model.count() to check if the field exists', function(done) {
+        stubModel.model = function() {
+          return {
+            count: function(opts) {
+              opts[field].should.equal(value);
+              Object.keys(opts).length.should.equal(1);
+              done();
+            }
+          };
+        };
+
+        utils.fieldExistsCheck.bind(stubModel)(field, value);
+      });
+
+      it('calls next() if the field does not exist yet', function(done) {
+        stubModel.model = function() {
+          return {
+            count: function(opts, cb) {
+              cb(null, 0);
+
+              next.calledOnce.should.equal(true);
+              done();
+            }
+          };
+        };
+
+        utils.fieldExistsCheck.bind(stubModel)(field, value, next);
+      });
+
+      it('fails if Model.count() returns an error', function(done) {
+        var stubError = 'count() error';
+
+        stubModel.model = function() {
+          return {
+            count: function(opts, cb) {
+              cb(stubError);
+
+              next.calledOnce.should.equal(true);
+              next.calledWith(stubError).should.equal(true);
+              done();
+            }
+          };
+        };
+
+        utils.fieldExistsCheck.bind(stubModel)(field, value, next);
+      });
+
+      it('moves on if the field has not changed', function() {
+        stubModel.isModified = function() { return false; };
+        utils.fieldExistsCheck.bind(stubModel)(field, null, next);
+        next.calledOnce.should.equal(true);
+      });
+
+      it('returns an error if the field exists', function(done) {
+        var stubError = new Error(field + ' already exists');
+        stubModel.model = function() {
+          return {
+            count: function(opts, cb) {
+              cb(null, 1);
+
+              next.calledOnce.should.equal(true);
+              next.calledWith(stubError).should.equal(true);
+              done();
+            }
+          };
+        };
+
+        utils.fieldExistsCheck.bind(stubModel)(field, value, next);
+      });
+    });
+
+    context('#password length check:', function() {
+      it('moves on if the password is >= 6 characters', function() {
+        var stubModel = { password: 'abc123' };
+
+        utils.checkPasswordLength.bind(stubModel)(next);
+        next.calledOnce.should.equal(true);
+      });
+
+      it('returns an error if password is < 6 characters', function() {
+        var error = new Error('Password needs to be at least 6 characters');
+        var stubModel = { password: 'a1b2' };
+
+        utils.checkPasswordLength.bind(stubModel)(next);
+        next.calledOnce.should.equal(true);
+        next.calledWith(error).should.equal(true);
+      });
+    });
+
+    context('#password hashing:', function() {
+      var stubModel;
+
+      beforeEach(function() {
         stubModel = {
           password: 'abc123',
           isModified: function() { return true; }
@@ -58,13 +180,13 @@ describe('User Model', function() {
           done();
         });
 
-        preSaveHook.bind(stubModel)();
+        utils.hashPassword.bind(stubModel)();
       });
 
       it('only pre-processes if the password has changed', function() {
         stubModel.isModified = function() { return false; };
 
-        preSaveHook.bind(stubModel)(next);
+        utils.hashPassword.bind(stubModel)(next);
         next.calledOnce.should.equal(true);
       });
 
@@ -76,7 +198,7 @@ describe('User Model', function() {
           done();
         });
 
-        preSaveHook.bind(stubModel)(next);
+        utils.hashPassword.bind(stubModel)(next);
       });
 
       it('sets the password if hash function succeeds', function(done) {
@@ -90,48 +212,48 @@ describe('User Model', function() {
           done();
         });
 
-        preSaveHook.bind(stubModel)(next);
+        utils.hashPassword.bind(stubModel)(next);
+      });
+    });
+  });
+
+  describe('#validation:', function() {
+    it('fails if username is not provided', function(done) {
+      var testUser = new User({
+        password: 'abc123',
+        email: 'herman@journey.com'
+      });
+
+      testUser.validate(function(err) {
+        should.exist(err);
+        err.name.should.equal('ValidationError');
+        done();
       });
     });
 
-    context('#validation:', function() {
-      it('fails if "username" is not provided', function(done) {
-        var testUser = new User({
-          password: 'abc123',
-          email: 'herman@journey.com'
-        });
-
-        testUser.validate(function(err) {
-          should.exist(err);
-          err.name.should.equal('ValidationError');
-          done();
-        });
+    it('fails if password is not provided', function(done) {
+      var testUser = new User({
+        username: 'herman',
+        email: 'herman@journey.com'
       });
 
-      it('fails if "password" is not provided', function(done) {
-        var testUser = new User({
-          username: 'herman',
-          email: 'herman@journey.com'
-        });
+      testUser.validate(function(err) {
+        should.exist(err);
+        err.name.should.equal('ValidationError');
+        done();
+      });
+    });
 
-        testUser.validate(function(err) {
-          should.exist(err);
-          err.name.should.equal('ValidationError');
-          done();
-        });
+    it('fails if email is not provided', function(done) {
+      var testUser = new User({
+        username: 'herman',
+        password: 'abc123'
       });
 
-      it('fails if "email" is not provided', function(done) {
-        var testUser = new User({
-          username: 'herman',
-          password: 'abc123'
-        });
-
-        testUser.validate(function(err) {
-          should.exist(err);
-          err.name.should.equal('ValidationError');
-          done();
-        });
+      testUser.validate(function(err) {
+        should.exist(err);
+        err.name.should.equal('ValidationError');
+        done();
       });
     });
   });

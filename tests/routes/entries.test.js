@@ -50,11 +50,11 @@ describe('Entry Routes', function() {
       router.post.firstCall.args[2](req, res, next);
     };
 
-    it('should register a URI for POST: /', function() {
+    it('registers a URI for POST: /', function() {
       router.post.calledWith('/', sandbox.match.any).should.equal(true);
     });
 
-    it('creates entries successfully if fields are valid', function(done) {
+    it('creates the entry successfully if fields are valid', function(done) {
       sandbox.stub(Entry.prototype, 'save', function(callback) {
         callback(null);
       });
