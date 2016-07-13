@@ -14,18 +14,10 @@ var app = express.Router();
  * - Contents (string)
  */
 app.post('/', ensureAuth, function(req, res, next) {
-  var type = req.body.type;
-  var contents = req.body.contents;
-  var creator = req.user._id;
-
-  if (!type || !contents) {
-    return res.status(400).send("Missing some parameters.");
-  }
-
   var entry = new Entry({
-    creator: creator,
-    type: type,
-    contents: contents
+    creator: req.user._id,
+    type: req.body.type,
+    contents: req.body.contents
   });
 
   entry.save(function(err) {
@@ -33,7 +25,7 @@ app.post('/', ensureAuth, function(req, res, next) {
       return next(err);
     }
 
-    res.redirect('/v1/users/' + creator + '/entries');
+    res.redirect('/v1/users/' + entry.creator + '/entries');
   });
 });
 
@@ -44,10 +36,12 @@ app.post('/', ensureAuth, function(req, res, next) {
  * current user
  */
 app.delete('/:entryId', ensureAuth, function(req, res, next) {
-  Entry.findOne({ '_id': req.params.entryId }, function(err, entry) {
+  Entry.findOne({
+    '_id': req.params.entryId,
+    'creator': req.user._id
+  }, function(err, entry) {
     if (err) {
-      console.log(err);
-      next(err);
+      return next(err);
     }
 
     if (!entry) {
@@ -55,26 +49,18 @@ app.delete('/:entryId', ensureAuth, function(req, res, next) {
         success: false,
         message: 'Entry not found.'
       });
-    } else {
-      if (entry.creator !== req.user._id) {
-        return res.status(401).json({
-          success: false,
-          message: 'Not Authorized.'
-        });
+    }
+
+    entry.remove(function(err) {
+      if (err) {
+        return next(err);
       }
 
-      entry.remove(function(err) {
-        if (err) {
-          console.log(err);
-          next(err);
-        }
-
-        res.status(200).json({
-          success: true,
-          message: 'Entry deleted.'
-        });
+      res.json({
+        success: true,
+        message: 'Entry deleted.'
       });
-    }
+    });
   });
 });
 
