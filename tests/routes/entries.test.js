@@ -5,7 +5,6 @@ var express = require('express');
 var should = require('chai').should();
 var sinon = require('sinon');
 var Entry = require('../../models/entryModel');
-var mongoose = require('mongoose');
 
 describe('Entry Routes', function() {
   var sandbox;
@@ -64,13 +63,13 @@ describe('Entry Routes', function() {
     });
 
     it('fails if Entry.save() returns an error', function(done) {
-      var fakeError = 'Error saving entry';
+      var stubError = 'Error saving entry';
       sandbox.stub(Entry.prototype, 'save', function(callback) {
-        callback(fakeError);
+        callback(stubError);
       });
 
       var next = function(err) {
-        err.should.equal(fakeError);
+        err.should.equal(stubError);
         done();
       };
 

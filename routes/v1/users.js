@@ -47,10 +47,7 @@ app.post('/', function(req, res, next) {
   });
 
   if (missingKeys.length > 0) {
-    return res.json({
-      success: false,
-      error: 'Params missing: ' + missingKeys
-    });
+    return next(new Error('Params missing: ' + missingKeys));
   }
 
   var newUser = new User(params);
@@ -66,7 +63,7 @@ app.post('/', function(req, res, next) {
       { expiresIn: '90 days' }
     );
 
-    res.status(200).json({
+    res.json({
       success: true,
       message: 'User created successfully.',
       user: user,
@@ -81,7 +78,7 @@ app.post('/', function(req, res, next) {
  */
 app.get('/:userId', ensureAuth, userIDExists, isCurrentUser,
   function(req, res) {
-    res.status(200).json({
+    res.json({
       success: true,
       user: req.userDoc
     });

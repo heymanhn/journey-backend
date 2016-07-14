@@ -35,7 +35,7 @@ describe('Entry Model', function() {
   });
 
   describe('#create entry:', function() {
-    it('should create a new Entry with the right fields', function(done) {
+    it('creates a new Entry with the right fields', function(done) {
       var testEntry = new Entry({
         creator: mongoose.Types.ObjectId('577371f00000000000000000'),
         type: 'text',
@@ -54,7 +54,7 @@ describe('Entry Model', function() {
     });
 
     context('#validation:', function() {
-      it('should fail if "type" is not provided', function(done) {
+      it('fails if type is not provided', function(done) {
         var testEntry = new Entry({
           contents: 'This is a test entry',
           creator: mongoose.Types.ObjectId('577371f00000000000000000')
@@ -67,7 +67,7 @@ describe('Entry Model', function() {
         });
       });
 
-      it('should fail if "contents" is not provided', function(done) {
+      it('fails if contents is not provided', function(done) {
         var testEntry = new Entry({
           type: 'text',
           creator: mongoose.Types.ObjectId('577371f00000000000000000')
@@ -80,7 +80,7 @@ describe('Entry Model', function() {
         });
       });
 
-      it('should fail if "creator" is not provided', function(done) {
+      it('fails if creator is not provided', function(done) {
         var testEntry = new Entry({
           type: 'text',
           contents: 'This is a test entry'
@@ -93,7 +93,7 @@ describe('Entry Model', function() {
         });
       });
 
-      it('should fail if "creator" is provided as a number', function(done) {
+      it('fails if creator is provided as a number', function(done) {
         var testEntry = new Entry({
           creator: 5773710000000000000000,
           type: 'text',
@@ -110,22 +110,12 @@ describe('Entry Model', function() {
   });
 
   describe('#get entries by userId:', function() {
-    it('should return 2 entries', function(done) {
+    it('returns the right number of entries', function(done) {
       var userId = '577371f00000000000000000';
 
       Entry.find({ creator: userId }, function(err, entries) {
         should.not.exist(err);
         entries.length.should.equal(2);
-        done();
-      });
-    });
-
-    it('should return 0 results if no userId exists', function(done) {
-      var userId = '577371f00000000000000001';
-
-      Entry.find({ creator: userId }, function(err, entries) {
-        should.not.exist(err);
-        entries.length.should.equal(0);
         done();
       });
     });
