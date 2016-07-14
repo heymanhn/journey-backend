@@ -77,7 +77,7 @@ app.post('/', function(req, res, next) {
  * about him/herself.
  */
 app.get('/:userId', ensureAuth, userIDExists, isCurrentUser,
-  function(req, res) {
+  function(req, res, next) {
     res.json({
       success: true,
       user: req.userDoc
@@ -111,8 +111,11 @@ app.put('/:userId', ensureAuth, userIDExists, isCurrentUser,
     newParams = _.pick(newParams, function(value, key) {
       return value !== undefined && value !== user[key];
     });
-
     _.each(newParams, function(value, key) {
+      if (key === 'password' && user.checkPassword(value)) {
+        return;
+      }
+
       user[key] = value;
     });
 
@@ -121,7 +124,7 @@ app.put('/:userId', ensureAuth, userIDExists, isCurrentUser,
         return next(err);
       }
 
-      res.status(200).json({
+      res.json({
         success: true,
         message: 'User updated successfully.',
         user: newUser
@@ -140,11 +143,10 @@ app.delete('/:userId', ensureAuth, userIDExists, isCurrentUser,
     var user = req.userDoc;
     user.remove(function(err) {
       if (err) {
-        console.log(err);
-        next(err);
+        return next(err);
       }
 
-      res.status(200).json({
+      res.json({
         success: true,
         message: 'User deleted.'
       });
@@ -170,7 +172,11 @@ app.get('/:userId/entries', ensureAuth, userIDExists, isCurrentUser,
         return next(err);
       }
 
-      res.status(200).json({
+      if (entries.length === 0) {
+        return next(new Error('No entries found'));
+      }
+
+      res.json({
         success: true,
         entries: entries
       });

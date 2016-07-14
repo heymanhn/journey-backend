@@ -260,20 +260,19 @@ describe('User Model', function() {
 
   describe('#instance methods:', function() {
     context('#checkPassword:', function() {
-      it('calls bcrypt.compare() with the right arguments', function() {
+      it('calls bcrypt.compareSync() with the right arguments', function() {
         var newPassword = '123abc';
         var oldPassword = 'abc123';
-        var cb = function() {};
         var bcryptMock = sandbox.mock(bcrypt)
-                                .expects('compare')
-                                .withArgs(newPassword, oldPassword, cb);
+                                .expects('compareSync')
+                                .withArgs(newPassword, oldPassword);
 
         var testUser = new User({
           username: 'herman',
           password: oldPassword
         });
 
-        testUser.checkPassword(newPassword, cb);
+        testUser.checkPassword(newPassword);
         bcryptMock.verify();
       });
     });

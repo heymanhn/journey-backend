@@ -46,31 +46,24 @@ app.post('/login', function(req, res, next) {
     }
 
     // Check if password is correct
-    user.checkPassword(password, function(err, result) {
-      if (err) {
-        console.log(err);
-        return next(err);
-      }
+    if (!user.checkPassword(password)) {
+      res.status(401).json({
+        success: false,
+        message: 'Incorrect password'
+      });
+    } else {
+      var token = jwt.sign(
+        user._doc,
+        config.secrets.jwt,
+        { expiresIn: '90 days' }
+      );
 
-      if (!result) {
-        res.status(401).json({
-          success: false,
-          message: 'Incorrect password'
-        });
-      } else {
-        var token = jwt.sign(
-          user._doc,
-          config.secrets.jwt,
-          { expiresIn: '90 days' }
-        );
-
-        res.status(200).json({
-          success: true,
-          user: user,
-          token: 'JWT ' + token
-        });
-      }
-    });
+      res.json({
+        success: true,
+        user: user,
+        token: 'JWT ' + token
+      });
+    }
   }
 });
 

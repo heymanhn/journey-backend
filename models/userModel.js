@@ -18,8 +18,9 @@ userSchema.pre('save', utils.checkEmailExists);
 userSchema.pre('save', utils.checkPasswordLength);
 userSchema.pre('save', utils.hashPassword);
 
-userSchema.methods.checkPassword = function(password, cb) {
-  bcrypt.compare(password, this.password, cb);
+// Compares a plain-text password to the user's hashed password
+userSchema.methods.checkPassword = function(password) {
+  return bcrypt.compareSync(password, this.password);
 };
 
 module.exports = mongoose.model('User', userSchema);

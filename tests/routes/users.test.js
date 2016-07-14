@@ -1,11 +1,13 @@
 /*jslint node: true, mocha: true */
 'use strict';
 
-var config = require('../../config/config');
 var express = require('express');
 var jwt = require('jsonwebtoken');
 var should = require('chai').should();
 var sinon = require('sinon');
+
+var config = require('../../config/config');
+var Entry = require('../../models/entryModel');
 var User = require('../../models/userModel');
 
 describe('User Routes', function() {
@@ -137,16 +139,20 @@ describe('User Routes', function() {
   });
 
   describe('#get /:userId', function() {
-    var req = {
-      userDoc: {
-        username: 'herman',
-        email: 'herman@journey.com'
-      }
-    };
+    var req;
 
     var callGet = function(res, next) {
       router.get.firstCall.args[4](req, res, next);
     };
+
+    beforeEach(function() {
+      req = {
+        userDoc: {
+          username: 'herman',
+          email: 'herman@journey.com'
+        }
+      };
+    });
 
     it('registers a URI for GET: /:userId', function() {
       router.get.firstCall.calledWith('/:userId', sandbox.match.any)
@@ -166,37 +172,214 @@ describe('User Routes', function() {
       };
       callGet(res);
     });
-
-    it('returns an error if no authenticated user object is available',
-    function() {
-      true.should.equal(false);
-    });
-
-    it('returns a 404 response if no user is found', function() {
-      true.should.equal(false);
-    });
   });
 
   describe('#put /:userId', function() {
+    var req;
+
+    var callPut = function(res, next) {
+      router.put.firstCall.args[4](req, res, next);
+    };
+
+    beforeEach(function() {
+      req = {
+        body: {
+          email: 'amy.doe@journey.com',
+          name: 'Amy Doe'
+        },
+        userDoc: {
+          username: 'amy',
+          password: 'hashedabc123',
+          email: 'amy@journey.com',
+          name: 'Amy Doe'
+        }
+      };
+    });
+
     it('registers a URI for PUT: /:userId', function() {
       router.put.firstCall.calledWith('/:userId', sandbox.match.any)
             .should.equal(true);
     });
+
+    it('does not change the password if it matches existing hashed password',
+      function(done) {
+      req.body.password = 'abc123';
+
+      req.userDoc.checkPassword = function(pw) {
+        pw.should.equal(req.body.password);
+        return true;
+      };
+      req.userDoc.save = function() {
+        this.password.should.not.equal(req.body.password);
+        done();
+      };
+
+      callPut();
+    });
+
+    it('only updates fields that have changed', function(done) {
+      var oldEmail = req.userDoc.email;
+      req.userDoc.save = function() {
+        this.email.should.not.equal(oldEmail);
+        done();
+      };
+
+      callPut();
+    });
+
+    it('updates the user and sends object in response', function(done) {
+      var stubUser = 'Updated user';
+      var expectedResponse = {
+        success: true,
+        message: 'User updated successfully.',
+        user: stubUser
+      };
+      var res = {
+        json: function(obj) {
+          obj.should.eql(expectedResponse);
+          done();
+        }
+      };
+
+      req.userDoc.save = function(cb) {
+        cb(null, stubUser);
+      };
+
+      callPut(res);
+    });
+
+    it('returns an error if the update operation fails', function(done) {
+      var stubError = 'Update error';
+      var next = function(err) {
+        err.should.equal(stubError);
+        done();
+      };
+      req.userDoc.save = function(cb) {
+        cb(stubError);
+      };
+
+      callPut(null, next);
+    });
   });
 
   describe('#delete /', function() {
+    var req = {};
+    var callDelete = function(res, next) {
+      router.delete.firstCall.args[4](req, res, next);
+    };
+
     it('registers a URI for DELETE: /:userId', function() {
       router.delete.firstCall.calledWith('/:userId', sandbox.match.any)
             .should.equal(true);
     });
+
+    it('calls user.remove() and sends response to user', function(done) {
+      var expectedResponse = {
+        success: true,
+        message: 'User deleted.'
+      };
+      var res = {
+        json: function(obj) {
+          obj.should.eql(expectedResponse);
+          done();
+        }
+      };
+      req.userDoc = {
+        remove: function(cb) { cb(); }
+      };
+
+      callDelete(res);
+    });
+
+    it('returns an error if the model\'s remove method fails', function(done) {
+      var stubError = 'Remove error';
+      var next = function(err) {
+        err.should.equal(stubError);
+        done();
+      };
+
+      req.userDoc = {
+        remove: function(cb) { cb(stubError); }
+      };
+
+      callDelete(null, next);
+    });
   });
 
   describe('#get /:userId/entries', function() {
+    var req = {
+      params: {
+        userId: 'a1b2c3d4'
+      }
+    };
+    var callGet = function(res, next) {
+      router.get.secondCall.args[4](req, res, next);
+    };
+
     it('registers a URI for GET: /:userId/entries', function() {
       router.get
             .secondCall
             .calledWith('/:userId/entries', sandbox.match.any)
             .should.equal(true);
+    });
+
+    it('looks for entries by the current user', function(done) {
+      var stubOpts = { creator: req.params.userId };
+
+      sandbox.stub(Entry, 'find', function(opts) {
+        opts.should.eql(stubOpts);
+        done();
+      });
+
+      callGet();
+    });
+
+    it('returns a list of entries', function(done) {
+      var stubEntries = ['Entry 1', 'Entry 2'];
+      var expectedResponse = {
+        success: true,
+        entries: stubEntries
+      };
+      var res = {
+        json: function(obj) {
+          obj.should.eql(expectedResponse);
+          done();
+        }
+      };
+
+      sandbox.stub(Entry, 'find', function(opts, cb) {
+        cb(null, stubEntries);
+      });
+
+      callGet(res);
+    });
+
+    it('returns an error if no entries are found', function(done) {
+      var stubError = new Error('No entries found');
+      var next = function(err) {
+        err.should.eql(stubError);
+        done();
+      };
+
+      sandbox.stub(Entry, 'find', function(opts, cb) {
+        cb(null, []);
+      });
+
+      callGet(null, next);
+    });
+
+    it('returns an error if Entry.find() fails', function(done) {
+      var stubError = 'Find error';
+      var next = function(err) {
+        err.should.equal(stubError);
+        done();
+      };
+
+      sandbox.stub(Entry, 'find', function(opts, cb) {
+        cb(stubError);
+      });
+
+      callGet(null, next);
     });
   });
 });

@@ -45,6 +45,7 @@
     "mocha": "^2.5.3",
     "mocha-mongoose": "^1.2.0",
     "morgan": "^1.7.0",
+    "node-debug": "^0.1.0",
     "nodemon": "^1.9.2",
     "sinon": "^1.17.4"
   }
