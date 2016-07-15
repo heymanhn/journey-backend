@@ -173,7 +173,9 @@ app.get('/:userId/entries', ensureAuth, userIDExists, isCurrentUser,
       }
 
       if (entries.length === 0) {
-        return next(new Error('No entries found'));
+        err = new Error('No entries found');
+        err.status = 404;
+        return next(err);
       }
 
       res.json({

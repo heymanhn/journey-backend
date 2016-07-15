@@ -356,6 +356,7 @@ describe('User Routes', function() {
 
     it('returns an error if no entries are found', function(done) {
       var stubError = new Error('No entries found');
+      stubError.status = 404;
       var next = function(err) {
         err.should.eql(stubError);
         done();
