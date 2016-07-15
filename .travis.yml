@@ -14,5 +14,3 @@ services:
   - mongodb
 env:
   - TRAVIS=travis CXX=g++-4.8
-after_success:
-  - coveralls
