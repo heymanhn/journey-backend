@@ -6,8 +6,7 @@ var router = express.Router();
 
 /* GET home page. */
 router.get('/', function(req, res) {
-  res.status(200).json({
-    success: true,
+  res.json({
     message: 'This is the Journey API.'
   });
 });

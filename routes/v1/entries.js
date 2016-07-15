@@ -45,10 +45,9 @@ app.delete('/:entryId', ensureAuth, function(req, res, next) {
     }
 
     if (!entry) {
-      return res.status(404).json({
-        success: false,
-        message: 'Entry not found.'
-      });
+      err = new Error('Entry not found');
+      err.status = 404;
+      return next(err);
     }
 
     entry.remove(function(err) {
@@ -57,7 +56,6 @@ app.delete('/:entryId', ensureAuth, function(req, res, next) {
       }
 
       res.json({
-        success: true,
         message: 'Entry deleted.'
       });
     });

@@ -87,24 +87,18 @@ describe('Entry Routes', function() {
       }
     };
 
-    var stubResponse = function(expectedResponse, expectedCode, done) {
-      var res = {
+    var stubResponse = function(expectedResponse, done) {
+      return {
         json: function(data) {
           data.should.eql(expectedResponse);
           done();
-        },
-        status: function(code) {
-          code.should.equal(expectedCode);
-          return res;
         }
       };
-
-      return res;
     };
 
     var stubNext = function(expectedError, done) {
       return function(err) {
-        err.should.equal(expectedError);
+        err.should.eql(expectedError);
         done();
       };
     };
@@ -145,15 +139,14 @@ describe('Entry Routes', function() {
       callDelete(null, next);
     });
 
-    it('returns a 404 response if no entry is found', function(done) {
-      var stubResponseJSON = {
-        success: false,
-        message: 'Entry not found.'
-      };
+    it('returns an error if no entry is found', function(done) {
+      var stubError = new Error('Entry not found');
+      stubError.status = 404;
+      var next = stubNext(stubError, done);
 
       stubFindOneEntry();
-      var res = stubResponse(stubResponseJSON, 404, done);
-      callDelete(res);
+      var res = stubResponse(stubError, done);
+      callDelete(null, next);
     });
 
     it('fails if the entry remove method returns an error', function(done) {
@@ -171,7 +164,6 @@ describe('Entry Routes', function() {
 
     it('sends a JSON response if entry is removed', function(done) {
       var stubResponseJSON = {
-        success: true,
         message: 'Entry deleted.'
       };
 
@@ -180,7 +172,7 @@ describe('Entry Routes', function() {
       };
 
       stubFindOneEntry(null, entry);
-      callDelete(stubResponse(stubResponseJSON, null, done));
+      callDelete(stubResponse(stubResponseJSON, done));
     });
   });
 });

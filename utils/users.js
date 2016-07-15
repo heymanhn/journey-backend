@@ -12,10 +12,9 @@ module.exports = {
    */
   isCurrentUser: function(req, res, next) {
     if (req.params.userId !== req.user.id) {
-      return res.status(401).json({
-        success: false,
-        message: 'Cannot perform this action on another user.'
-      });
+      var err = new Error('Cannot perform this action on another user');
+      err.status = 403;
+      return next(err);
     }
 
     next();
@@ -35,10 +34,9 @@ module.exports = {
       }
 
       if (!user) {
-        res.status(404).json({
-          success: false,
-          message: 'User not found.'
-        });
+        err = new Error('User not found');
+        err.status = 404;
+        return next(err);
       } else {
         req.userDoc = user;
         next();
