@@ -15,10 +15,9 @@ module.exports = {
       }
 
       if (!user) {
-        return res.status(401).json({
-          success: false,
-          message: 'Not Authorized'
-        });
+        err = new Error('Not Authorized');
+        err.status = 401;
+        return next(err);
       }
 
       req.user = user;
