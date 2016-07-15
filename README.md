@@ -1,5 +1,6 @@
 # journey-backend
 [![Build Status](https://travis-ci.org/heymanhn/journey-backend.svg?branch=master)](https://travis-ci.org/heymanhn/journey-backend)
+[![Coverage Status](https://coveralls.io/repos/github/heymanhn/journey-backend/badge.svg?branch=master)](https://coveralls.io/github/heymanhn/journey-backend?branch=master)
 
 Journey helps you chronicle everything you do, wherever you go. Use the app to record your commute routes. Quickly jot down notes for ideas. Record an audio reminder for yourself. It's there when you need to look back at a day in the past. It’s as if you have instant access to your mind at all times.
 
