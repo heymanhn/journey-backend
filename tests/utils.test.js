@@ -5,6 +5,7 @@ var passport = require('passport');
 var should = require('chai').should();
 var sinon = require('sinon');
 
+var checkLoginParams = require('../utils/auth').checkLoginParams;
 var ensureAuth = require('../utils/auth').ensureAuth;
 var isCurrentUser = require('../utils/users').isCurrentUser;
 var userIDExists = require('../utils/users').userIDExists;
@@ -19,7 +20,7 @@ describe('Routes Middleware', function() {
 
   afterEach(function() {
     sandbox.restore();
-  })
+  });
 
   describe('#auth middleware', function() {
     context('#ensureAuth:', function() {
@@ -78,6 +79,81 @@ describe('Routes Middleware', function() {
         });
 
         ensureAuth(req, null, next);
+      });
+    });
+
+    context('#checkLoginParams:', function() {
+      var req;
+
+      beforeEach(function() {
+        req = {
+          body: {
+            username: 'amy',
+            email: 'amy@journey.com',
+            password: 'abc123'
+          }
+        };
+      });
+
+      it('proceeds if request has a username and password', function(done) {
+        delete req.body.email;
+
+        var next = function() {
+          should.exist(req.body.username);
+          should.exist(req.body.password);
+          done();
+        };
+
+        checkLoginParams(req, null, next);
+      });
+
+      it('proceeds if the request has an email and password', function(done) {
+        delete req.body.username;
+
+        var next = function() {
+          should.exist(req.body.email);
+          should.exist(req.body.password);
+          done();
+        };
+
+        checkLoginParams(req, null, next);
+      });
+
+      it('sets login type in the request before proceeding', function(done) {
+        delete req.body.email;
+
+        var next = function() {
+          req.loginType.should.equal('username');
+          done();
+        };
+
+        checkLoginParams(req, null, next);
+      });
+
+      it('returns an error if the password is not provided', function(done) {
+        delete req.body.email;
+        delete req.body.password;
+
+        var stubError = new Error('Password not provided');
+        var next = function(err) {
+          err.should.eql(stubError);
+          done();
+        };
+
+        checkLoginParams(req, null, next);
+      });
+
+      it('returns an error if username/email is not provided', function(done) {
+        delete req.body.username;
+        delete req.body.email;
+
+        var stubError = new Error('Username or email not provided');
+        var next = function(err) {
+          err.should.eql(stubError);
+          done();
+        };
+
+        checkLoginParams(req, null, next);
       });
     });
   });

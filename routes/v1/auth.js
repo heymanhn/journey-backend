@@ -6,51 +6,37 @@ var jwt = require('jsonwebtoken');
 
 var config = require('../../config/config');
 var User = require('../../models/userModel');
+var checkLoginParams = require('../../utils/auth').checkLoginParams;
+
 var app = express.Router();
 
-app.post('/login', function(req, res, next) {
-  var username = req.body.username;
-  var email = req.body.email;
-  var password = req.body.password;
+/*
+ * POST /login
+ *
+ * Users can log in with either their usernames or email address, in
+ * combination with their passwords.
+ *
+ * Upon successful login, the backend generates a JSON web token and returns
+ * it to the client.
+ *
+ * The checkLoginParams() middleware sets req.loginType based on whether
+ * the request provides a username or an email.
+ */
+app.post('/login', checkLoginParams, function(req, res, next) {
+  var opts = {};
+  opts[req.loginType] = req.body[req.loginType];
 
-  if (!username && !email) {
-    return res.status(400).json({
-      success: false,
-      message: 'Missing username or email'
-    });
-  }
-
-  if (!password) {
-    return res.status(400).json({
-      success: false,
-      message: 'Username or password missing'
-    });
-  }
-
-  if (username) {
-    User.findOne({ 'username': username }, processLogin);
-  } else {
-    User.findOne({ 'email': email }, processLogin);
-  }
-
-  function processLogin(err, user) {
+  User.findOne(opts, function(err, user) {
     if (err) {
       return next(err);
     }
 
     if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: 'User not found'
-      });
+      return next(new Error('Invalid username or email'));
     }
 
-    // Check if password is correct
-    if (!user.checkPassword(password)) {
-      res.status(401).json({
-        success: false,
-        message: 'Incorrect password'
-      });
+    if (!user.checkPassword(req.body.password)) {
+      return next(new Error('Invalid password'));
     } else {
       var token = jwt.sign(
         user._doc,
@@ -59,12 +45,11 @@ app.post('/login', function(req, res, next) {
       );
 
       res.json({
-        success: true,
         user: user,
         token: 'JWT ' + token
       });
     }
-  }
+  });
 });
 
 module.exports = app;
