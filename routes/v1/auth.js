@@ -44,6 +44,10 @@ app.post('/login', checkLoginParams, function(req, res, next) {
         { expiresIn: '90 days' }
       );
 
+      if (!token) {
+        return next(new Error('Error generating authentication token'));
+      }
+
       res.json({
         user: user,
         token: 'JWT ' + token

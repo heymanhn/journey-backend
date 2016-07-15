@@ -39,6 +39,13 @@ describe('Authentication Routes', function() {
       };
     });
 
+    var stubNext = function(stubError, done) {
+      return function(err) {
+        err.should.eql(stubError);
+        done();
+      };
+    };
+
     var callPost = function(res, next) {
       router.post.firstCall.args[2](req, res, next);
     };
@@ -71,7 +78,7 @@ describe('Authentication Routes', function() {
       callPost();
     });
 
-    it('creates a JWT if password maches, and sends it in the response',
+    it('creates a JWT if password matches, and sends it in the response',
       function(done) {
       var stubUser = {
         _doc: 'Stub doc',
@@ -107,10 +114,7 @@ describe('Authentication Routes', function() {
 
     it('returns an error if User lookup fails', function(done) {
       var stubError = 'Stub error';
-      var next = function(err) {
-        err.should.equal(stubError);
-        done();
-      };
+      var next = stubNext(stubError, done);
 
       sandbox.stub(User, 'findOne', function(opts, cb) {
         cb(stubError);
@@ -121,10 +125,7 @@ describe('Authentication Routes', function() {
 
     it('returns an error if no user is found', function(done) {
       var stubError = new Error('Invalid username or email');
-      var next = function(err) {
-        err.should.eql(stubError);
-        done();
-      };
+      var next = stubNext(stubError, done);
 
       sandbox.stub(User, 'findOne', function(opts, cb) {
         cb();
@@ -138,10 +139,7 @@ describe('Authentication Routes', function() {
         checkPassword: function() { return false; }
       };
       var stubError = new Error('Invalid password');
-      var next = function(err) {
-        err.should.eql(stubError);
-        done();
-      };
+      var next = stubNext(stubError, done);
 
       sandbox.stub(User, 'findOne', function(opts, cb) {
         cb(null, stubUser);
@@ -150,8 +148,19 @@ describe('Authentication Routes', function() {
       callPost(null, next);
     });
 
-    // it('returns an error if JWT creation fails', function(done) {
+    it('returns an error if JWT creation fails', function(done) {
+      var stubUser = {
+        checkPassword: function() { return true; }
+      };
+      var stubError = new Error('Error generating authentication token');
+      var next = stubNext(stubError, done);
 
-    // });
+      sandbox.stub(jwt, 'sign').returns(null);
+      sandbox.stub(User, 'findOne', function(opts, cb) {
+        cb(null, stubUser);
+      });
+
+      callPost(null, next);
+    });
   });
 });
