@@ -89,7 +89,6 @@ describe('User Routes', function() {
     it('returns the user object and JWT upon success', function(done) {
       var stubToken = 'abcdefg';
       var expectedResponse = {
-        success: true,
         message: 'User created successfully.',
         user: stubUser,
         token: 'JWT ' + stubToken
@@ -160,10 +159,7 @@ describe('User Routes', function() {
     });
 
     it('returns the current authenticated user object', function(done) {
-      var expectedResponse = {
-        success: true,
-        user: req.userDoc
-      };
+      var expectedResponse = { user: req.userDoc };
       var res = {
         json: function(obj) {
           obj.should.eql(expectedResponse);
@@ -230,7 +226,6 @@ describe('User Routes', function() {
     it('updates the user and sends object in response', function(done) {
       var stubUser = 'Updated user';
       var expectedResponse = {
-        success: true,
         message: 'User updated successfully.',
         user: stubUser
       };
@@ -274,10 +269,7 @@ describe('User Routes', function() {
     });
 
     it('calls user.remove() and sends response to user', function(done) {
-      var expectedResponse = {
-        success: true,
-        message: 'User deleted.'
-      };
+      var expectedResponse = { message: 'User deleted.' };
       var res = {
         json: function(obj) {
           obj.should.eql(expectedResponse);
@@ -336,10 +328,7 @@ describe('User Routes', function() {
 
     it('returns a list of entries', function(done) {
       var stubEntries = ['Entry 1', 'Entry 2'];
-      var expectedResponse = {
-        success: true,
-        entries: stubEntries
-      };
+      var expectedResponse = { entries: stubEntries };
       var res = {
         json: function(obj) {
           obj.should.eql(expectedResponse);

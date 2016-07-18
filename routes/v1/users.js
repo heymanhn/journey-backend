@@ -64,7 +64,6 @@ app.post('/', function(req, res, next) {
     );
 
     res.json({
-      success: true,
       message: 'User created successfully.',
       user: user,
       token: 'JWT ' + token
@@ -79,7 +78,6 @@ app.post('/', function(req, res, next) {
 app.get('/:userId', ensureAuth, userIDExists, isCurrentUser,
   function(req, res, next) {
     res.json({
-      success: true,
       user: req.userDoc
     });
   }
@@ -125,7 +123,6 @@ app.put('/:userId', ensureAuth, userIDExists, isCurrentUser,
       }
 
       res.json({
-        success: true,
         message: 'User updated successfully.',
         user: newUser
       });
@@ -147,7 +144,6 @@ app.delete('/:userId', ensureAuth, userIDExists, isCurrentUser,
       }
 
       res.json({
-        success: true,
         message: 'User deleted.'
       });
     });
@@ -179,7 +175,6 @@ app.get('/:userId/entries', ensureAuth, userIDExists, isCurrentUser,
       }
 
       res.json({
-        success: true,
         entries: entries
       });
     });
