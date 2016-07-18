@@ -54,8 +54,27 @@ describe('Entry Routes', function() {
     });
 
     it('creates the entry successfully if fields are valid', function(done) {
-      sandbox.stub(Entry.prototype, 'save', function(callback) {
-        callback(null);
+      sandbox.stub(Entry.prototype, 'save', function(cb) {
+        cb();
+      });
+
+      var res = stubRedirect('/v1/users/' + req.user._id + '/entries', done);
+      callPost(res);
+    });
+
+    it('saves the location data if provided', function(done) {
+      req.body.loc = {
+        type: 'Point',
+        coordinates: [-122.416534, 37.612311]
+      };
+
+      sandbox.stub(Entry.prototype, 'save', function(cb) {
+        var loc = this._doc.loc;
+        (typeof loc).should.equal('object');
+        loc.type.should.eql(req.body.loc.type);
+        loc.coordinates[0].should.equal(req.body.loc.coordinates[0]);
+        loc.coordinates[1].should.equal(req.body.loc.coordinates[1]);
+        cb();
       });
 
       var res = stubRedirect('/v1/users/' + req.user._id + '/entries', done);
@@ -64,8 +83,8 @@ describe('Entry Routes', function() {
 
     it('fails if Entry.save() returns an error', function(done) {
       var stubError = 'Error saving entry';
-      sandbox.stub(Entry.prototype, 'save', function(callback) {
-        callback(stubError);
+      sandbox.stub(Entry.prototype, 'save', function(cb) {
+        cb(stubError);
       });
 
       var next = function(err) {

@@ -35,13 +35,25 @@ describe('Entry Model', function() {
   });
 
   describe('#create entry:', function() {
-    it('creates a new Entry with the right fields', function(done) {
-      var testEntry = new Entry({
+    var entryParams;
+    var validationChecker = function(done) {
+      return function(err) {
+        should.exist(err);
+        err.name.should.equal('ValidationError');
+        done();
+      };
+    };
+
+    beforeEach(function() {
+      entryParams = {
         creator: mongoose.Types.ObjectId('577371f00000000000000000'),
         type: 'text',
         contents: 'This is a test entry'
-      });
+      };
+    });
 
+    it('creates a new Entry with the right fields', function(done) {
+      var testEntry = new Entry(entryParams);
       testEntry.save(function(err, entry) {
         should.not.exist(err);
         (typeof entry).should.equal('object');
@@ -53,58 +65,53 @@ describe('Entry Model', function() {
       });
     });
 
+    it('saves the location coordinates if provided', function(done) {
+      entryParams.loc = {
+        type: 'Point',
+        coordinates: [-122.416534, 37.612311]
+      };
+      var testEntry = new Entry(entryParams);
+
+      testEntry.save(function(err, entry) {
+        should.not.exist(err);
+        entry.loc.should.equal(testEntry.loc);
+        done();
+      });
+    });
+
     context('#validation:', function() {
       it('fails if type is not provided', function(done) {
-        var testEntry = new Entry({
-          contents: 'This is a test entry',
-          creator: mongoose.Types.ObjectId('577371f00000000000000000')
-        });
-
-        testEntry.validate(function(err) {
-          should.exist(err);
-          err.name.should.equal('ValidationError');
-          done();
-        });
+        delete entryParams.type;
+        var testEntry = new Entry(entryParams);
+        testEntry.validate(validationChecker(done));
       });
 
       it('fails if contents is not provided', function(done) {
-        var testEntry = new Entry({
-          type: 'text',
-          creator: mongoose.Types.ObjectId('577371f00000000000000000')
-        });
-
-        testEntry.validate(function(err) {
-          should.exist(err);
-          err.name.should.equal('ValidationError');
-          done();
-        });
+        delete entryParams.contents;
+        var testEntry = new Entry(entryParams);
+        testEntry.validate(validationChecker(done));
       });
 
       it('fails if creator is not provided', function(done) {
-        var testEntry = new Entry({
-          type: 'text',
-          contents: 'This is a test entry'
-        });
-
-        testEntry.validate(function(err) {
-          should.exist(err);
-          err.name.should.equal('ValidationError');
-          done();
-        });
+        delete entryParams.creator;
+        var testEntry = new Entry(entryParams);
+        testEntry.validate(validationChecker(done));
       });
 
       it('fails if creator is provided as a number', function(done) {
-        var testEntry = new Entry({
-          creator: 5773710000000000000000,
-          type: 'text',
-          contents: 'This is a test entry'
-        });
+        entryParams.creator = 5773710000000000000000;
+        var testEntry = new Entry(entryParams);
+        testEntry.validate(validationChecker(done));
+      });
 
-        testEntry.validate(function(err) {
-          should.exist(err);
-          err.name.should.equal('ValidationError');
-          done();
-        });
+      it('fails if location coordinates have wrong format', function(done) {
+        entryParams.loc = {
+          type: 'Point',
+          coordinates: ['lng', 'lat']
+        };
+        var testEntry = new Entry(entryParams);
+
+        testEntry.validate(validationChecker(done));
       });
     });
   });

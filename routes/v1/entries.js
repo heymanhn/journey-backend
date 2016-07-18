@@ -12,14 +12,20 @@ var app = express.Router();
  * - Creator (current user)
  * - Type (text for now)
  * - Contents (string)
+ * - Location (Optional: lat, lng)
  */
 app.post('/', ensureAuth, function(req, res, next) {
-  var entry = new Entry({
+  var params = {
     creator: req.user._id,
     type: req.body.type,
     contents: req.body.contents
-  });
+  };
 
+  if (req.body.loc) {
+    params.loc = req.body.loc;
+  }
+
+  var entry = new Entry(params);
   entry.save(function(err) {
     if (err) {
       return next(err);

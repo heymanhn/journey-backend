@@ -12,8 +12,10 @@ var entrySchema = new mongoose.Schema({
   },
   type: { type: String, required: true },
   contents: { type: String, required: true },
-  lat: Number,
-  lng: Number
+  loc: {
+    type: { type: String },
+    coordinates: [Number]
+  }
 });
 
 module.exports = mongoose.model('Entry', entrySchema);
