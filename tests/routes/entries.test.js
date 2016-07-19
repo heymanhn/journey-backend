@@ -54,9 +54,7 @@ describe('Entry Routes', function() {
     });
 
     it('creates the entry successfully if fields are valid', function(done) {
-      sandbox.stub(Entry.prototype, 'save', function(cb) {
-        cb();
-      });
+      sandbox.stub(Entry.prototype, 'save').yields();
 
       var res = stubRedirect('/v1/users/' + req.user._id + '/entries', done);
       callPost(res);
@@ -83,9 +81,7 @@ describe('Entry Routes', function() {
 
     it('fails if Entry.save() returns an error', function(done) {
       var stubError = 'Error saving entry';
-      sandbox.stub(Entry.prototype, 'save', function(cb) {
-        cb(stubError);
-      });
+      sandbox.stub(Entry.prototype, 'save').yields(stubError);
 
       var next = function(err) {
         err.should.equal(stubError);
@@ -122,12 +118,6 @@ describe('Entry Routes', function() {
       };
     };
 
-    var stubFindOneEntry = function(err, entry) {
-      sandbox.stub(Entry, 'findOne', function(opts, cb) {
-        cb(err, entry);
-      });
-    };
-
     var callDelete = function(res, next) {
       router.delete.firstCall.args[2](req, res, next);
     };
@@ -146,7 +136,7 @@ describe('Entry Routes', function() {
         }
       };
 
-      stubFindOneEntry(null, entry);
+      sandbox.stub(Entry, 'findOne').yields(null, entry);
       callDelete();
     });
 
@@ -154,7 +144,7 @@ describe('Entry Routes', function() {
       var stubError = 'Error finding entry';
       var next = stubNext(stubError, done);
 
-      stubFindOneEntry(stubError, null);
+      sandbox.stub(Entry, 'findOne').yields(stubError);
       callDelete(null, next);
     });
 
@@ -163,7 +153,7 @@ describe('Entry Routes', function() {
       stubError.status = 404;
       var next = stubNext(stubError, done);
 
-      stubFindOneEntry();
+      sandbox.stub(Entry, 'findOne').yields();
       var res = stubResponse(stubError, done);
       callDelete(null, next);
     });
@@ -177,7 +167,7 @@ describe('Entry Routes', function() {
         }
       };
 
-      stubFindOneEntry(null, entry);
+      sandbox.stub(Entry, 'findOne').yields(null, entry);
       callDelete(null, next);
     });
 
@@ -190,7 +180,7 @@ describe('Entry Routes', function() {
         remove: function(cb) { cb(); }
       };
 
-      stubFindOneEntry(null, entry);
+      sandbox.stub(Entry, 'findOne').yields(null, entry);
       callDelete(stubResponse(stubResponseJSON, done));
     });
   });

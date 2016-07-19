@@ -101,9 +101,7 @@ describe('User Routes', function() {
       };
 
       sandbox.stub(jwt, 'sign').returns(stubToken);
-      sandbox.stub(User.prototype, 'save', function(cb) {
-        cb(null, stubUser);
-      });
+      sandbox.stub(User.prototype, 'save').yields(null, stubUser);
 
       callPost(res);
     });
@@ -128,10 +126,7 @@ describe('User Routes', function() {
         done();
       };
 
-      sandbox.stub(User.prototype, 'save', function(cb) {
-        cb(stubError, null);
-      });
-
+      sandbox.stub(User.prototype, 'save').yields(stubError);
       callPost(null, next);
     });
 
@@ -336,10 +331,7 @@ describe('User Routes', function() {
         }
       };
 
-      sandbox.stub(Entry, 'find', function(opts, cb) {
-        cb(null, stubEntries);
-      });
-
+      sandbox.stub(Entry, 'find').yields(null, stubEntries);
       callGet(res);
     });
 
@@ -351,10 +343,7 @@ describe('User Routes', function() {
         done();
       };
 
-      sandbox.stub(Entry, 'find', function(opts, cb) {
-        cb(null, []);
-      });
-
+      sandbox.stub(Entry, 'find').yields(null, []);
       callGet(null, next);
     });
 
@@ -365,10 +354,7 @@ describe('User Routes', function() {
         done();
       };
 
-      sandbox.stub(Entry, 'find', function(opts, cb) {
-        cb(stubError);
-      });
-
+      sandbox.stub(Entry, 'find').yields(stubError);
       callGet(null, next);
     });
   });

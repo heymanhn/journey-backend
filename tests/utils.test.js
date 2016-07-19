@@ -221,10 +221,7 @@ describe('Routes Middleware', function() {
           done();
         };
 
-        sandbox.stub(User, 'findOne', function(opts, cb) {
-          cb(null, stubUser);
-        });
-
+        sandbox.stub(User, 'findOne').yields(null, stubUser);
         userIDExists(req, null, next);
       });
 
@@ -235,10 +232,7 @@ describe('Routes Middleware', function() {
           done();
         };
 
-        sandbox.stub(User, 'findOne', function(opts, cb) {
-          cb(stubError);
-        });
-
+        sandbox.stub(User, 'findOne').yields(stubError);
         userIDExists(req, null, next);
       });
 
@@ -250,10 +244,7 @@ describe('Routes Middleware', function() {
           done();
         };
 
-        sandbox.stub(User, 'findOne', function(opts, cb) {
-          cb();
-        });
-
+        sandbox.stub(User, 'findOne').yields();
         userIDExists(req, null, next);
       });
 

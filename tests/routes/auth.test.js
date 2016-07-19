@@ -105,10 +105,7 @@ describe('Authentication Routes', function() {
         return stubToken;
       });
 
-      sandbox.stub(User, 'findOne', function(opts, cb) {
-        cb(null, stubUser);
-      });
-
+      sandbox.stub(User, 'findOne').yields(null, stubUser);
       callPost(res);
     });
 
@@ -116,10 +113,7 @@ describe('Authentication Routes', function() {
       var stubError = 'Stub error';
       var next = stubNext(stubError, done);
 
-      sandbox.stub(User, 'findOne', function(opts, cb) {
-        cb(stubError);
-      });
-
+      sandbox.stub(User, 'findOne').yields(stubError);
       callPost(null, next);
     });
 
@@ -127,10 +121,7 @@ describe('Authentication Routes', function() {
       var stubError = new Error('Invalid username or email');
       var next = stubNext(stubError, done);
 
-      sandbox.stub(User, 'findOne', function(opts, cb) {
-        cb();
-      });
-
+      sandbox.stub(User, 'findOne').yields();
       callPost(null, next);
     });
 
@@ -141,10 +132,7 @@ describe('Authentication Routes', function() {
       var stubError = new Error('Invalid password');
       var next = stubNext(stubError, done);
 
-      sandbox.stub(User, 'findOne', function(opts, cb) {
-        cb(null, stubUser);
-      });
-
+      sandbox.stub(User, 'findOne').yields(null, stubUser);
       callPost(null, next);
     });
 
@@ -156,10 +144,7 @@ describe('Authentication Routes', function() {
       var next = stubNext(stubError, done);
 
       sandbox.stub(jwt, 'sign').returns(null);
-      sandbox.stub(User, 'findOne', function(opts, cb) {
-        cb(null, stubUser);
-      });
-
+      sandbox.stub(User, 'findOne').yields(null, stubUser);
       callPost(null, next);
     });
   });
