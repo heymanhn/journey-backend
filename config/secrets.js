@@ -2,5 +2,8 @@
 'use strict';
 
 module.exports = {
-  jwt: 'grass duckling skin cream beige carpentry'
+  jwt: 'grass duckling skin cream beige carpentry',
+  s3: {
+    mediaBucket: 'journey.media'
+  }
 };

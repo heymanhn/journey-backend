@@ -24,6 +24,7 @@
   },
   "homepage": "https://github.com/heymanhn/journey-backend#readme",
   "dependencies": {
+    "aws-sdk": "^2.4.7",
     "bcrypt": "^0.8.7",
     "bcrypt-nodejs": "0.0.3",
     "body-parser": "~1.15.1",
@@ -50,6 +51,7 @@
     "morgan": "^1.7.0",
     "node-debug": "^0.1.0",
     "nodemon": "^1.9.2",
+    "rewire": "^2.5.2",
     "sinon": "^1.17.4"
   }
 }
