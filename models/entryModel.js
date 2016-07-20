@@ -2,6 +2,7 @@
 'use strict';
 
 var mongoose = require('mongoose');
+var utils = require('./entryUtils');
 
 var entrySchema = new mongoose.Schema({
   date: { type: Date, default: Date.now },
@@ -11,11 +12,14 @@ var entrySchema = new mongoose.Schema({
     required: true
   },
   type: { type: String, required: true },
-  contents: { type: String, required: true },
+  contents: mongoose.Schema.Types.Mixed,
+  message: String,
   loc: {
     type: { type: String },
     coordinates: [Number]
   }
 });
+
+entrySchema.pre('save', utils.validateFields);
 
 module.exports = mongoose.model('Entry', entrySchema);

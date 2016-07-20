@@ -8,7 +8,7 @@ var ensureAuth = require('../../utils/auth').ensureAuth;
 var s3config = require('../../config/secrets').s3;
 
 var app = express.Router();
-AWS.config.update({region: 'us-west-1'});
+AWS.config.update({ region: s3config.region });
 var s3 = new AWS.S3();
 
 /*
@@ -30,10 +30,6 @@ app.get('/signedurl', ensureAuth, function(req, res, next) {
     s3.getSignedUrl('putObject', params, function(err, url) {
       if (err) {
         return next(err);
-      }
-
-      if (!url) {
-        return next(new Error('Error uploading file'));
       }
 
       res.json({

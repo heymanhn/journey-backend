@@ -133,16 +133,5 @@ describe('Uploads Routes', function() {
       sandbox.stub(s3, 'getSignedUrl').yields(stubError);
       callGet(null, next);
     });
-
-    it('returns an error if S3 call doesn\'t generate URL', function(done) {
-      var stubError = new Error('Error uploading file');
-      var next = function(err) {
-        err.should.eql(stubError);
-        done();
-      };
-
-      sandbox.stub(s3, 'getSignedUrl').yields();
-      callGet(null, next);
-    });
   });
 });

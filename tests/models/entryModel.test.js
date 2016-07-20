@@ -5,22 +5,23 @@ var mongoose = require('mongoose');
 var should = require('chai').should();
 
 var Entry = require('../../models/entryModel');
-var utils = require('./utils');
+var testUtils = require('./utils');
+var utils = require('../../models/entryUtils');
 
 describe('Entry Model', function() {
-  before(utils.connect);
+  before(testUtils.connect);
 
   beforeEach(function(done) {
     var entry1 = new Entry({
       creator: mongoose.Types.ObjectId('577371f00000000000000000'),
       type: 'text',
-      contents: 'Entry 1'
+      message: 'Entry 1'
     });
 
     var entry2 = new Entry({
       creator: mongoose.Types.ObjectId('577371f00000000000000000'),
       type: 'text',
-      contents: 'Entry 2'
+      message: 'Entry 2'
     });
 
     entry1.save(function() {
@@ -48,7 +49,7 @@ describe('Entry Model', function() {
       entryParams = {
         creator: mongoose.Types.ObjectId('577371f00000000000000000'),
         type: 'text',
-        contents: 'This is a test entry'
+        message: 'This is a test entry'
       };
     });
 
@@ -58,7 +59,7 @@ describe('Entry Model', function() {
         should.not.exist(err);
         (typeof entry).should.equal('object');
         entry.type.should.equal(testEntry.type);
-        entry.contents.should.equal(testEntry.contents);
+        entry.message.should.equal(testEntry.message);
         entry.creator.should.equal(testEntry.creator);
 
         done();
@@ -79,15 +80,22 @@ describe('Entry Model', function() {
       });
     });
 
+    it('saves the contents for a video/audio entry', function(done) {
+      entryParams.type = 'video';
+      entryParams.contents = 'http://stubvideolink.com';
+
+      var testEntry = new Entry(entryParams);
+      testEntry.save(function(err, entry) {
+        should.not.exist(err);
+        entry.type.should.equal(testEntry.type);
+        entry.contents.should.equal(testEntry.contents);
+        done();
+      });
+    });
+
     context('#validation:', function() {
       it('fails if type is not provided', function(done) {
         delete entryParams.type;
-        var testEntry = new Entry(entryParams);
-        testEntry.validate(validationChecker(done));
-      });
-
-      it('fails if contents is not provided', function(done) {
-        delete entryParams.contents;
         var testEntry = new Entry(entryParams);
         testEntry.validate(validationChecker(done));
       });
@@ -113,6 +121,79 @@ describe('Entry Model', function() {
 
         testEntry.validate(validationChecker(done));
       });
+    });
+  });
+
+  describe('#pre-save checks:', function() {
+    var stubModel;
+    var stubNext = function(expectedError, done) {
+      return function(err) {
+        err.should.eql(expectedError);
+        done();
+      };
+    };
+
+    beforeEach(function() {
+      stubModel = {
+        creator: 'a1b2c3d4',
+        type: 'text',
+        message: 'This is a message'
+      };
+    });
+
+    it('fails if a text entry does not have a message', function(done) {
+      delete stubModel.message;
+
+      var stubError = new Error('Text entry is missing a message');
+      var next = stubNext(stubError, done);
+
+      utils.validateFields.bind(stubModel)(next);
+    });
+
+    it('fails if a text entry contains contents', function(done) {
+      stubModel.contents = 'http://www.fakecontents.com';
+
+      var stubError = new Error('Text entry has invalid contents');
+      var next = stubNext(stubError, done);
+
+      utils.validateFields.bind(stubModel)(next);
+    });
+
+    it('fails if a photo entry does not have contents', function(done) {
+      stubModel.type = 'photo';
+
+      var stubError = new Error('Entry is missing contents');
+      var next = stubNext(stubError, done);
+
+      utils.validateFields.bind(stubModel)(next);
+    });
+
+    it('fails if a video entry does not have contents', function(done) {
+      stubModel.type = 'video';
+
+      var stubError = new Error('Entry is missing contents');
+      var next = stubNext(stubError, done);
+
+      utils.validateFields.bind(stubModel)(next);
+    });
+
+    it('fails if a photo entry has wrong content type', function(done) {
+      stubModel.type = 'photo';
+      stubModel.contents = [0, 1];
+
+      var stubError = new Error('Entry contents are invalid');
+      var next = stubNext(stubError, done);
+
+      utils.validateFields.bind(stubModel)(next);
+    });
+
+    it('fails if the type provided is not supported', function(done) {
+      stubModel.type = 'foo';
+
+      var stubError = new Error('Invalid entry type');
+      var next = stubNext(stubError, done);
+
+      utils.validateFields.bind(stubModel)(next);
     });
   });
 
