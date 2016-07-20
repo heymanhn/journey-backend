@@ -56,6 +56,7 @@ app.post('/', ensureAuth, function(req, res, next) {
  *
  */
 app.delete('/:entryId', ensureAuth, function(req, res, next) {
+  debugger;
   var params = {
     _id: req.params.entryId,
     creator: req.user._id
@@ -64,9 +65,9 @@ app.delete('/:entryId', ensureAuth, function(req, res, next) {
   Entry
     .findOne(params).exec()
     .then(deleteS3Contents)
-    .then(function(entry) {
-      entry.remove();
-    }).then(function() {
+    .then(removeEntry)
+    .then(function() {
+      debugger;
       res.json({
         message: 'Entry deleted.'
       });
@@ -88,6 +89,10 @@ function deleteS3Contents(entry) {
   } else {
     return Promise.resolve(entry);
   }
+}
+
+function removeEntry(entry) {
+  return entry.remove();
 }
 
 module.exports = app;

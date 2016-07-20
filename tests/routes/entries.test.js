@@ -1,10 +1,14 @@
 /*jslint node: true, mocha: true */
 'use strict';
 
+var chai = require('chai');
+var chaiAsPromised = require('chai-as-promised');
 var express = require('express');
-var should = require('chai').should();
 var rewire = require('rewire');
+var should = chai.should();
 var sinon = require('sinon');
+require('sinon-as-promised');
+chai.use(chaiAsPromised);
 
 var Entry = require('../../models/entryModel');
 var s3config = require('../../config/secrets').s3;
@@ -112,15 +116,8 @@ describe('Entry Routes', function() {
   describe('#delete /', function() {
     var req;
     var s3;
-
-    var stubResponse = function(expectedResponse, done) {
-      return {
-        json: function(data) {
-          data.should.eql(expectedResponse);
-          done();
-        }
-      };
-    };
+    var deleteS3Contents;
+    var removeEntry;
 
     var stubNext = function(expectedError, done) {
       return function(err) {
@@ -144,6 +141,8 @@ describe('Entry Routes', function() {
       };
 
       s3 = router.__get__('s3');
+      deleteS3Contents = router.__get__('deleteS3Contents');
+      removeEntry = router.__get__('removeEntry');
     });
 
     it('registers a URI for DELETE: /:entryId', function() {
@@ -152,81 +151,35 @@ describe('Entry Routes', function() {
         .calledWith('/:entryId', sandbox.match.any).should.equal(true);
     });
 
-    it('deletes the entry\'s S3 contents if it exists', function(done) {
-      var stubKey = 'a1a1a1a1-a1a1-a1a1-a1a1-a1a1a1a1a1a1';
-      var stubEntry = {
-        contents: 'http://www.fakecontent.com/'
-                    + s3config.mediaBucket
-                    + '/'
-                    + stubKey
-      };
-
-      sandbox.stub(s3, 'deleteObject', function(params) {
-        params.Bucket.should.equal(s3config.mediaBucket);
-        params.Key.should.equal(stubKey);
+    it('looks for the entry using the entry ID', function(done) {
+      router.__set__('deleteS3Contents', function() {
         done();
       });
 
-      sandbox.stub(Entry, 'findOne').yields(null, stubEntry);
+      sandbox.stub(Entry, 'findOne', function(params) {
+        params._id.should.equal(req.params.entryId);
+        return {
+          exec: function() {
+            return Promise.resolve();
+          }
+        };
+      });
+
       callDelete();
-    });
-
-    it('calls entry.remove() if the entry exists', function(done) {
-      var stubEntry = {
-        remove: function(cb) {
-          should.exist(cb);
-          done();
-        }
-      };
-
-      sandbox.stub(Entry, 'findOne').yields(null, stubEntry);
-      callDelete();
-    });
-
-    it('fails if S3 deletion returns an error', function(done) {
-      var stubError = 'S3 deletion error';
-      var stubKey = 'a1a1a1a1-a1a1-a1a1-a1a1-a1a1a1a1a1a1';
-      var stubEntry = {
-        contents: 'http://www.fakecontent.com/'
-                    + s3config.mediaBucket
-                    + '/'
-                    + stubKey
-      };
-      var next = stubNext(stubError, done);
-
-      sandbox.stub(s3, 'deleteObject').yields(stubError);
-      sandbox.stub(Entry, 'findOne').yields(null, stubEntry);
-      callDelete(null, next);
     });
 
     it('fails if Entry.findOne() returns an error', function(done) {
       var stubError = 'Error finding entry';
       var next = stubNext(stubError, done);
 
-      sandbox.stub(Entry, 'findOne').yields(stubError);
-      callDelete(null, next);
-    });
+      sandbox.stub(Entry, 'findOne', function() {
+        return {
+          exec: function() {
+            return Promise.reject(stubError);
+          }
+        };
+      });
 
-    it('returns an error if no entry is found', function(done) {
-      var stubError = new Error('Entry not found');
-      stubError.status = 404;
-      var next = stubNext(stubError, done);
-
-      sandbox.stub(Entry, 'findOne').yields();
-      var res = stubResponse(stubError, done);
-      callDelete(null, next);
-    });
-
-    it('fails if the entry remove method returns an error', function(done) {
-      var stubError = 'Error removing entry';
-      var next = stubNext(stubError, done);
-      var stubEntry = {
-        remove: function(cb) {
-          cb(stubError);
-        }
-      };
-
-      sandbox.stub(Entry, 'findOne').yields(null, stubEntry);
       callDelete(null, next);
     });
 
@@ -235,12 +188,100 @@ describe('Entry Routes', function() {
         message: 'Entry deleted.'
       };
 
-      var stubEntry = {
-        remove: function(cb) { cb(); }
+      var res = {
+        json: function(data) {
+          data.should.eql(stubResponseJSON);
+          done();
+        }
       };
 
-      sandbox.stub(Entry, 'findOne').yields(null, stubEntry);
-      callDelete(stubResponse(stubResponseJSON, done));
+      var stubEntry = {
+        type: 'Stub Entry'
+      };
+
+      router.__set__('deleteS3Contents', function(entry) {
+        return entry;
+      });
+      router.__set__('removeEntry', function(entry) {
+        return entry;
+      });
+
+      sandbox.stub(Entry, 'findOne', function() {
+        return {
+          exec: function() {
+            return Promise.resolve(stubEntry);
+          }
+        };
+      });
+
+      callDelete(res);
+    });
+
+    context('#deleteS3Contents:', function() {
+      it('deletes the entry\'s S3 contents if it exists', function() {
+        var stubKey = 'a1a1a1a1-a1a1-a1a1-a1a1-a1a1a1a1a1a1';
+        var stubEntry = {
+          contents: 'http://www.fakecontent.com/'
+                      + s3config.mediaBucket
+                      + '/'
+                      + stubKey
+        };
+
+        sandbox.stub(s3, 'deleteObject', function(params) {
+          params.Bucket.should.equal(s3config.mediaBucket);
+          params.Key.should.equal(stubKey);
+
+          return {
+            promise: function() { return Promise.resolve(); }
+          };
+        });
+
+        return deleteS3Contents(stubEntry).should.eventually.equal(stubEntry);
+      });
+
+      it('continues if the entry has no contents to delete', function() {
+        var stubEntry = { type: 'text' };
+
+        return deleteS3Contents(stubEntry).should.eventually.equal(stubEntry);
+      });
+
+      it('returns an error if no entry is found', function() {
+        var stubError = new Error('Entry not found');
+        stubError.status = 404;
+
+        return deleteS3Contents().should.be.rejected
+          .and.eventually.eql(stubError);
+      });
+
+      it('returns an error if S3 deletion returns an error', function() {
+        var stubError = 'S3 deletion error';
+        var stubKey = 'a1a1a1a1-a1a1-a1a1-a1a1-a1a1a1a1a1a1';
+        var stubEntry = {
+          contents: 'http://www.fakecontent.com/'
+                      + s3config.mediaBucket
+                      + '/'
+                      + stubKey
+        };
+
+        sandbox.stub(s3, 'deleteObject').returns({
+          promise: function() { return Promise.reject(stubError); }
+        });
+
+        return deleteS3Contents(stubEntry).should.be.rejected
+          .and.eventually.eql(stubError);
+      });
+    });
+
+    context('#removeEntry:', function() {
+      it('calls entry.remove() if the entry exists', function() {
+        var stubEntry = {
+          remove: function() {
+            return Promise.resolve();
+          }
+        };
+
+        return removeEntry(stubEntry).should.eventually.be.fulfilled;
+      });
     });
   });
 });
