@@ -56,49 +56,38 @@ app.post('/', ensureAuth, function(req, res, next) {
  *
  */
 app.delete('/:entryId', ensureAuth, function(req, res, next) {
-  Entry.findOne({
-    '_id': req.params.entryId,
-    'creator': req.user._id
-  }, function(err, entry) {
-    if (err) {
-      return next(err);
-    }
+  var params = {
+    _id: req.params.entryId,
+    creator: req.user._id
+  };
 
-    if (!entry) {
-      err = new Error('Entry not found');
-      err.status = 404;
-      return next(err);
-    }
-
-    if ((typeof entry.contents) === 'string') {
-      var params = {
-        Bucket: s3config.mediaBucket,
-        Key: entry.contents.match(/\w{8}-\w{4}-\w{4}-\w{4}-\w{12}/)[0]
-      };
-
-      s3.deleteObject(params, function(err, data) {
-        if (err) {
-          return next(err);
-        }
-
-        removeEntry();
+  Entry
+    .findOne(params).exec()
+    .then(deleteS3Contents)
+    .then(function(entry) {
+      entry.remove();
+    }).then(function() {
+      res.json({
+        message: 'Entry deleted.'
       });
-    } else {
-      removeEntry();
-    }
-
-    function removeEntry() {
-      entry.remove(function(err) {
-        if (err) {
-          return next(err);
-        }
-
-        res.json({
-          message: 'Entry deleted.'
-        });
-      });
-    }
-  });
+    }).catch(next);
 });
+
+function deleteS3Contents(entry) {
+  if (!entry) {
+    var err = new Error('Entry not found');
+    err.status = 404;
+    return Promise.reject(err);
+  }
+
+  if (entry.contents && (typeof entry.contents) === 'string') {
+    return s3.deleteObject({
+      Bucket: s3config.mediaBucket,
+      Key: entry.contents.match(/\w{8}-\w{4}-\w{4}-\w{4}-\w{12}/)[0]
+    }).promise().then(function() { return entry; });
+  } else {
+    return Promise.resolve(entry);
+  }
+}
 
 module.exports = app;
