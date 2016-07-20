@@ -56,7 +56,6 @@ app.post('/', ensureAuth, function(req, res, next) {
  *
  */
 app.delete('/:entryId', ensureAuth, function(req, res, next) {
-  debugger;
   var params = {
     _id: req.params.entryId,
     creator: req.user._id
@@ -67,7 +66,6 @@ app.delete('/:entryId', ensureAuth, function(req, res, next) {
     .then(deleteS3Contents)
     .then(removeEntry)
     .then(function() {
-      debugger;
       res.json({
         message: 'Entry deleted.'
       });
