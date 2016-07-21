@@ -23,38 +23,43 @@ var s3 = new AWS.S3();
  *
  */
 app.get('/signedurl', ensureAuth, function(req, res, next) {
-  findValidParams(function(params) {
-    params.ContentType = req.query.fileType;
-    params.ACL = 'public-read';
-
-    s3.getSignedUrl('putObject', params, function(err, url) {
-      if (err) {
-        return next(err);
-      }
-
+  findValidParams()
+    .then(getSignedUrl.bind(null, req.query.fileType))
+    .then(function(url) {
       res.json({
         url: url
       });
-    });
-  });
+    })
+    .catch(next);
 });
 
-function findValidParams(cb) {
+function findValidParams() {
   var params = {
     Bucket: s3config.mediaBucket,
     Key: guid()
   };
 
-  var processResponse = function(err, data) {
-    if (err) {
-      return cb(params);
-    } else {
-      params.Key = guid();
-      s3.getObject(params, processResponse);
-    }
-  };
+  /* s3.getObject() returns an error if an object with the generated key
+   * doesn't exist, and a valid object otherwise. Hence we need to flip the
+   * logic of the promise handling below.
+   */
+  return s3.getObject(params).promise()
+    .then(findValidParams)
+    .catch(function(err) {
+      debugger;
+      if (err.name === 'NoSuchKey') {
+        return Promise.resolve(params);
+      } else {
+        return Promise.reject(err);
+      }
+    });
+}
 
-  s3.getObject(params, processResponse);
+function getSignedUrl(fileType, params) {
+  params.ContentType = fileType;
+  params.ACL = 'public-read';
+
+  return s3.getSignedUrl('putObject', params);
 }
 
 // Borrowed from Stack Overflow
