@@ -15,6 +15,7 @@ module.exports = {
         break;
 
       case 'photo':
+      case 'audio':
       case 'video':
         if (!this.contents) {
           return next(new Error('Entry is missing contents'));

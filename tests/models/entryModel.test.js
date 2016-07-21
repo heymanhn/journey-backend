@@ -80,7 +80,33 @@ describe('Entry Model', function() {
       });
     });
 
-    it('saves the contents for a video/audio entry', function(done) {
+    it('saves the contents for a video entry', function(done) {
+      entryParams.type = 'video';
+      entryParams.contents = 'http://stubvideolink.com';
+
+      var testEntry = new Entry(entryParams);
+      testEntry.save(function(err, entry) {
+        should.not.exist(err);
+        entry.type.should.equal(testEntry.type);
+        entry.contents.should.equal(testEntry.contents);
+        done();
+      });
+    });
+
+    it('saves the contents for a photo entry', function(done) {
+      entryParams.type = 'photo';
+      entryParams.contents = 'http://stubvideolink.com';
+
+      var testEntry = new Entry(entryParams);
+      testEntry.save(function(err, entry) {
+        should.not.exist(err);
+        entry.type.should.equal(testEntry.type);
+        entry.contents.should.equal(testEntry.contents);
+        done();
+      });
+    });
+
+    it('saves the contents for an audio entry', function(done) {
       entryParams.type = 'video';
       entryParams.contents = 'http://stubvideolink.com';
 
@@ -170,6 +196,15 @@ describe('Entry Model', function() {
 
     it('fails if a video entry does not have contents', function(done) {
       stubModel.type = 'video';
+
+      var stubError = new Error('Entry is missing contents');
+      var next = stubNext(stubError, done);
+
+      utils.validateFields.bind(stubModel)(next);
+    });
+
+    it('fails if an audio entry does not have contents', function(done) {
+      stubModel.type = 'audio';
 
       var stubError = new Error('Entry is missing contents');
       var next = stubNext(stubError, done);
