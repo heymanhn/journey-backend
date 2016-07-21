@@ -5,9 +5,11 @@ var chai = require('chai');
 var chaiAsPromised = require('chai-as-promised');
 var express = require('express');
 var rewire = require('rewire');
-var should = chai.should();
+var should = chai.should(); // jshint ignore:line
 var sinon = require('sinon');
+
 require('sinon-as-promised');
+require('mongoose').Promise = Promise;
 chai.use(chaiAsPromised);
 
 var Entry = require('../../models/entryModel');
@@ -72,13 +74,14 @@ describe('Entry Routes', function() {
       req.body.type = 'video';
       delete req.body.message;
 
-      sandbox.stub(Entry.prototype, 'save', function(cb) {
+      sandbox.stub(Entry.prototype, 'save', function() {
         this._doc.contents.should.equal(req.body.contents);
-        cb();
+        return {
+          then: function() { done(); }
+        };
       });
 
-      var res = stubRedirect('/v1/users/' + req.user._id + '/entries', done);
-      callPost(res);
+      callPost();
     });
 
     it('saves the location data if provided', function(done) {
@@ -87,17 +90,18 @@ describe('Entry Routes', function() {
         coordinates: [-122.416534, 37.612311]
       };
 
-      sandbox.stub(Entry.prototype, 'save', function(cb) {
+      sandbox.stub(Entry.prototype, 'save', function() {
         var loc = this._doc.loc;
         (typeof loc).should.equal('object');
         loc.type.should.eql(req.body.loc.type);
         loc.coordinates[0].should.equal(req.body.loc.coordinates[0]);
         loc.coordinates[1].should.equal(req.body.loc.coordinates[1]);
-        cb();
+        return {
+          then: function() { done(); }
+        };
       });
 
-      var res = stubRedirect('/v1/users/' + req.user._id + '/entries', done);
-      callPost(res);
+      callPost();
     });
 
     it('fails if Entry.save() returns an error', function(done) {
@@ -221,10 +225,10 @@ describe('Entry Routes', function() {
       it('deletes the entry\'s S3 contents if it exists', function() {
         var stubKey = 'a1a1a1a1-a1a1-a1a1-a1a1-a1a1a1a1a1a1';
         var stubEntry = {
-          contents: 'http://www.fakecontent.com/'
-                      + s3config.mediaBucket
-                      + '/'
-                      + stubKey
+          contents: 'http://www.fakecontent.com/' +
+                      s3config.mediaBucket +
+                      '/' +
+                      stubKey
         };
 
         sandbox.stub(s3, 'deleteObject', function(params) {
@@ -257,10 +261,10 @@ describe('Entry Routes', function() {
         var stubError = 'S3 deletion error';
         var stubKey = 'a1a1a1a1-a1a1-a1a1-a1a1-a1a1a1a1a1a1';
         var stubEntry = {
-          contents: 'http://www.fakecontent.com/'
-                      + s3config.mediaBucket
-                      + '/'
-                      + stubKey
+          contents: 'http://www.fakecontent.com/' +
+                      s3config.mediaBucket +
+                      '/' +
+                      stubKey
         };
 
         sandbox.stub(s3, 'deleteObject').returns({

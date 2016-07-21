@@ -9,7 +9,6 @@ var Entry = require('../../models/entryModel');
 var s3config = require('../../config/secrets').s3;
 
 var app = express.Router();
-
 AWS.config.update({region: s3config.region });
 var s3 = new AWS.S3();
 
@@ -39,13 +38,12 @@ app.post('/', ensureAuth, function(req, res, next) {
   }
 
   var entry = new Entry(params);
-  entry.save(function(err) {
-    if (err) {
-      return next(err);
-    }
-
-    res.redirect('/v1/users/' + entry.creator + '/entries');
-  });
+  entry
+    .save()
+    .then(function() {
+      res.redirect('/v1/users/' + params.creator + '/entries');
+    })
+    .catch(next);
 });
 
 /*
