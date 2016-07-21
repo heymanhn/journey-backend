@@ -2,8 +2,13 @@
 'use strict';
 
 var bcrypt = require('bcrypt');
-var should = require('chai').should();
+var chai = require('chai');
+var chaiAsPromised = require('chai-as-promised');
+var should = chai.should();
 var sinon = require('sinon');
+
+require('sinon-as-promised');
+chai.use(chaiAsPromised);
 
 var testUtils = require('./utils');
 var User = require('../../models/userModel');
@@ -81,45 +86,34 @@ describe('User Model', function() {
             count: function(opts) {
               opts[field].should.equal(value);
               Object.keys(opts).length.should.equal(1);
-              done();
+              return { exec: function() { return Promise.resolve(0); } };
             }
           };
         };
 
-        utils.fieldExistsCheck.bind(stubModel)(field, value);
-      });
-
-      it('calls next() if the field does not exist yet', function(done) {
-        stubModel.model = function() {
-          return {
-            count: function(opts, cb) {
-              cb(null, 0);
-
-              next.calledOnce.should.equal(true);
-              done();
-            }
-          };
-        };
-
-        utils.fieldExistsCheck.bind(stubModel)(field, value, next);
+        utils.fieldExistsCheck.bind(stubModel)(field, value, done);
       });
 
       it('fails if Model.count() returns an error', function(done) {
         var stubError = 'count() error';
+        var stubNext = function(err) {
+          err.should.eql(stubError);
+          done();
+        };
 
         stubModel.model = function() {
           return {
-            count: function(opts, cb) {
-              cb(stubError);
-
-              next.calledOnce.should.equal(true);
-              next.calledWith(stubError).should.equal(true);
-              done();
+            count: function() {
+              return {
+                exec: function() {
+                  return Promise.reject(stubError);
+                }
+              };
             }
           };
         };
 
-        utils.fieldExistsCheck.bind(stubModel)(field, value, next);
+        utils.fieldExistsCheck.bind(stubModel)(field, value, stubNext);
       });
 
       it('moves on if the field has not changed', function() {
@@ -130,19 +124,24 @@ describe('User Model', function() {
 
       it('returns an error if the field exists', function(done) {
         var stubError = new Error(field + ' already exists');
+        var stubNext = function(err) {
+          err.should.eql(stubError);
+          done();
+        };
+
         stubModel.model = function() {
           return {
-            count: function(opts, cb) {
-              cb(null, 1);
-
-              next.calledOnce.should.equal(true);
-              next.calledWith(stubError).should.equal(true);
-              done();
+            count: function() {
+              return {
+                exec: function() {
+                  return Promise.resolve(1);
+                }
+              };
             }
           };
         };
 
-        utils.fieldExistsCheck.bind(stubModel)(field, value, next);
+        utils.fieldExistsCheck.bind(stubModel)(field, value, stubNext);
       });
     });
 

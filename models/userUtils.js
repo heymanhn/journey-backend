@@ -13,17 +13,16 @@ function fieldExistsCheck(field, value, next) {
   var opts = {};
   opts[field] = value;
 
-  User.count(opts, function(err, count) {
-    if (err) {
-      return next(err);
-    }
-
-    if (count === 0) {
-      return next();
-    } else {
-      return next(new Error(field + ' already exists'));
-    }
-  });
+  User
+    .count(opts).exec()
+    .then(function(count) {
+      if (count === 0) {
+        return next();
+      } else {
+        return Promise.reject(new Error(field + ' already exists'));
+      }
+    })
+    .catch(next);
 }
 
 module.exports = {
