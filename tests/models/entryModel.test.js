@@ -106,6 +106,24 @@ describe('Entry Model', function() {
       });
     });
 
+    it('saves the contents for a photo entry with multiple photos',
+      function(done) {
+      entryParams.type = 'photo';
+      entryParams.contents = [
+        'http://stubvideolink1.com',
+        'http://stubvideolink2.com',
+        'http://stubvideolink3.com'
+      ];
+
+      var testEntry = new Entry(entryParams);
+      testEntry.save(function(err, entry) {
+        should.not.exist(err);
+        entry.type.should.equal(entryParams.type);
+        entry.contents.should.eql(entryParams.contents);
+        done();
+      });
+    });
+
     it('saves the contents for an audio entry', function(done) {
       entryParams.type = 'video';
       entryParams.contents = 'http://stubvideolink.com';
@@ -207,16 +225,6 @@ describe('Entry Model', function() {
       stubModel.type = 'audio';
 
       var stubError = new Error('Entry is missing contents');
-      var next = stubNext(stubError, done);
-
-      utils.validateFields.bind(stubModel)(next);
-    });
-
-    it('fails if a photo entry has wrong content type', function(done) {
-      stubModel.type = 'photo';
-      stubModel.contents = [0, 1];
-
-      var stubError = new Error('Entry contents are invalid');
       var next = stubNext(stubError, done);
 
       utils.validateFields.bind(stubModel)(next);

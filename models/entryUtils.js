@@ -20,9 +20,6 @@ module.exports = {
         if (!this.contents) {
           return next(new Error('Entry is missing contents'));
         }
-        if ((typeof this.contents) !== 'string') {
-          return next(new Error('Entry contents are invalid'));
-        }
         break;
 
       default:
