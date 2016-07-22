@@ -71,19 +71,36 @@ app.delete('/:entryId', ensureAuth, function(req, res, next) {
 });
 
 function deleteS3Contents(entry) {
+  debugger;
   if (!entry) {
     var err = new Error('Entry not found');
     err.status = 404;
     return Promise.reject(err);
   }
 
-  if (entry.contents && (typeof entry.contents) === 'string') {
-    return s3.deleteObject({
-      Bucket: s3config.mediaBucket,
-      Key: entry.contents.match(/\w{8}-\w{4}-\w{4}-\w{4}-\w{12}/)[0]
-    }).promise().then(function() { return entry; });
+  if (!entry.contents) {
+    return entry;
   } else {
-    return Promise.resolve(entry);
+    var urls;
+    switch (typeof entry.contents) {
+      case 'object':
+        urls = entry.contents;
+        break;
+      case 'string':
+        urls = [entry.contents];
+        break;
+      default:
+        return Promise.reject(new Error('Entry has invalid contents'));
+    }
+
+    urls = urls.map(function(value) {
+      return s3.deleteObject({
+        Bucket: s3config.mediaBucket,
+        Key: value.match(/\w{8}-\w{4}-\w{4}-\w{4}-\w{12}/)[0]
+      }).promise();
+    });
+
+    return Promise.all(urls).then(function() { return entry; });
   }
 }
 

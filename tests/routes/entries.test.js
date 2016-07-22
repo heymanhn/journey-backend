@@ -1,6 +1,7 @@
 /*jslint node: true, mocha: true */
 'use strict';
 
+var AWS = require('aws-sdk'); // jshint ignore:line
 var chai = require('chai');
 var chaiAsPromised = require('chai-as-promised');
 var express = require('express');
@@ -225,10 +226,7 @@ describe('Entry Routes', function() {
       it('deletes the entry\'s S3 contents if it exists', function() {
         var stubKey = 'a1a1a1a1-a1a1-a1a1-a1a1-a1a1a1a1a1a1';
         var stubEntry = {
-          contents: 'http://www.fakecontent.com/' +
-                      s3config.mediaBucket +
-                      '/' +
-                      stubKey
+          contents: 'http://www.fakecontent.com/' + stubKey
         };
 
         sandbox.stub(s3, 'deleteObject', function(params) {
@@ -243,10 +241,29 @@ describe('Entry Routes', function() {
         return deleteS3Contents(stubEntry).should.eventually.equal(stubEntry);
       });
 
+      it('deletes multiple entries if an array is provided', function(done) {
+        var stubEntry = {
+          contents: [
+            'http://www.foo.com/a1a1a1a1-a1a1-a1a1-a1a1-a1a1a1a1a1a1',
+            'http://www.foo.com/a1a1a1a1-a1a1-a1a1-a1a1-a1a1a1a1a1a2',
+            'http://www.foo.com/a1a1a1a1-a1a1-a1a1-a1a1-a1a1a1a1a1a3'
+          ]
+        };
+        var deleteSpy = sandbox.stub(s3, 'deleteObject').returns({
+          promise: function() { return Promise.resolve(); }
+        });
+
+        deleteS3Contents(stubEntry).then(function() {
+          deleteSpy.callCount.should.equal(stubEntry.contents.length);
+          done();
+        });
+      });
+
       it('continues if the entry has no contents to delete', function() {
         var stubEntry = { type: 'text' };
 
-        return deleteS3Contents(stubEntry).should.eventually.equal(stubEntry);
+        return deleteS3Contents(Promise.resolve(stubEntry))
+          .should.eventually.equal(stubEntry);
       });
 
       it('returns an error if no entry is found', function() {
@@ -260,16 +277,21 @@ describe('Entry Routes', function() {
       it('returns an error if S3 deletion returns an error', function() {
         var stubError = 'S3 deletion error';
         var stubKey = 'a1a1a1a1-a1a1-a1a1-a1a1-a1a1a1a1a1a1';
-        var stubEntry = {
-          contents: 'http://www.fakecontent.com/' +
-                      s3config.mediaBucket +
-                      '/' +
-                      stubKey
-        };
+        var stubEntry = { contents: 'http://www.fakecontent.com/' + stubKey };
 
         sandbox.stub(s3, 'deleteObject').returns({
           promise: function() { return Promise.reject(stubError); }
         });
+
+        return deleteS3Contents(stubEntry).should.be.rejected
+          .and.eventually.eql(stubError);
+      });
+
+      it('returns an error if the contents have invalid type', function() {
+        var stubEntry = {
+          contents: 123
+        };
+        var stubError = new Error('Entry has invalid contents');
 
         return deleteS3Contents(stubEntry).should.be.rejected
           .and.eventually.eql(stubError);
