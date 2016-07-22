@@ -12,26 +12,40 @@ AWS.config.update({ region: s3config.region });
 var s3 = new AWS.S3();
 
 /*
- * GET /uploads/signedurl
+ * GET /uploads/signedurls
  *
- * Returns a signed URL from Amazon S3 that the caller can use to upload media
- * using a PUT request. Once the file is uploaded, anyone with access to the
- * URL can view the file.
+ * Returns a number of signed URLs from Amazon S3 that the caller can use to
+ * upload media using PUT requests. Once the files are uploaded, anyone with
+ * the URLs can view the files.
  *
- * The caller will need to specify the URL for any image or video uploaded in
- * the POST request for adding a new entry.
+ * The caller will need to include the URLs in the POST request for adding
+ * new entries.
+ *
+ * If called with a query parameter "urls", the app generates and returns the
+ * number of URLs specified. If the parameter is not specified, the request
+ * defaults to generating 1 URL.
  *
  */
-app.get('/signedurl', ensureAuth, function(req, res, next) {
-  findValidParams()
-    .then(getSignedUrl.bind(null, req.query.fileType))
-    .then(function(url) {
+app.get('/signedurls', ensureAuth, function(req, res, next) {
+  var urlCount = Number(req.query.urls) || 1;
+  var requests = generateRequests(urlCount);
+
+  return Promise.all(requests)
+    .then(function(urls) {
       res.json({
-        url: url
+        urls: urls
       });
     })
     .catch(next);
 });
+
+function generateRequests(count) {
+  return Array(count)
+    .fill(0)
+    .map(function(value) {
+      return findValidParams().then(getSignedUrl);
+    });
+}
 
 function findValidParams() {
   var params = {
@@ -46,7 +60,6 @@ function findValidParams() {
   return s3.getObject(params).promise()
     .then(findValidParams)
     .catch(function(err) {
-      debugger;
       if (err.name === 'NoSuchKey') {
         return Promise.resolve(params);
       } else {
@@ -55,11 +68,10 @@ function findValidParams() {
     });
 }
 
-function getSignedUrl(fileType, params) {
-  params.ContentType = fileType;
+function getSignedUrl(params) {
   params.ACL = 'public-read';
 
-  return s3.getSignedUrl('putObject', params);
+  return Promise.resolve(s3.getSignedUrl('putObject', params));
 }
 
 // Borrowed from Stack Overflow
