@@ -47,6 +47,22 @@ app.post('/', ensureAuth, function(req, res, next) {
 });
 
 /*
+ * GET /entries/:entryId
+ *
+ * Fetches details for a specific entry.
+ *
+ */
+app.get('/:entryId', ensureAuth, function(req, res, next) {
+  findEntry(req.params.entryId, req.user._id)
+    .then(function(entry) {
+      res.json({
+        entry: entry
+      });
+    })
+    .catch(next);
+});
+
+/*
  * DELETE /entries/:entryId
  *
  * Removes an entry, first confirming that the entry was created by the
@@ -54,30 +70,37 @@ app.post('/', ensureAuth, function(req, res, next) {
  *
  */
 app.delete('/:entryId', ensureAuth, function(req, res, next) {
-  var params = {
-    _id: req.params.entryId,
-    creator: req.user._id
-  };
-
-  Entry
-    .findOne(params).exec()
+  findEntry(req.params.entryId, req.user._id)
     .then(deleteS3Contents)
     .then(removeEntry)
     .then(function() {
       res.json({
         message: 'Entry deleted.'
       });
-    }).catch(next);
+    })
+    .catch(next);
 });
 
-function deleteS3Contents(entry) {
-  debugger;
-  if (!entry) {
-    var err = new Error('Entry not found');
-    err.status = 404;
-    return Promise.reject(err);
-  }
+function findEntry(entryId, userId) {
+  var params = {
+    _id: entryId,
+    creator: userId
+  };
 
+  return Entry
+    .findOne(params).exec()
+    .then(function(entry) {
+      if (!entry) {
+        var err = new Error('Entry not found');
+        err.status = 404;
+        return Promise.reject(err);
+      }
+
+      return entry;
+    });
+}
+
+function deleteS3Contents(entry) {
   if (!entry.contents) {
     return entry;
   } else {
