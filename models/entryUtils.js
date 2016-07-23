@@ -27,5 +27,18 @@ module.exports = {
     }
 
     next();
+  },
+
+  findEntries: function(params, count, page) {
+    if (!params || !count || !page) {
+      return Promise.reject(new Error('Invalid arguments'));
+    }
+
+    return this
+      .find(params)
+      .sort({ date: -1 })
+      .skip(count * (page-1))
+      .limit(count)
+      .exec();
   }
 };

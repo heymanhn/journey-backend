@@ -297,7 +297,9 @@ describe('User Routes', function() {
     var req = {
       params: {
         userId: 'a1b2c3d4'
-      }
+      },
+
+      query: {}
     };
     var callGet = function(res, next) {
       router.get.secondCall.args[4](req, res, next);
@@ -313,17 +315,46 @@ describe('User Routes', function() {
     it('looks for entries by the current user', function(done) {
       var stubOpts = { creator: req.params.userId };
 
-      sandbox.stub(Entry, 'find', function(opts) {
-        opts.should.eql(stubOpts);
-        done();
+      sandbox.stub(Entry, 'findEntries', function(params, count, page) {
+        params.creator.should.equal(req.params.userId);
+        count.should.equal(config.database.DEFAULT_COUNT);
+        page.should.equal(1);
+
+        return {
+          then: function() { return { catch: function() { done(); } }; }
+        };
       });
 
       callGet();
     });
 
-    it('returns a list of entries', function(done) {
-      var stubEntries = ['Entry 1', 'Entry 2'];
-      var expectedResponse = { entries: stubEntries };
+    it('uses additional query parameters if provided', function(done) {
+      req.query = {
+        page: '1',
+        count: '5',
+        maxDate: '2016-07-22'
+      };
+
+      sandbox.stub(Entry, 'findEntries', function(params, count, page) {
+        params.date.should.eql({ $lt: new Date(req.query.maxDate) });
+        count.should.equal(Number(req.query.count));
+        page.should.equal(Number(req.query.page));
+
+        return {
+          then: function() { return { catch: function() { done(); } }; }
+        };
+      });
+
+      callGet();
+    });
+
+    it('returns a list of entries in the response', function(done) {
+      var stubEntries = ['Entry 1', 'Entry 2', 'Entry 3'];
+      var expectedResponse = {
+        page: 1,
+        results: 3,
+        entries: stubEntries,
+      };
       var res = {
         json: function(obj) {
           obj.should.eql(expectedResponse);
@@ -331,30 +362,31 @@ describe('User Routes', function() {
         }
       };
 
-      sandbox.stub(Entry, 'find').yields(null, stubEntries);
+      sandbox.stub(Entry, 'findEntries').returns(Promise.resolve(stubEntries));
       callGet(res);
     });
 
     it('returns an error if no entries are found', function(done) {
       var stubError = new Error('No entries found');
       stubError.status = 404;
+
       var next = function(err) {
         err.should.eql(stubError);
         done();
       };
 
-      sandbox.stub(Entry, 'find').yields(null, []);
+      sandbox.stub(Entry, 'findEntries').returns(Promise.resolve([]));
       callGet(null, next);
     });
 
-    it('returns an error if Entry.find() fails', function(done) {
+    it('returns an error if Entry.findEntries() fails', function(done) {
       var stubError = 'Find error';
       var next = function(err) {
         err.should.equal(stubError);
         done();
       };
 
-      sandbox.stub(Entry, 'find').yields(stubError);
+      sandbox.stub(Entry, 'findEntries').returns(Promise.reject(stubError));
       callGet(null, next);
     });
   });

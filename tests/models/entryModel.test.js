@@ -24,11 +24,16 @@ describe('Entry Model', function() {
       message: 'Entry 2'
     });
 
-    entry1.save(function() {
-      entry2.save(function() {
-        done();
-      });
+    var entry3 = new Entry({
+      creator: mongoose.Types.ObjectId('577371f00000000000000000'),
+      type: 'text',
+      message: 'Entry 3'
     });
+
+    var saveOps = [entry1.save(), entry2.save(), entry3.save()];
+    Promise
+      .all(saveOps)
+      .then(function() { done(); });
   });
 
   afterEach(function(done) {
@@ -240,15 +245,33 @@ describe('Entry Model', function() {
     });
   });
 
-  describe('#get entries by userId:', function() {
+  describe('#findEntries:', function() {
     it('returns the right number of entries', function(done) {
-      var userId = '577371f00000000000000000';
+      var page = 1;
+      var count = 2;
+      var params = {
+        creator: '577371f00000000000000000'
+      };
 
-      Entry.find({ creator: userId }, function(err, entries) {
-        should.not.exist(err);
-        entries.length.should.equal(2);
+      Entry.findEntries(params, count, page).then(function(entries) {
+        entries.length.should.equal(count);
+        entries[0].creator.toString().should.equal(params.creator);
         done();
       });
+    });
+
+    it('returns an error if any of the arguments are missing', function() {
+      var page = 1;
+      var count = 2;
+      var stubError = new Error('Invalid arguments');
+
+      Entry.findEntries(null, count, page).should.be.rejectedWith(stubError);
+    });
+
+    it('returns an error if something in the chain fails', function() {
+      var params = '577371f00000000000000000';
+
+      Entry.findEntries(params, 1, 2).should.be.rejected; // jshint ignore:line
     });
   });
 });

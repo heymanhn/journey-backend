@@ -21,5 +21,6 @@ var entrySchema = new mongoose.Schema({
 });
 
 entrySchema.pre('save', utils.validateFields);
+entrySchema.statics.findEntries = utils.findEntries;
 
 module.exports = mongoose.model('Entry', entrySchema);

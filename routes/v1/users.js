@@ -182,11 +182,7 @@ app.get('/:userId/entries', ensureAuth, userIDExists, isCurrentUser,
     }
 
     Entry
-      .find(params)
-      .sort({ date: -1 })
-      .skip(count * (page-1))
-      .limit(count)
-      .exec()
+      .findEntries(params, count, page)
       .then(function(entries) {
         if (entries.length === 0) {
           var err = new Error('No entries found');
