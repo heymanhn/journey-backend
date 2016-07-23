@@ -8,5 +8,7 @@ module.exports = {
 
   test: {
     url: 'mongodb://localhost:27017/journey-test'
-  }
+  },
+
+  DEFAULT_COUNT: 20
 };

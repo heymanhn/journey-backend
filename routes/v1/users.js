@@ -159,26 +159,48 @@ app.delete('/:userId', ensureAuth, userIDExists, isCurrentUser,
 /*
  * GET /users/:userId/entries
  *
- * Get all journey entries created by this user
+ * Get all journey entries created by this user, in reverse chronological order
+ *
+ * Query params:
+ * - count: Number of items to return, default 20
+ * - page: Page #, calculated based on 'count', default 1
+ * - maxDate: Cut-off date for first entry to return
+ *
  */
 app.get('/:userId/entries', ensureAuth, userIDExists, isCurrentUser,
   function(req, res, next) {
-    Entry.find({ creator: req.params.userId }, function(err, entries) {
-      if (err) {
-        return next(err);
-      }
+    var count = Number(req.query.count) || config.database.DEFAULT_COUNT;
+    var page = Number(req.query.page) || 1;
+    var params = {
+      creator: req.params.userId
+    };
 
-      if (entries.length === 0) {
-        err = new Error('No entries found');
-        err.status = 404;
-        return next(err);
-      }
+    if (req.query.maxDate) {
+      params.date = {
+        $lt: new Date(req.query.maxDate)
+      };
+    }
 
-      res.json({
-        entries: entries
-      });
-    });
-  }
-);
+    Entry
+      .find(params)
+      .sort({ date: -1 })
+      .skip(count * (page-1))
+      .limit(count)
+      .exec()
+      .then(function(entries) {
+        if (entries.length === 0) {
+          var err = new Error('No entries found');
+          err.status = 404;
+          return Promise.reject(err);
+        }
+
+        res.json({
+          page: page,
+          results: entries.length,
+          entries: entries
+        });
+      })
+      .catch(next);
+});
 
 module.exports = app;
