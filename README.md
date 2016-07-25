@@ -44,36 +44,19 @@ Get information about a user. Only returns information for the user represented 
 
 
 ### Journey Entries
-Add an entry to your journey, or view your past entries. You can add entries of the following types:
+Add an entry to your journey, or view your past entries.
 
+#### POST /entries
+Add an entry to your journey. Supported entry types include:
 * Text
 * Photos
-* Videos
+* Video
 * Audio
 
-#### POST /entries/text
-Add a text entry to your journey.
-
 Body params:
+* `message` - Description (required for )
 * `data` - Text contents
 
-#### POST /entries/images
-Add a image entry to your journey.
-
-Body params:
-* `image` - Binary contents of the image
-
-#### POST /entries/videos
-Add a video entry to your journey.
-
-Body params:
-* `video` - Binary contents of the video media
-
-#### POST /entries/audios
-Add an audio entry to your journey.
-
-Body params:
-* `audio` - Binary contents of the audio media
 
 #### GET /entries
 Returns a list of entries from your journeys.
@@ -96,3 +79,5 @@ Example JSON:
 ]
 ```
 
+## Set-up
+Run `npm run test-local` to kick-off local Mocha test suites.
