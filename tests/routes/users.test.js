@@ -3,7 +3,7 @@
 
 var express = require('express');
 var jwt = require('jsonwebtoken');
-var should = require('chai').should();
+var should = require('chai').should(); // jshint ignore:line
 var sinon = require('sinon');
 
 var config = require('../../config/config');
@@ -313,8 +313,6 @@ describe('User Routes', function() {
     });
 
     it('looks for entries by the current user', function(done) {
-      var stubOpts = { creator: req.params.userId };
-
       sandbox.stub(Entry, 'findEntries', function(params, count, page) {
         params.creator.should.equal(req.params.userId);
         count.should.equal(config.database.DEFAULT_COUNT);

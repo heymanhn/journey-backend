@@ -170,7 +170,7 @@ describe('Entry Routes', function() {
       var next = function(err) {
         err.should.eql(stubError);
         done();
-      }
+      };
 
       router.__set__('findEntry', function() {
         return Promise.reject(stubError);
