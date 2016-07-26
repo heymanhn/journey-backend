@@ -9,6 +9,7 @@ var sinon = require('sinon');
 
 require('sinon-as-promised');
 chai.use(chaiAsPromised);
+require('mongoose').Promise = Promise;
 
 var testUtils = require('./utils');
 var User = require('../../models/userModel');

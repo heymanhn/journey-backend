@@ -7,6 +7,7 @@ var should = require('chai').should();
 var Entry = require('../../models/entryModel');
 var testUtils = require('./utils');
 var utils = require('../../models/entryUtils');
+mongoose.Promise = Promise;
 
 describe('Entry Model', function() {
   before(testUtils.connect);
