@@ -33,10 +33,7 @@ describe('User Routes', function() {
 
   describe('#post /', function() {
     var req;
-    var stubExpiry = { expiresIn: '90 days' };
-    var stubUser = {
-      _doc: 'foo'
-    };
+    var stubUser;
 
     var callPost = function(res, next) {
       router.post.firstCall.args[1](req, res, next);
@@ -51,6 +48,8 @@ describe('User Routes', function() {
           name: 'Amy Doe'
         }
       };
+
+      stubUser = { _doc: 'foo' };
     });
 
     it('registers a URI for POST: /', function() {
@@ -66,22 +65,13 @@ describe('User Routes', function() {
     });
 
     it('generates a JSON web token once user is created', function(done) {
-      var res = { json: function() {} };
+      var res = { json: function() { done(); } };
 
-      // Passes the right args into jwt.sign()
-      var jwtMock = sandbox.mock(jwt)
-                           .expects('sign')
-                           .once()
-                           .withArgs(
-                              stubUser._doc,
-                              config.secrets.jwt,
-                              stubExpiry);
-
-      sandbox.stub(User.prototype, 'save', function(cb) {
-        cb(null, stubUser);
-        jwtMock.verify();
-        done();
+      sandbox.stub(jwt, 'sign', function(payload, secret, expiry) {
+        payload.should.eql(stubUser._doc);
+        secret.should.equal(config.secrets.jwt);
       });
+      sandbox.stub(User.prototype, 'save').yields(null, stubUser);
 
       callPost(res);
     });

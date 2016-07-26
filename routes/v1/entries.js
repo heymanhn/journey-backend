@@ -38,12 +38,13 @@ app.post('/', ensureAuth, function(req, res, next) {
   }
 
   var entry = new Entry(params);
-  entry
-    .save()
-    .then(function() {
-      res.redirect('/v1/users/' + params.creator + '/entries');
-    })
-    .catch(next);
+  entry.save(function(err) {
+    if (err) {
+      return next(err);
+    }
+
+    res.redirect('/v1/users/' + params.creator + '/entries');
+  });
 });
 
 /*
