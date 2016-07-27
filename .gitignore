@@ -41,3 +41,6 @@ jspm_packages
 
 # Certificate files
 *.pem
+
+# Apiary rendered files
+apiary.html
