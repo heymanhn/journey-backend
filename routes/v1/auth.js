@@ -1,6 +1,7 @@
 /*jslint node: true */
 'use strict';
 
+var _ = require('underscore');
 var express = require('express');
 var jwt = require('jsonwebtoken');
 
@@ -45,9 +46,8 @@ app.post('/login', checkLoginParams, function(req, res, next) {
         return next(new Error('Error generating authentication token'));
       }
 
-      delete user._doc.password;
       res.json({
-        user: user,
+        user: _.omit(user._doc, 'password'),
         token: 'JWT ' + token
       });
     }

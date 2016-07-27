@@ -55,10 +55,9 @@ app.post('/', function(req, res, next) {
       { expiresIn: '90 days' }
     );
 
-    delete user._doc.password;
     res.json({
       message: 'User created successfully.',
-      user: user,
+      user: _.omit(user._doc, 'password'),
       token: 'JWT ' + token
     });
   });
@@ -68,14 +67,14 @@ app.post('/', function(req, res, next) {
 /*
  * GET /users/:userId
  *
- * Retrieve information about a user. Currently, the authenticated user can
- * only get information about herself.
+ * Retrieve information about a user. Only allowed on currently authenticated
+ * user.
  *
  */
 app.get('/:userId', ensureAuth, userIDExists, isCurrentUser,
   function(req, res, next) {
     res.json({
-      user: req.userDoc
+      user: _.omit(req.userDoc._doc, 'password')
     });
   }
 );
@@ -84,12 +83,6 @@ app.get('/:userId', ensureAuth, userIDExists, isCurrentUser,
  * PUT /users/:userId
  *
  * Updates the user. Only allowed on currently authenticated user.
- *
- * Fields that can be updated:
- * - username
- * - email
- * - password
- * - name
  *
  */
 app.put('/:userId', ensureAuth, userIDExists, isCurrentUser,
@@ -121,7 +114,7 @@ app.put('/:userId', ensureAuth, userIDExists, isCurrentUser,
 
       res.json({
         message: 'User updated successfully.',
-        user: newUser
+        user: _.omit(newUser._doc, 'password')
       });
     });
   }
