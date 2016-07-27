@@ -140,16 +140,11 @@ app.delete('/:userId', ensureAuth, userIDExists, isCurrentUser,
   }
 );
 
-
-/*
- * User state endpoints
- * =========================
- */
-
 /*
  * GET /users/:userId/entries
  *
- * Get all journey entries created by this user, in reverse chronological order
+ * Get all journey entries created by this user, in reverse chronological
+ * order.
  *
  * Query params:
  * - count: Number of items to return, default 20

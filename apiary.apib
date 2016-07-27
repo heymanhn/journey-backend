@@ -1,80 +1,169 @@
 FORMAT: 1A
 HOST: http://polls.apiblueprint.org/
 
-# journey
+# Journey
 
-Polls is a simple API allowing consumers to view polls and vote in them.
+Journey helps you organize your trips, allowing you to maximize your experiences at every destination you visit and to relive those moments when you return home.
 
-## Questions Collection [/questions]
+The Journey API allows consumers to access and create trips, which contain lists of places users want to go for their destinations.
 
-### List All Questions [GET]
 
-+ Response 200 (application/json)
+## Authentication [/login]
 
-        [
-            {
-                "question": "Favourite programming language?",
-                "published_at": "2015-08-05T08:40:51.620Z",
-                "choices": [
-                    {
-                        "choice": "Swift",
-                        "votes": 2048
-                    }, {
-                        "choice": "Python",
-                        "votes": 1024
-                    }, {
-                        "choice": "Objective-C",
-                        "votes": 512
-                    }, {
-                        "choice": "Ruby",
-                        "votes": 256
-                    }
-                ]
-            }
-        ]
+Journey uses JSON Web Tokens for the API server's authentication. This means the server does not maintain sessions for each connection. Once the server authenticates a client and provides a JSON Web Token, all subsequent API requests (except for user account creation) need to include that token in the HTTP `Authorization` header.
 
-### Create a New Question [POST]
+### Login [POST]
 
-You may create your own question using this action. It takes a JSON
-object containing a question and a collection of answers in the
-form of choices.
+Log in with either a username or email, as well as the password. The API returns the user object and a JSON Web Token if authentication is successful.
 
 + Request (application/json)
 
         {
-            "question": "Favourite programming language?",
-            "choices": [
-                "Swift",
-                "Python",
-                "Objective-C",
-                "Ruby"
+            "username": "amy",
+            "password": "abc123"
+        }
+
++ Response 200 (application/json)
+
+        {
+            "user": {
+                "_id": "57733624ed070136a557dddd",
+                "username": "amy",
+                "email": "amy@journey.com",
+                "name": "Amy Doe",
+                "__v": 0,
+                "signupDate": "2016-06-29T02:44:52.928Z"
+            },
+            "token": "JWT <JWT_TOKEN>"
+        }
+
+
+## User Management [/users]
+
+### User Sign Up [POST]
+
+Create a new user account. Requires user to provide a username, email, and password. Optionally, user can provide a full name.
+
+The API returns the user object and a JSON Web Token if account creation is successful, meaning that the user will already be logged in.
+
++ Request (application/json)
+
+        {
+            "username": "amy",
+            "email": "amy@journey.com",
+            "password": "abc123",
+            "name": "Amy Doe"
+        }
+
++ Response 200 (application/json)
+
+        {
+            "user": {
+                "_id": "57733624ed070136a557dddd",
+                "username": "amy",
+                "email": "amy@journey.com",
+                "name": "Amy Doe",
+                "__v": 0,
+                "signupDate": "2016-07-27T02:44:52.928Z"
+            },
+            "token": "JWT <JWT_TOKEN>"
+        }
+
+### Get User Information [GET /users/{userId}]
+
+Retrieve information about a user. Only allowed on currently authenticated user.
+
++ Parameters
+    + userId (string) - User ID to fetch information for.
+
++ Response 200 (application/json)
+
+        {
+            "user": {
+                "_id": "57733624ed070136a557dddd",
+                "username": "amy",
+                "email": "amy@journey.com",
+                "name": "Amy Doe",
+                "__v": 0,
+                "signupDate": "2016-07-27T02:44:52.928Z"
+            }
+        }
+
+### Update User Information [PUT /users/{userId}]
+
+Updates the user. Only allowed on currently authenticated user.
+
++ Parameters
+    + userId (string) - User ID to update information for.
+
++ Request (application/json)
+
+    {
+        "email": "amy.doe@journey.com",
+        "name": "Amy Emily Doe"
+    }
+
++ Response 200 (application/json)
+
+        {
+            "user": {
+                "_id": "57733624ed070136a557dddd",
+                "username": "amy",
+                "email": "amy.doe@journey.com",
+                "name": "Amy Emily Doe",
+                "__v": 0,
+                "signupDate": "2016-07-27T02:44:52.928Z"
+            }
+        }
+
+### Get User's Entries [GET /users/{userId}/entries]
+
+Get all journey entries created by this user, in reverse chronological order.
+
++ Parameters
+    + userId (string) - User ID to get entries for.
+    + count (number) - Number of items to return. Default is 20
+    + page (number) - Page # to return based on the count per page.
+    + maxDate (string) - Cut-off date for first entry to return, in ISODate format
+
++ Response 200 (application/json)
+
+        {
+            "page": 1,
+            "results": 2,
+            "entries": [
+                {
+                    "_id": "578ede2a50b26fc5d3c6baaa",
+                    "creator": "5785e22fdff4328371f8e781",
+                    "type": "video",
+                    "message": "And here's a video showing him scooting around",
+                    "contents": "https://s3-us-west-1.amazonaws.com/journey.media/4daba8e3-78c4-4ef2-b187-06b9d97b3228",
+                    "__v": 0,
+                    "loc": {
+                        "type": "Point",
+                        "coordinates": [
+                            -122.431301,
+                            37.773233
+                        ]
+                    },
+                    "date": "2016-07-20T02:12:58.332Z"
+                },
+                {
+                    "_id": "578edda250b26fc5d3c6baa8",
+                    "creator": "5785e22fdff4328371f8e781",
+                    "type": "photo",
+                    "message": "Check out this cute picture of Mochi!",
+                    "contents": "https://s3-us-west-1.amazonaws.com/journey.media/e7b5b426-0d6b-4325-9d4e-8d2ba6fc8502",
+                    "__v": 0,
+                    "loc": {
+                        "type": "Point",
+                        "coordinates": [
+                            -122.431301,
+                            37.773224
+                        ]
+                    },
+                    "date": "2016-07-20T02:10:42.442Z"
+                }
             ]
         }
 
-+ Response 201 (application/json)
-
-    + Headers
-
-            Location: /questions/2
-
-    + Body
-
-            {
-                "question": "Favourite programming language?",
-                "published_at": "2015-08-05T08:40:51.620Z",
-                "choices": [
-                    {
-                        "choice": "Swift",
-                        "votes": 0
-                    }, {
-                        "choice": "Python",
-                        "votes": 0
-                    }, {
-                        "choice": "Objective-C",
-                        "votes": 0
-                    }, {
-                        "choice": "Ruby",
-                        "votes": 0
-                    }
-                ]
-            }
