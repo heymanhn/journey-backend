@@ -15,11 +15,13 @@ var s3 = new AWS.S3();
 /*
  * POST /entries/
  *
- * - Creator (current user)
- * - Type (text, photo, video)
- * - Contents (Optional: multiple types)
- * - Message (Optional: string)
- * - Location (Optional: lat, lng)
+ * Create a journey entry.
+ *
+ * - The type of the entry is required.
+ * - Contents is required if the user is creating a `video`, `audio`, or
+ *   `photo` entry.
+ * - Message is required if the user is creating a `text` entry.
+ *
  */
 app.post('/', ensureAuth, function(req, res, next) {
   var params = {
@@ -50,7 +52,8 @@ app.post('/', ensureAuth, function(req, res, next) {
 /*
  * GET /entries/:entryId
  *
- * Fetches details for a specific entry.
+ * Fetches details for a specific entry created by the currently authenticated
+ * user.
  *
  */
 app.get('/:entryId', ensureAuth, function(req, res, next) {

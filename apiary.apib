@@ -1,5 +1,5 @@
 FORMAT: 1A
-HOST: http://polls.apiblueprint.org/
+HOST: http://journeyapp.no-domain-yet.com/v1
 
 # Journey
 
@@ -98,10 +98,10 @@ Updates the user. Only allowed on currently authenticated user.
 
 + Request (application/json)
 
-    {
-        "email": "amy.doe@journey.com",
-        "name": "Amy Emily Doe"
-    }
+        {
+            "email": "amy.doe@journey.com",
+            "name": "Amy Emily Doe"
+        }
 
 + Response 200 (application/json)
 
@@ -116,7 +116,7 @@ Updates the user. Only allowed on currently authenticated user.
             }
         }
 
-### Get User's Entries [GET /users/{userId}/entries]
+### Get User's Entries [GET /users/{userId}/entries?count={count}&page={page}&maxDate={maxDate}]
 
 Get all journey entries created by this user, in reverse chronological order.
 
@@ -167,3 +167,133 @@ Get all journey entries created by this user, in reverse chronological order.
             ]
         }
 
+## Journey Entries [/entries]
+
+The concept of journey entries may be deprecated as I transition the app towards a trip planning experience.
+
+Each journey entry includes the following:
+
+* a timestamp
+* a location (lat/lng coordinates)
+* an entry type (text, photos, video, audio)
+* entry contents (URL to media saved to Amazon S3)
+* a message (required for text entries)
+
+### Create an entry [POST]
+
+Create a journey entry.
+
+* The type of the entry is required.
+* Contents is required if the user is creating a `video`, `audio`, or `photo` entry.
+* Message is required if the user is creating a `text` entry.
+
++ Request (application/json)
+
+        {
+            "type": "photo",
+            "contents": "http://s3.amazon.com/journey/photo.jpg",
+            "message": "Picture of Amy and Adam!",
+            "loc": {
+                "type": "Point",
+                "coordinates": [
+                    -122.431397,
+                    37.773982
+                ]
+            }
+        }
+
++ Response 200 (application/json)
+
+        {
+            "page": 1,
+            "results": 3,
+            "entries": [
+                {
+                    "_id": "578ede2a50b26fc5d3c6badd",
+                    "creator": "5785e22fdff4328371f8e781",
+                    "type": "photo",
+                    "message": "Picture of Amy and Adam!",
+                    "contents": "http://s3.amazon.com/journey/photo.jpg",
+                    "__v": 0,
+                    "loc": {
+                        "type": "Point",
+                        "coordinates": [
+                            -122.431397,
+                            37.773982
+                        ]
+                    },
+                    "date": "2016-07-27T15:02:57.912Z"
+                },
+                {
+                    "_id": "578ede2a50b26fc5d3c6baaa",
+                    "creator": "5785e22fdff4328371f8e781",
+                    "type": "video",
+                    "message": "And here's a video showing him scooting around",
+                    "contents": "https://s3-us-west-1.amazonaws.com/journey.media/4daba8e3-78c4-4ef2-b187-06b9d97b3228",
+                    "__v": 0,
+                    "loc": {
+                        "type": "Point",
+                        "coordinates": [
+                            -122.431301,
+                            37.773233
+                        ]
+                    },
+                    "date": "2016-07-20T02:12:58.332Z"
+                },
+                {
+                    "_id": "578edda250b26fc5d3c6baa8",
+                    "creator": "5785e22fdff4328371f8e781",
+                    "type": "photo",
+                    "message": "Check out this cute picture of Mochi!",
+                    "contents": "https://s3-us-west-1.amazonaws.com/journey.media/e7b5b426-0d6b-4325-9d4e-8d2ba6fc8502",
+                    "__v": 0,
+                    "loc": {
+                        "type": "Point",
+                        "coordinates": [
+                            -122.431301,
+                            37.773224
+                        ]
+                    },
+                    "date": "2016-07-20T02:10:42.442Z"
+                }
+            ]
+        }
+
+### Get an entry [GET /entries/{entryId}]
+
+Fetches details for a specific entry created by the currently authenticated user.
+
++ Parameters
+    + entryId (string) - Entry ID
+
++ Response 200 (application/json)
+
+        {
+            "_id": "578edda250b26fc5d3c6baa8",
+            "creator": "5785e22fdff4328371f8e781",
+            "type": "photo",
+            "message": "Check out this cute picture of Mochi!",
+            "contents": "https://s3-us-west-1.amazonaws.com/journey.media/e7b5b426-0d6b-4325-9d4e-8d2ba6fc8502",
+            "__v": 0,
+            "loc": {
+                "type": "Point",
+                "coordinates": [
+                    -122.431301,
+                    37.773224
+                ]
+            },
+            "date": "2016-07-20T02:10:42.442Z"
+        }
+
+### Delete an entry [DELETE /entries/{entryId}]
+
+Removes an entry, first confirming that the entry was created by the current user. The contents are also deleted from S3 if they exist.
+
++ Parameters
+    + entryId (string) - Entry ID
+
++ Response 200 (application/json)
+
+        {
+            "message": "Entry deleted."
+        }
