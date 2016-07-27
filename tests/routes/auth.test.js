@@ -81,7 +81,9 @@ describe('Authentication Routes', function() {
     it('creates a JWT if password matches, and sends it in the response',
       function(done) {
       var stubUser = {
-        _doc: 'Stub doc',
+        _doc: {
+          username: 'Stub User'
+        },
         checkPassword: function(pw) {
           pw.should.equal(req.body.password);
           return true;
@@ -89,7 +91,7 @@ describe('Authentication Routes', function() {
       };
       var stubToken = 'stubtoken';
       var expectedResponse = {
-        user: stubUser,
+        user: stubUser._doc,
         token: 'JWT ' + stubToken
       };
 

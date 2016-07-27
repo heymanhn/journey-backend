@@ -49,7 +49,7 @@ describe('User Routes', function() {
         }
       };
 
-      stubUser = { _doc: 'foo' };
+      stubUser = { _doc: { username: 'foo' } };
     });
 
     it('registers a URI for POST: /', function() {
@@ -80,7 +80,7 @@ describe('User Routes', function() {
       var stubToken = 'abcdefg';
       var expectedResponse = {
         message: 'User created successfully.',
-        user: stubUser,
+        user: stubUser._doc,
         token: 'JWT ' + stubToken
       };
       var res = {
@@ -132,8 +132,10 @@ describe('User Routes', function() {
     beforeEach(function() {
       req = {
         userDoc: {
-          username: 'herman',
-          email: 'herman@journey.com'
+          _doc: {
+            username: 'herman',
+            email: 'herman@journey.com'
+          }
         }
       };
     });
@@ -144,7 +146,7 @@ describe('User Routes', function() {
     });
 
     it('returns the current authenticated user object', function(done) {
-      var expectedResponse = { user: req.userDoc };
+      var expectedResponse = { user: req.userDoc._doc };
       var res = {
         json: function(obj) {
           obj.should.eql(expectedResponse);
@@ -209,10 +211,16 @@ describe('User Routes', function() {
     });
 
     it('updates the user and sends object in response', function(done) {
-      var stubUser = 'Updated user';
+      var stubUser = {
+        _doc: {
+          username: 'amy',
+          email: 'amy@journey.com',
+          name: 'Amy Doe'
+        }
+      };
       var expectedResponse = {
         message: 'User updated successfully.',
-        user: stubUser
+        user: stubUser._doc
       };
       var res = {
         json: function(obj) {
