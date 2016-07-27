@@ -13,11 +13,8 @@ var app = express.Router();
 /*
  * POST /login
  *
- * Users can log in with either their usernames or email address, in
- * combination with their passwords.
- *
- * Upon successful login, the backend generates a JSON web token and returns
- * it to the client.
+ * Log in with either a username or email, as well as the password. The server
+ * returns a JSON Web Token if authentication is successful.
  *
  * The checkLoginParams() middleware sets req.loginType based on whether
  * the request provides a username or an email.
@@ -48,6 +45,7 @@ app.post('/login', checkLoginParams, function(req, res, next) {
         return next(new Error('Error generating authentication token'));
       }
 
+      delete user._doc.password;
       res.json({
         user: user,
         token: 'JWT ' + token

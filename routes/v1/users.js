@@ -15,20 +15,12 @@ var User = require('../../models/userModel');
 var app = express.Router();
 
 /*
- * User management endpoints
- * =========================
- */
-
-/*
- * Requires:
- * - username
- * - email
- * - hashed password
+ * POST /users
  *
- * Optional:
- * - Name
+ * Create a new user account. Requires user to provide a username, email, and
+ * password. Optionally, user can provide a full name. Doesn't require
+ * authentication.
  *
- * Doesn't require authentication
  */
 app.post('/', function(req, res, next) {
   var params = {
@@ -63,6 +55,7 @@ app.post('/', function(req, res, next) {
       { expiresIn: '90 days' }
     );
 
+    delete user._doc.password;
     res.json({
       message: 'User created successfully.',
       user: user,
@@ -71,9 +64,13 @@ app.post('/', function(req, res, next) {
   });
 });
 
+
 /*
- * For now, only allow the currently authenticated user to get information
- * about him/herself.
+ * GET /users/:userId
+ *
+ * Retrieve information about a user. Currently, the authenticated user can
+ * only get information about herself.
+ *
  */
 app.get('/:userId', ensureAuth, userIDExists, isCurrentUser,
   function(req, res, next) {
