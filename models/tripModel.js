@@ -16,7 +16,7 @@ var tripSchema = new mongoose.Schema({
   endDate: Date,
   destinations: [String],
   wishlist: [String],
-  itinerary: [String],
+  plan: [String],
   visibility: { type: String, default: 'private' }
 });
 
