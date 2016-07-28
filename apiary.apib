@@ -218,8 +218,8 @@ Each trip includes the following:
 * Trip creator
 * A title
 * A list of destinations (cities or countries)
-* A list of places to visit
-* (COMING SOON) A trip plan, which is a list of places that represents an itinerary
+* (COMING SOON) A wishlist of places to visit
+* (COMING SOON) A trip itinerary, which is a list of places that users plan to go to
 * Visibility (public or private)
 
 ### Create a trip [POST]
@@ -278,6 +278,56 @@ Gets details about a particular trip created by the currently authenticated user
             "wishlist": [],
             "itinerary": [],
             "visibility": "private"
+        }
+
+### Update a trip [PUT /trips/{tripId}]
+
+Updates the trip. Only allowed on trips created by currently authenticated user.
+
++ Parameters
+    + tripId (string) - Trip ID to update.
+
++ Request (application/json)
+
+        {
+            "title": "Amy goes to Paris and Marseille",
+            "startDate": "2016-08-12",
+            "destinations": [
+                "Paris, France",
+                "Marseille, France",
+                "Nice, France"
+            ]
+        }
+
++ Response 200 (application/json)
+
+        {
+            "_id": "578edda250b26fc5d3c6baa8",
+            "creator": "5785e22fdff4328371f8e781",
+            "title": "Amy goes to Paris and Marseille",
+            "startDate": "2016-08-12"
+            "endDate": "2016-08-20",
+            "destinations": [
+                "Paris, France",
+                "Marseille, France",
+                "Nice, France"
+            ],
+            "wishlist": [],
+            "itinerary": [],
+            "visibility": "private"
+        }
+
+### Delete a trip [DELETE /trips/{tripId}]
+
+Deletes the trip. Only allowed on trips created by currently authenticated user.
+
++ Parameters
+    + tripId (string) - Trip ID to delete.
+
++ Response 200 (application/json)
+
+        {
+            "message": "Trip deleted."
         }
 
 
