@@ -126,7 +126,7 @@ describe('User Routes', function() {
     var req;
 
     var callGet = function(res, next) {
-      router.get.firstCall.args[4](req, res, next);
+      router.get.firstCall.args[3](req, res, next);
     };
 
     beforeEach(function() {
@@ -161,7 +161,7 @@ describe('User Routes', function() {
     var req;
 
     var callPut = function(res, next) {
-      router.put.firstCall.args[4](req, res, next);
+      router.put.firstCall.args[3](req, res, next);
     };
 
     beforeEach(function() {
@@ -253,7 +253,7 @@ describe('User Routes', function() {
   describe('#delete /', function() {
     var req = {};
     var callDelete = function(res, next) {
-      router.delete.firstCall.args[4](req, res, next);
+      router.delete.firstCall.args[3](req, res, next);
     };
 
     it('registers a URI for DELETE: /:userId', function() {
@@ -300,12 +300,12 @@ describe('User Routes', function() {
       query: {}
     };
     var callGet = function(res, next) {
-      router.get.secondCall.args[4](req, res, next);
+      router.get.thirdCall.args[3](req, res, next);
     };
 
     it('registers a URI for GET: /:userId/entries', function() {
       router.get
-            .secondCall
+            .thirdCall
             .calledWith('/:userId/entries', sandbox.match.any)
             .should.equal(true);
     });
@@ -313,7 +313,7 @@ describe('User Routes', function() {
     it('looks for entries by the current user', function(done) {
       sandbox.stub(Entry, 'findEntries', function(params, count, page) {
         params.creator.should.equal(req.params.userId);
-        count.should.equal(config.database.DEFAULT_COUNT);
+        count.should.equal(config.database.DEFAULT_ENTRY_COUNT);
         page.should.equal(1);
 
         return {

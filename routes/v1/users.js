@@ -9,7 +9,7 @@ var config = require('../../config/config');
 var ensureAuth = require('../../utils/auth').ensureAuth;
 var Entry = require('../../models/entryModel');
 var isCurrentUser = require('../../utils/users').isCurrentUser;
-var userIDExists = require('../../utils/users').userIDExists;
+var Trip = require('../../models/tripModel');
 var User = require('../../models/userModel');
 
 var app = express.Router();
@@ -71,13 +71,11 @@ app.post('/', function(req, res, next) {
  * user.
  *
  */
-app.get('/:userId', ensureAuth, userIDExists, isCurrentUser,
-  function(req, res, next) {
-    res.json({
-      user: _.omit(req.userDoc._doc, 'password')
-    });
-  }
-);
+app.get('/:userId', ensureAuth, isCurrentUser, function(req, res) {
+  res.json({
+    user: _.omit(req.userDoc._doc, 'password')
+  });
+});
 
 /*
  * PUT /users/:userId
@@ -85,60 +83,87 @@ app.get('/:userId', ensureAuth, userIDExists, isCurrentUser,
  * Updates the user. Only allowed on currently authenticated user.
  *
  */
-app.put('/:userId', ensureAuth, userIDExists, isCurrentUser,
-  function(req, res, next) {
-    var user = req.userDoc;
-    var newParams = {
-      username: req.body.username,
-      password: req.body.password,
-      email: req.body.email,
-      name: req.body.name
-    };
+app.put('/:userId', ensureAuth, isCurrentUser, function(req, res, next) {
+  var user = req.userDoc;
+  var newParams = {
+    username: req.body.username,
+    password: req.body.password,
+    email: req.body.email,
+    name: req.body.name
+  };
 
-    // Only keep the params that need to be modified
-    newParams = _.pick(newParams, function(value, key) {
-      return value !== undefined && value !== user[key];
+  // Only keep the params that need to be modified
+  newParams = _.pick(newParams, function(value, key) {
+    return value !== undefined && value !== user[key];
+  });
+  _.each(newParams, function(value, key) {
+    if (key === 'password' && user.checkPassword(value)) {
+      return;
+    }
+
+    user[key] = value;
+  });
+
+  user.save(function(err, newUser) {
+    if (err) {
+      return next(err);
+    }
+
+    res.json({
+      message: 'User updated successfully.',
+      user: _.omit(newUser._doc, 'password')
     });
-    _.each(newParams, function(value, key) {
-      if (key === 'password' && user.checkPassword(value)) {
-        return;
-      }
-
-      user[key] = value;
-    });
-
-    user.save(function(err, newUser) {
-      if (err) {
-        return next(err);
-      }
-
-      res.json({
-        message: 'User updated successfully.',
-        user: _.omit(newUser._doc, 'password')
-      });
-    });
-  }
-);
+  });
+});
 
 /*
  * DELETE /users/:userId
  *
  * Deletes the user. Only allowed on currently authenticated user.
  */
-app.delete('/:userId', ensureAuth, userIDExists, isCurrentUser,
-  function(req, res, next) {
-    var user = req.userDoc;
-    user.remove(function(err) {
-      if (err) {
-        return next(err);
+app.delete('/:userId', ensureAuth, isCurrentUser, function(req, res, next) {
+  var user = req.userDoc;
+  user.remove(function(err) {
+    if (err) {
+      return next(err);
+    }
+
+    res.json({
+      message: 'User deleted.'
+    });
+  });
+});
+
+/*
+ * GET /users/:userId/trips
+ *
+ * Get all the trips created by the currently authenticated user, in reverse
+ * chronological order.
+ *
+ */
+app.get('/:userId/trips', ensureAuth, isCurrentUser, function(req, res, next) {
+  var page = Number(req.query.page) || 1;
+  var params = {
+    creator: req.params.userId
+  };
+
+  Trip
+    .findTrips(params, page)
+    .then(function(trips) {
+      if (trips.length === 0) {
+        var err = new Error('No trips found');
+        err.status = 404;
+        return Promise.reject(err);
       }
 
       res.json({
-        message: 'User deleted.'
+        page: page,
+        results: trips.length,
+        trips: trips
       });
-    });
-  }
-);
+    })
+    .catch(next);
+});
 
 /*
  * GET /users/:userId/entries
@@ -152,36 +177,36 @@ app.delete('/:userId', ensureAuth, userIDExists, isCurrentUser,
  * - maxDate: Cut-off date for first entry to return
  *
  */
-app.get('/:userId/entries', ensureAuth, userIDExists, isCurrentUser,
+app.get('/:userId/entries', ensureAuth, isCurrentUser,
   function(req, res, next) {
-    var count = Number(req.query.count) || config.database.DEFAULT_COUNT;
-    var page = Number(req.query.page) || 1;
-    var params = {
-      creator: req.params.userId
+  var count = Number(req.query.count) || config.database.DEFAULT_ENTRY_COUNT;
+  var page = Number(req.query.page) || 1;
+  var params = {
+    creator: req.params.userId
+  };
+
+  if (req.query.maxDate) {
+    params.date = {
+      $lt: new Date(req.query.maxDate)
     };
+  }
 
-    if (req.query.maxDate) {
-      params.date = {
-        $lt: new Date(req.query.maxDate)
-      };
-    }
+  Entry
+    .findEntries(params, count, page)
+    .then(function(entries) {
+      if (entries.length === 0) {
+        var err = new Error('No entries found');
+        err.status = 404;
+        return Promise.reject(err);
+      }
 
-    Entry
-      .findEntries(params, count, page)
-      .then(function(entries) {
-        if (entries.length === 0) {
-          var err = new Error('No entries found');
-          err.status = 404;
-          return Promise.reject(err);
-        }
-
-        res.json({
-          page: page,
-          results: entries.length,
-          entries: entries
-        });
-      })
-      .catch(next);
+      res.json({
+        page: page,
+        results: entries.length,
+        entries: entries
+      });
+    })
+    .catch(next);
 });
 
 module.exports = app;

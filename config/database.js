@@ -10,5 +10,6 @@ module.exports = {
     url: 'mongodb://localhost:27017/journey-test'
   },
 
-  DEFAULT_COUNT: 20
+  DEFAULT_ENTRY_COUNT: 20,
+  DEFAULT_TRIP_COUNT: 10
 };
