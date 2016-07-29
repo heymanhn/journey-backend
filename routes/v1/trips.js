@@ -99,6 +99,52 @@ app.delete('/:tripId', ensureAuth, function(req, res, next) {
     .catch(next);
 });
 
+
+/*
+ * Trip Ideas
+ */
+
+/*
+ * POST /trips/:tripId/ideas
+ *
+ * Add a new idea to the trip. Only allowed on trips created by the currently
+ * authenticated user.
+ *
+ */
+app.post('/:tripId/ideas', ensureAuth, function(req, res, next) {
+  var tripId = req.params.tripId;
+
+  findTrip(tripId, req.user._id)
+    .then(createTripIdea.bind(null, req.body))
+    .then(saveTrip)
+    .then(function() {
+      res.redirect('/v1/trips/' + tripId + '/ideas');
+    })
+    .catch(next);
+});
+
+/*
+ * GET /trips/:tripId/ideas
+ *
+ * Get the list of ideas from a given trip. Only allowed on trips created by
+ * the currently authenticated user.
+ *
+ */
+app.get('/:tripId/ideas', ensureAuth, function(req, res, next) {
+  findTrip(req.params.tripId, req.user._id)
+    .then(function(trip) {
+      res.json({
+        ideas: trip.ideas
+      });
+    })
+    .catch(next);
+});
+
+
+/*
+ * Helper functions
+ */
+
 function findTrip(tripId, userId) {
   var params = {
     _id: tripId,
@@ -142,6 +188,27 @@ function saveTrip(trip) {
 
 function removeTrip(trip) {
   return trip.remove();
+}
+
+function createTripIdea(params, trip) {
+  var newParams = {
+    googlePlaceId: params.googlePlaceId,
+    name: params.name,
+    loc: params.loc
+  };
+
+  var optionalParams = [
+    'address', 'phone', 'types', 'photo', 'url', 'status', 'comment'
+  ];
+
+  optionalParams.forEach(function(field) {
+    if (params[field]) {
+      newParams[field] = params[field];
+    }
+  });
+
+  trip.ideas.push(newParams);
+  return trip;
 }
 
 module.exports = app;

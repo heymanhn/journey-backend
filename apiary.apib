@@ -133,6 +133,7 @@ Get all the trips created by the currently authenticated user, in reverse chrono
                 {
                     "_id": "578edda250b26fc5d3c6baa8",
                     "creator": "5785e22fdff4328371f8e781",
+                    "date": "2016-07-27T23:01:05.404Z",
                     "title": "Paris and Marseille",
                     "startDate": "2016-08-15"
                     "endDate": "2016-08-20",
@@ -145,6 +146,7 @@ Get all the trips created by the currently authenticated user, in reverse chrono
                 {
                     "_id": "578edda250b26fc5d3c6baa9",
                     "creator": "5785e22fdff4328371f8e781",
+                    "date": "2016-07-28T11:24:55.404Z",
                     "title": "Amy and Adam Take Vietnam!",
                     "startDate": "2016-09-22"
                     "endDate": "2016-09-27",
@@ -214,6 +216,7 @@ Users can create and manage trips on the Journey app. Each trip specifies a list
 
 Each trip includes the following properties:
 
+* `_id` - Mongo ID
 * `date` - Date created
 * `creator` - User who created the trip
 * `title`
@@ -245,6 +248,7 @@ Creates a new trip. Only `title` is required during creation. Returns the newly 
             "trip": {
                 "_id": "578edda250b26fc5d3c6baa8",
                 "creator": "5785e22fdff4328371f8e781",
+                "date": "2016-07-25T15:58:32.404Z",
                 "title": "Paris and Marseille",
                 "startDate": "2016-08-15"
                 "endDate": "2016-08-20",
@@ -271,6 +275,7 @@ Gets details about a particular trip created by the currently authenticated user
             "trip": {
                 "_id": "578edda250b26fc5d3c6baa8",
                 "creator": "5785e22fdff4328371f8e781",
+                "date": "2016-07-25T15:58:32.404Z",
                 "title": "Paris and Marseille",
                 "startDate": "2016-08-15"
                 "endDate": "2016-08-20",
@@ -309,6 +314,7 @@ Updates the trip. Only allowed on trips created by currently authenticated user.
             "trip": {
                 "_id": "578edda250b26fc5d3c6baa8",
                 "creator": "5785e22fdff4328371f8e781",
+                "date": "2016-07-25T15:58:32.404Z",
                 "title": "Amy goes to Paris and Marseille",
                 "startDate": "2016-08-12"
                 "endDate": "2016-08-20",
@@ -334,6 +340,147 @@ Deletes the trip. Only allowed on trips created by currently authenticated user.
 
         {
             "message": "Trip deleted."
+        }
+
+
+## Trip Ideas [/trips/{tripId}/ideas]
+
+Each trip contains a list of ideas, each of which is a place that the user wants to visit on the trip. The order of the ideas in the array dictates the order they'll be displayed to the user. Each trip only has one list of ideas. Users can add, remove, reorder, or move an idea to the trip plan.
+
+Each trip idea includes the following properties:
+
+* `_id` - Mongo ID
+* `googlePlaceId` - Google Place ID
+* `date` - Date created
+* `name`
+* `loc` - Location (Type and coordinates)
+* `address`
+* `phone`
+* `types` - List of place types
+* `photo` - URL for the primary photo for the place
+* `url` - URL for the listing on Google
+* `status` - 'active', 'planned', or 'deleted'. Defaults to `active` on creation
+* `comment` - User comment about the idea
+
+### Create a trip idea [POST]
+
+Creates a new idea for the trip. Only allowed on a trip created by the currently authenticated user. The following properties are required to be provided for creation:
+
+* `googlePlaceId`
+* `name`
+* `loc`
+* `url`
+
++ Request (application/json)
+
+        {
+            "googlePlaceId": "ChIJ3S-JXmauEmsRUcIaWtf4MzE",
+            "name": "Sydney Opera House",
+            "loc": {
+                "type": "Point",
+                "coordinates": [
+                    151.2152967,
+                    -33.8567844
+                ]
+            },
+            "address": "Bennelong Point, Sydney NSW 2000, Australia",
+            "phone": "(02) 9250 7111",
+            "types": [
+              "point_of_interest",
+              "establishment"
+            ],
+            "photo": "https://lh5.googleusercontent.com/-rlKEkZQ5hqA/VTS0B2sLp_I/AAAAAAAAH7U/w8ECgtHcpjA470l7hxfA2mDi8qKZrfG1Q/s1600-w500/",
+            "url": "https://maps.google.com/?cid=3545450935484072529",
+            "comment": "Have to go here for any trip to Sydney"
+        }
+
++ Response 302 (application/json)
+
+        {
+            "ideas": [
+                {
+                    "_id": "578edda250b26fc5d3c6bf22",
+                    "googlePlaceId": "ChIJ3S-JXmauEmsRUcIaWtf4MzE",
+                    "date": "2016-07-29T07:27:02.451Z"
+                    "name": "Sydney Opera House",
+                    "loc": {
+                        "type": "Point",
+                        "coordinates": [
+                            151.2152967,
+                            -33.8567844
+                        ]
+                    },
+                    "address": "Bennelong Point, Sydney NSW 2000, Australia",
+                    "phone": "(02) 9250 7111",
+                    "types": [
+                      "point_of_interest",
+                      "establishment"
+                    ],
+                    "photo": "https://lh5.googleusercontent.com/-rlKEkZQ5hqA/VTS0B2sLp_I/AAAAAAAAH7U/w8ECgtHcpjA470l7hxfA2mDi8qKZrfG1Q/s1600-w500/",
+                    "url": "https://maps.google.com/?cid=3545450935484072529",
+                    "status": "active",
+                    "comment": "Have to go here for any trip to Sydney"
+                }
+            ]
+        }
+
+### Get a trip's ideas [GET /trips/{tripId}/ideas?page={page}]
+
+Returns the list of ideas from a trip, in reverse chronological order. Only allowed on trips created by the currently authenticated user. Returns 20 ideas at a time.
+
++ Parameters
+    + tripId (string) - Trip ID
+    + page (number) - Page # of results to return.
+
++ Response 200 (application/json)
+
+        {
+            "page": 1,
+            "results": 2,
+            "ideas": [
+                {
+                    "_id": "578edda250b26fc5d3c6bf22",
+                    "googlePlaceId": "ChIJ3S-JXmauEmsRUcIaWtf4MzE",
+                    "date": "2016-07-29T07:27:02.451Z"
+                    "name": "Sydney Opera House",
+                    "loc": {
+                        "type": "Point",
+                        "coordinates": [
+                            151.2152967,
+                            -33.8567844
+                        ]
+                    },
+                    "address": "Bennelong Point, Sydney NSW 2000, Australia",
+                    "phone": "(02) 9250 7111",
+                    "types": [
+                      "point_of_interest",
+                      "establishment"
+                    ],
+                    "photo": "https://lh5.googleusercontent.com/-rlKEkZQ5hqA/VTS0B2sLp_I/AAAAAAAAH7U/w8ECgtHcpjA470l7hxfA2mDi8qKZrfG1Q/s1600-w500/",
+                    "url": "https://maps.google.com/?cid=3545450935484072529",
+                    "status": "active",
+                    "comment": "Have to go here for any trip to Sydney"
+                },
+                {
+                    "_id": "578edda250b26fc5d3c6bf35",
+                    "googlePlaceId": "ChIJBa7IFYuuEmsRn7XUnfYcDC8",
+                    "date": "2016-07-29T06:35:48.729Z"
+                    "name": "Sydney Harbour Bridge",
+                    "loc": {
+                        "type": "Point",
+                        "coordinates": [
+                            151.2125697,
+                            -33.8487927
+                        ]
+                    },
+                    "address": "Sydney Harbour Bridge, Milsons Point NSW 2061, Australia",
+                    "types": [
+                      "route"
+                    ],
+                    "url": "https://maps.google.com/?q=Sydney+Harbour+Bridge,+Milsons+Point+NSW+2061,+Australia&ftid=0x6b12ae8b15c8ae05:0x2f0c1cf69dd4b59f",
+                    "status": "active"
+                },
+            ]
         }
 
 
@@ -373,7 +520,7 @@ Create a journey entry. Returns an updated list of the user's entries upon succe
             }
         }
 
-+ Response 200 (application/json)
++ Response 302 (application/json)
 
         {
             "page": 1,

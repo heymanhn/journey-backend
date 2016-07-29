@@ -4,8 +4,22 @@
 var mongoose = require('mongoose');
 var utils = require('./tripUtils');
 
-var ideaSchema;
-
+var ideaSchema = new mongoose.Schema({
+  googlePlaceId: { type: String, required: true },
+  date: { type: Date, default: Date.now },
+  name: { type: String, required: true },
+  loc: {
+    type: { type: String, required: true },
+    coordinates: { type: [Number], required: true }
+  },
+  address: String,
+  phone: String,
+  types: [String],
+  photo: String,
+  url: String,
+  status: { type: String, default: 'active' },
+  comment: String
+});
 
 var tripSchema = new mongoose.Schema({
   date: { type: Date, default: Date.now },
@@ -18,7 +32,7 @@ var tripSchema = new mongoose.Schema({
   startDate: Date,
   endDate: Date,
   destinations: [String],
-  ideas: [String],
+  ideas: [ideaSchema],
   plan: [String],
   visibility: { type: String, default: 'private' }
 });
