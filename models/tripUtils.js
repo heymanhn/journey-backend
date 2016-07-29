@@ -21,7 +21,6 @@ module.exports = {
 
     return this
       .find(params)
-      .select('-wishlist -itinerary') // Not returning the full object
       .sort({ date: -1 })
       .skip(count * (page-1))
       .limit(count)

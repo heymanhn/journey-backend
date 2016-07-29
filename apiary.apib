@@ -210,21 +210,21 @@ Get all journey entries created by the currently authenticated user, in reverse 
 
 ## Trip Management [/trips]
 
-Users can create and manage trips on the Journey app. Each trip specifies a list of destinations that the user is visiting, as well as lists of places the user wants to visit and has already visited.
+Users can create and manage trips on the Journey app. Each trip specifies a list of destinations that the user is visiting, as well as a list of places the user wants to visit (ideas) and a concrete trip plan to execute.
 
-Each trip includes the following:
+Each trip includes the following properties:
 
-* Date created
-* Trip creator
-* A title
-* A list of destinations (cities or countries)
-* (COMING SOON) A wishlist of places to visit
-* (COMING SOON) A trip plan, which is a list of places that users plan to go to
-* Visibility (public or private)
+* `date` - Date created
+* `creator` - User who created the trip
+* `title`
+* `destinations` - A list of cities/countries/continents the user will be visiting
+* `ideas` - A list of places the user wants to visit
+* (COMING SOON) `plan` - An itinerary for the trip, composed of places the user has decided to visit
+* `visibility` - whether or not the trip is publicly visilble
 
 ### Create a trip [POST]
 
-Creates a new trip. Only a title is required during creation. Returns the newly created trip upon success.
+Creates a new trip. Only `title` is required during creation. Returns the newly created trip upon success.
 
 + Request (application/json)
 
@@ -242,18 +242,20 @@ Creates a new trip. Only a title is required during creation. Returns the newly 
 + Response 200 (application/json)
 
         {
-            "_id": "578edda250b26fc5d3c6baa8",
-            "creator": "5785e22fdff4328371f8e781",
-            "title": "Paris and Marseille",
-            "startDate": "2016-08-15"
-            "endDate": "2016-08-20",
-            "destinations": [
-                "Paris, France",
-                "Marseille, France"
-            ],
-            "wishlist": [],
-            "plan": [],
-            "visibility": "private"
+            "trip": {
+                "_id": "578edda250b26fc5d3c6baa8",
+                "creator": "5785e22fdff4328371f8e781",
+                "title": "Paris and Marseille",
+                "startDate": "2016-08-15"
+                "endDate": "2016-08-20",
+                "destinations": [
+                    "Paris, France",
+                    "Marseille, France"
+                ],
+                "ideas": [],
+                "plan": [],
+                "visibility": "private"
+            }
         }
 
 ### Get a trip [GET /trips/{tripId}]
@@ -266,18 +268,20 @@ Gets details about a particular trip created by the currently authenticated user
 + Response 200 (application/json)
 
         {
-            "_id": "578edda250b26fc5d3c6baa8",
-            "creator": "5785e22fdff4328371f8e781",
-            "title": "Paris and Marseille",
-            "startDate": "2016-08-15"
-            "endDate": "2016-08-20",
-            "destinations": [
-                "Paris, France",
-                "Marseille, France"
-            ],
-            "wishlist": [],
-            "plan": [],
-            "visibility": "private"
+            "trip": {
+                "_id": "578edda250b26fc5d3c6baa8",
+                "creator": "5785e22fdff4328371f8e781",
+                "title": "Paris and Marseille",
+                "startDate": "2016-08-15"
+                "endDate": "2016-08-20",
+                "destinations": [
+                    "Paris, France",
+                    "Marseille, France"
+                ],
+                "ideas": [],
+                "plan": [],
+                "visibility": "private"
+            }
         }
 
 ### Update a trip [PUT /trips/{tripId}]
@@ -302,19 +306,21 @@ Updates the trip. Only allowed on trips created by currently authenticated user.
 + Response 200 (application/json)
 
         {
-            "_id": "578edda250b26fc5d3c6baa8",
-            "creator": "5785e22fdff4328371f8e781",
-            "title": "Amy goes to Paris and Marseille",
-            "startDate": "2016-08-12"
-            "endDate": "2016-08-20",
-            "destinations": [
-                "Paris, France",
-                "Marseille, France",
-                "Nice, France"
-            ],
-            "wishlist": [],
-            "plan": [],
-            "visibility": "private"
+            "trip": {
+                "_id": "578edda250b26fc5d3c6baa8",
+                "creator": "5785e22fdff4328371f8e781",
+                "title": "Amy goes to Paris and Marseille",
+                "startDate": "2016-08-12"
+                "endDate": "2016-08-20",
+                "destinations": [
+                    "Paris, France",
+                    "Marseille, France",
+                    "Nice, France"
+                ],
+                "ideas": [],
+                "plan": [],
+                "visibility": "private"
+            }
         }
 
 ### Delete a trip [DELETE /trips/{tripId}]
@@ -434,20 +440,22 @@ Fetches details for a specific entry created by the currently authenticated user
 + Response 200 (application/json)
 
         {
-            "_id": "578edda250b26fc5d3c6baa8",
-            "creator": "5785e22fdff4328371f8e781",
-            "type": "photo",
-            "message": "Check out this cute picture of Mochi!",
-            "contents": "https://s3-us-west-1.amazonaws.com/journey.media/e7b5b426-0d6b-4325-9d4e-8d2ba6fc8502",
-            "__v": 0,
-            "loc": {
-                "type": "Point",
-                "coordinates": [
-                    -122.431301,
-                    37.773224
-                ]
-            },
-            "date": "2016-07-20T02:10:42.442Z"
+            "entry": {
+                "_id": "578edda250b26fc5d3c6baa8",
+                "creator": "5785e22fdff4328371f8e781",
+                "type": "photo",
+                "message": "Check out this cute picture of Mochi!",
+                "contents": "https://s3-us-west-1.amazonaws.com/journey.media/e7b5b426-0d6b-4325-9d4e-8d2ba6fc8502",
+                "__v": 0,
+                "loc": {
+                    "type": "Point",
+                    "coordinates": [
+                        -122.431301,
+                        37.773224
+                    ]
+                },
+                "date": "2016-07-20T02:10:42.442Z"
+            }
         }
 
 ### Delete an entry [DELETE /entries/{entryId}]
