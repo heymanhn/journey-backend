@@ -140,6 +140,25 @@ app.get('/:tripId/ideas', ensureAuth, function(req, res, next) {
     .catch(next);
 });
 
+/*
+ * DELETE /trips/:tripId/ideas
+ *
+ * Clears the list of ideas from a given trip. Only allowed on trips created by
+ * the currently authenticated user.
+ *
+ */
+app.delete('/:tripId/ideas', ensureAuth, function(req, res, next) {
+  findTrip(req.params.tripId, req.user._id)
+    .then(deleteTripIdeas)
+    .then(saveTrip)
+    .then(function() {
+      res.json({
+        message: 'Trip ideas deleted.'
+      });
+    })
+    .catch(next);
+});
+
 
 /*
  * Helper functions
@@ -191,6 +210,7 @@ function removeTrip(trip) {
 }
 
 function createTripIdea(params, trip) {
+  var ideaExists = false;
   var newParams = {
     googlePlaceId: params.googlePlaceId,
     name: params.name,
@@ -207,7 +227,22 @@ function createTripIdea(params, trip) {
     }
   });
 
+  trip.ideas.forEach(function(idea) {
+    if (idea.googlePlaceId === newParams.googlePlaceId) {
+      ideaExists = true;
+    }
+  });
+
+  if (ideaExists) {
+    return Promise.reject(new Error('Idea already exists.'));
+  }
+
   trip.ideas.push(newParams);
+  return trip;
+}
+
+function deleteTripIdeas(trip) {
+  trip.ideas = [];
   return trip;
 }
 

@@ -483,6 +483,19 @@ Returns the list of ideas from a trip, in reverse chronological order. Only allo
             ]
         }
 
+### Delete a trip's ideas [DELETE]
+
+Clears the list of ideas from a given trip. Only allowed on trips created by the currently authenticated user.
+
++ Parameters
+    + tripId (string) - Trip ID
+
++ Response 200 (application/json)
+
+        {
+            "message": "Trip ideas deleted."
+        }
+
 
 ## Journey Entries [/entries]
 
