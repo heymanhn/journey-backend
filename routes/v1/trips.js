@@ -64,7 +64,7 @@ app.get('/:tripId', ensureAuth, function(req, res, next) {
  * Updates the trip. Only allowed on trips created by currently authenticated
  * user.
  *
- * COMING SOON: Figure out how to set and update the wishlist and itinerary
+ * COMING SOON: Figure out how to set and update the ideas and plan
  * properties
  *
  */

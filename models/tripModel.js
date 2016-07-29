@@ -4,6 +4,9 @@
 var mongoose = require('mongoose');
 var utils = require('./tripUtils');
 
+var ideaSchema;
+
+
 var tripSchema = new mongoose.Schema({
   date: { type: Date, default: Date.now },
   creator: {
@@ -15,7 +18,7 @@ var tripSchema = new mongoose.Schema({
   startDate: Date,
   endDate: Date,
   destinations: [String],
-  wishlist: [String],
+  ideas: [String],
   plan: [String],
   visibility: { type: String, default: 'private' }
 });
