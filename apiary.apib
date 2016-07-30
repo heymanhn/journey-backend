@@ -546,6 +546,20 @@ Users can update the order of an idea in the list, the comment, or the status.
             ]
         }
 
+### Delete a trip idea [DELETE /trips/{tripId}/ideas/{ideaId}]
+
+Removes an idea from a trip. Only allowed on ideas from trips created by the currently authenticated user.
+
++ Parameters
+    + tripId (string) - Trip ID
+    + ideaId (string) - Idea ID
+
++ Response 200 (application/json)
+
+        {
+            "message": "Trip idea deleted successfully."
+        }
+
 
 ## Journey Entries [/entries]
 

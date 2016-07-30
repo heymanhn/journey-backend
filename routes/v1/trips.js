@@ -182,6 +182,25 @@ app.put('/:tripId/ideas/:ideaId', ensureAuth, function(req, res, next) {
     .catch(next);
 });
 
+/*
+ * DELETE /:tripId/ideas/:ideaId
+ *
+ * Removes an idea from a trip. Only allowed on ideas from trips created by the
+ * currently authenticated user.
+ *
+ */
+app.delete('/:tripId/ideas/:ideaId', ensureAuth, function (req, res, next) {
+  findTrip(req.params.tripId, req.user._id)
+    .then(deleteTripIdea.bind(null, req.params.ideaId))
+    .then(saveTrip)
+    .then(function() {
+      res.json({
+        message: "Trip idea deleted successfully"
+      });
+    })
+    .catch(next);
+});
+
 
 /*
  * Helper functions
@@ -295,6 +314,13 @@ function updateTripIdea(params, ideaId, trip) {
 
 function deleteTripIdeas(trip) {
   trip.ideas = [];
+  return trip;
+}
+
+function deleteTripIdea(ideaId, trip) {
+  var idea = trip.ideas.id(ideaId);
+  idea.remove();
+
   return trip;
 }
 
