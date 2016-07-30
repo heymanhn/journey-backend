@@ -10,7 +10,7 @@ var Trip = require('../../models/tripModel');
 var app = express.Router();
 
 /*
- * POST /trips/
+ * POST /
  *
  * Creates a new trip. Only a title is required during creation. Returns the
  * newly created trip upon success.
@@ -34,15 +34,13 @@ app.post('/', ensureAuth, function(req, res, next) {
   trip
     .save()
     .then(function(newTrip) {
-      res.json({
-        trip: newTrip
-      });
+      res.redirect('/v1/users/' + req.user._id + '/trips/');
     })
     .catch(next);
 });
 
 /*
- * GET /trips/:tripId
+ * GET /:tripId
  *
  * Gets details about a particular trip created by the currently authenticated
  * user.
@@ -59,7 +57,7 @@ app.get('/:tripId', ensureAuth, function(req, res, next) {
 });
 
 /*
- * PUT /trips/:tripId
+ * PUT /:tripId
  *
  * Updates the trip. Only allowed on trips created by currently authenticated
  * user.
@@ -82,7 +80,7 @@ app.put('/:tripId', ensureAuth, function(req, res, next) {
 });
 
 /*
- * DELETE /trips/:tripId
+ * DELETE /:tripId
  *
  * Deletes the trip. Only allowed on trips created by currently authenticated
  * user.
@@ -105,7 +103,7 @@ app.delete('/:tripId', ensureAuth, function(req, res, next) {
  */
 
 /*
- * POST /trips/:tripId/ideas
+ * POST /:tripId/ideas
  *
  * Add a new idea to the trip. Only allowed on trips created by the currently
  * authenticated user.
@@ -124,7 +122,7 @@ app.post('/:tripId/ideas', ensureAuth, function(req, res, next) {
 });
 
 /*
- * GET /trips/:tripId/ideas
+ * GET /:tripId/ideas
  *
  * Get the list of ideas from a given trip. Only allowed on trips created by
  * the currently authenticated user.
@@ -141,7 +139,7 @@ app.get('/:tripId/ideas', ensureAuth, function(req, res, next) {
 });
 
 /*
- * DELETE /trips/:tripId/ideas
+ * DELETE /:tripId/ideas
  *
  * Clears the list of ideas from a given trip. Only allowed on trips created by
  * the currently authenticated user.
@@ -154,6 +152,31 @@ app.delete('/:tripId/ideas', ensureAuth, function(req, res, next) {
     .then(function() {
       res.json({
         message: 'Trip ideas deleted.'
+      });
+    })
+    .catch(next);
+});
+
+/*
+ * PUT /:tripId/ideas/:ideaId
+ *
+ * Updates an idea that belongs to a trip. Useful for reordering an idea in the
+ * list, marking an idea as "planned", or marking an idea back as "active".
+ * Only allowed on ideas whose trips are created by the currently authenticated
+ * user.
+ *
+ * Users can update the order of an idea in the list, or the comments the users
+ * provided.
+ *
+ */
+app.put('/:tripId/ideas/:ideaId', ensureAuth, function(req, res, next) {
+  findTrip(req.params.tripId, req.user._id)
+    .then(updateTripIdea.bind(null, req.body, req.params.ideaId))
+    .then(saveTrip)
+    .then(function(trip) {
+      res.json({
+        message: 'Trip idea updated successfully',
+        ideas: trip.ideas
       });
     })
     .catch(next);
@@ -238,6 +261,35 @@ function createTripIdea(params, trip) {
   }
 
   trip.ideas.push(newParams);
+  return trip;
+}
+
+function updateTripIdea(params, ideaId, trip) {
+  var idea = trip.ideas.id(ideaId);
+
+  if (!idea) {
+    return Promise.reject(new Error('Trip idea not found'));
+  }
+
+  if (params.comment !== undefined && params.comment !== idea.comment) {
+    idea.comment = params.comment;
+  }
+
+  if (params.status !== undefined && params.status !== idea.status) {
+    idea.status = params.status;
+  }
+
+  // Re-order the idea within the list if the index specified has changed vs.
+  // the idea's current index in the array
+  if (params.index !== undefined && params.index !== idea.__index) {
+    if (params.index < 0 || params.index > trip.ideas.length - 1) {
+      return Promise.reject(new Error('Invalid position for idea'));
+    }
+
+    trip.ideas.splice(idea.__index, 1);
+    trip.ideas.splice(params.index, 0, idea);
+  }
+
   return trip;
 }
 

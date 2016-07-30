@@ -242,24 +242,26 @@ Creates a new trip. Only `title` is required during creation. Returns the newly 
             "visibility": "private"
         }
 
-+ Response 200 (application/json)
++ Response 302 (application/json)
 
         {
-            "trip": {
-                "_id": "578edda250b26fc5d3c6baa8",
-                "creator": "5785e22fdff4328371f8e781",
-                "date": "2016-07-25T15:58:32.404Z",
-                "title": "Paris and Marseille",
-                "startDate": "2016-08-15"
-                "endDate": "2016-08-20",
-                "destinations": [
-                    "Paris, France",
-                    "Marseille, France"
-                ],
-                "ideas": [],
-                "plan": [],
-                "visibility": "private"
-            }
+            "trips": [
+                {
+                    "_id": "578edda250b26fc5d3c6baa8",
+                    "creator": "5785e22fdff4328371f8e781",
+                    "date": "2016-07-25T15:58:32.404Z",
+                    "title": "Paris and Marseille",
+                    "startDate": "2016-08-15"
+                    "endDate": "2016-08-20",
+                    "destinations": [
+                        "Paris, France",
+                        "Marseille, France"
+                    ],
+                    "ideas": [],
+                    "plan": [],
+                    "visibility": "private"
+               }
+            ]
         }
 
 ### Get a trip [GET /trips/{tripId}]
@@ -359,7 +361,7 @@ Each trip idea includes the following properties:
 * `types` - List of place types
 * `photo` - URL for the primary photo for the place
 * `url` - URL for the listing on Google
-* `status` - 'active', 'planned', or 'deleted'. Defaults to `active` on creation
+* `status` - 'active' or 'planned'. Defaults to `active` on creation
 * `comment` - User comment about the idea
 
 ### Create a trip idea [POST]
@@ -479,7 +481,7 @@ Returns the list of ideas from a trip, in reverse chronological order. Only allo
                     ],
                     "url": "https://maps.google.com/?q=Sydney+Harbour+Bridge,+Milsons+Point+NSW+2061,+Australia&ftid=0x6b12ae8b15c8ae05:0x2f0c1cf69dd4b59f",
                     "status": "active"
-                },
+                }
             ]
         }
 
@@ -494,6 +496,54 @@ Clears the list of ideas from a given trip. Only allowed on trips created by the
 
         {
             "message": "Trip ideas deleted."
+        }
+
+### Update a trip idea [PUT /trips/{tripId}/ideas/{ideaId}]
+
+Updates an idea that belongs to a trip. Useful for reordering an idea in the list, marking an idea as "planned", or marking an idea back as "active". Only allowed on ideas whose trips are created by the currently authenticated user.
+
+Users can update the order of an idea in the list, the comment, or the status.
+
++ Parameters
+    + tripId (string) - Trip ID
+    + ideaId (string) - Idea ID
+
++ Request (application/json)
+
+        {
+            "index": 0,
+            "comment": "See if we can go with Shiv tomorrow."
+        }
+
++ Response 200 (application/json)
+
+        {
+            "message": "Trip idea updated successfully.",
+            "ideas": [
+                {
+                    "_id": "578edda250b26fc5d3c6bf22",
+                    "googlePlaceId": "ChIJ3S-JXmauEmsRUcIaWtf4MzE",
+                    "date": "2016-07-29T07:27:02.451Z"
+                    "name": "Sydney Opera House",
+                    "loc": {
+                        "type": "Point",
+                        "coordinates": [
+                            151.2152967,
+                            -33.8567844
+                        ]
+                    },
+                    "address": "Bennelong Point, Sydney NSW 2000, Australia",
+                    "phone": "(02) 9250 7111",
+                    "types": [
+                      "point_of_interest",
+                      "establishment"
+                    ],
+                    "photo": "https://lh5.googleusercontent.com/-rlKEkZQ5hqA/VTS0B2sLp_I/AAAAAAAAH7U/w8ECgtHcpjA470l7hxfA2mDi8qKZrfG1Q/s1600-w500/",
+                    "url": "https://maps.google.com/?cid=3545450935484072529",
+                    "status": "active",
+                    "comment": "See if we can go with Shiv tomorrow."
+                }
+            ]
         }
 
 

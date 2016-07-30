@@ -9,6 +9,10 @@ module.exports = {
       return next(new Error('Trip entry is missing a title'));
     }
 
+    if (!Array.isArray(this.ideas)) {
+      return next(new Error('Trip ideas have invalid format'));
+    }
+
     next();
   },
 
