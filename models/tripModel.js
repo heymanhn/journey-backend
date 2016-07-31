@@ -21,6 +21,16 @@ var ideaSchema = new mongoose.Schema({
   comment: String
 });
 
+var destinationSchema = new mongoose.Schema({
+  googlePlaceId: { type: String, required: true },
+  name: { type: String, required: true },
+  loc: {
+    type: { type: String, required: true },
+    coordinates: { type: [Number], required: true }
+  },
+  types: [String]
+});
+
 var tripSchema = new mongoose.Schema({
   date: { type: Date, default: Date.now },
   creator: {
@@ -31,7 +41,7 @@ var tripSchema = new mongoose.Schema({
   title: { type: String, required: true },
   startDate: Date,
   endDate: Date,
-  destinations: [String],
+  destinations: [destinationSchema],
   ideas: [ideaSchema],
   plan: [String],
   visibility: { type: String, default: 'private' }

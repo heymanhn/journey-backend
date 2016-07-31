@@ -137,10 +137,9 @@ Get all the trips created by the currently authenticated user, in reverse chrono
                     "title": "Paris and Marseille",
                     "startDate": "2016-08-15"
                     "endDate": "2016-08-20",
-                    "destinations": [
-                        "Paris, France",
-                        "Marseille, France"
-                    ],
+                    "destinations": [],
+                    "ideas": [],
+                    "plan": [],
                     "visibility": "private"
                 },
                 {
@@ -150,9 +149,9 @@ Get all the trips created by the currently authenticated user, in reverse chrono
                     "title": "Amy and Adam Take Vietnam!",
                     "startDate": "2016-09-22"
                     "endDate": "2016-09-27",
-                    "destinations": [
-                        "Vietnam"
-                    ],
+                    "destinations": [],
+                    "ideas": [],
+                    "plan": [],
                     "visibility": "public"
                 }
             ]
@@ -235,10 +234,6 @@ Creates a new trip. Only `title` is required during creation. Returns the newly 
             "title": "Paris and Marseille",
             "startDate": "2016-08-15"
             "endDate": "2016-08-20",
-            "destinations": [
-                "Paris, France",
-                "Marseille, France"
-            ],
             "visibility": "private"
         }
 
@@ -253,10 +248,7 @@ Creates a new trip. Only `title` is required during creation. Returns the newly 
                     "title": "Paris and Marseille",
                     "startDate": "2016-08-15"
                     "endDate": "2016-08-20",
-                    "destinations": [
-                        "Paris, France",
-                        "Marseille, France"
-                    ],
+                    "destinations": [],
                     "ideas": [],
                     "plan": [],
                     "visibility": "private"
@@ -320,11 +312,7 @@ Updates the trip. Only allowed on trips created by currently authenticated user.
                 "title": "Amy goes to Paris and Marseille",
                 "startDate": "2016-08-12"
                 "endDate": "2016-08-20",
-                "destinations": [
-                    "Paris, France",
-                    "Marseille, France",
-                    "Nice, France"
-                ],
+                "destinations": [],
                 "ideas": [],
                 "plan": [],
                 "visibility": "private"
@@ -333,7 +321,7 @@ Updates the trip. Only allowed on trips created by currently authenticated user.
 
 ### Delete a trip [DELETE /trips/{tripId}]
 
-Deletes the trip. Only allowed on trips created by currently authenticated user.
+Deletes the trip. Only allowed on trips created by the currently authenticated user.
 
 + Parameters
     + tripId (string) - Trip ID to delete.
@@ -342,6 +330,67 @@ Deletes the trip. Only allowed on trips created by currently authenticated user.
 
         {
             "message": "Trip deleted."
+        }
+
+## Trip Destinations [/trips/{tripId}/destinations]
+
+Each trip contains a list of destinations. The purpose of keeping this list is to help visualize where users are visiting on the map, even before ideas or plans are set.
+
+### Add a trip destination [POST]
+
+Adds a destination to the trip. Only allowed on trips created by the currently authenticated user.
+
++ Request (application/json)
+
+        {
+            "googlePlaceId": "ChIJm7oRy-tVZDURS9uIugCbJJE",
+            "name": "South Korea",
+            "loc": {
+                "type": "Point",
+                "coordinates": [
+                    151.2125697,
+                    -33.8487927
+                ]
+            },
+            "types": [
+                "country"
+            ]
+        }
+
++ Response 200 (application/json)
+
+        {
+            "destinations": [
+                {
+                    "_id": "579e7853181f58d5412ab908",
+                    "googlePlaceId": "ChIJm7oRy-tVZDURS9uIugCbJJE",
+                    "name": "South Korea",
+                    "loc": {
+                        "type": "Point",
+                        "coordinates": [
+                            151.2125697,
+                            -33.8487927
+                        ]
+                    },
+                    "types": [
+                        "country"
+                    ]
+                }
+            ]
+        }
+
+### Remove a trip destination [DELETE /trips/{tripId}/destinations/{destinationId}]
+
+Removes a destination from a trip. Only allowed on trips created by the currently authenticated user.
+
++ Parameters
+    + tripId (string) - Trip ID to get details for.
+    + destinationId (string) - Destination ID in the trip.
+
++ Response 200 (application/json)
+
+        {
+            "message": "Trip destination deleted."
         }
 
 
