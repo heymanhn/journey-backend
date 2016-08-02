@@ -7,7 +7,7 @@ Journey helps you organize your trips, allowing you to maximize your experiences
 This repository contains the API server for accessing Journey data. Please visit the [API documentation](http://docs.journeyapp.apiary.io/#) for more details.
 
 
-## Set-up
+## Setup
 Recommend using Homebrew if available to install these software packages:
 * Install MongoDB
 * Install NodeJS
