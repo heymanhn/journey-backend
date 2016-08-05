@@ -221,12 +221,12 @@ Each trip includes the following properties:
 * `title`
 * `destinations` - A list of cities/countries/continents the user will be visiting
 * `ideas` - A list of places the user wants to visit
-* (COMING SOON) `plan` - An itinerary for the trip, composed of places the user has decided to visit
-* `visibility` - whether or not the trip is publicly visilble
+* `plan` - A day-by-day itinerary for the trip, composed of places the user has decided to visit
+* `visibility` - whether or not the trip is publicly visible
 
 ### Create a trip [POST]
 
-Creates a new trip. Only `title` is required during creation. Returns the newly created trip upon success.
+Creates a new trip. Only `title` is required during creation, and the user can only specify `title`, `startDate`, `endDate`, and `destinations` during trip creation. Returns the newly created trip upon success.
 
 + Request (application/json)
 
@@ -410,7 +410,7 @@ Each trip idea includes the following properties:
 * `types` - List of place types
 * `photo` - URL for the primary photo for the place
 * `url` - URL for the listing on Google
-* `status` - 'active' or 'planned'. Defaults to `active` on creation
+* `status` - `active` or `planned`. Defaults to `active` on creation
 * `comment` - User comment about the idea
 
 ### Create a trip idea [POST]
@@ -608,6 +608,67 @@ Removes an idea from a trip. Only allowed on ideas from trips created by the cur
         {
             "message": "Trip idea deleted successfully."
         }
+
+
+## Trip Plan [/trips/{tripId}/plan]
+
+Each trip contains a plan, which keeps track of all the places users plan to visit during a trip. Each plan is made up of a series of trip days. Each day contains a list of trip entries - places users want to visit on that day. Users add entries to a specific day of the plan, and do so either by moving a Trip Idea into the Trip Plan, or directly into the plan.
+
+To facilitate frequent back-and-forths between Trip Ideas and the Trip Plan, the backend will handle updating the state of an idea as users move it to the plan and back.
+
+The below schemas make up a trip plan:
+
+Trip Plan: Array of Trip Days. The index of the day in the array corresponds to the day # of the trip.
+
+Trip Day:
+* `_id` - Mongo ID
+* `entries` - An array of Trip Entries
+* `lodging` - subObject below, can be empty
+  * `address` - optional
+  * `googlePlaceId` - optional
+  * `name` - optional
+  * `loc` - Location (Type and coordinates), optional
+  * `type` (address or place)
+
+The order of the items in the `entries` array determines the order the user intends to visit them during the day.
+
+Trip Entry:
+* `_id` - Mongo ID
+* `googlePlaceId` - Google Place ID
+* `date` - Date created
+* `name` - Name of the place
+* `loc` - Location (Type and coordinates)
+* `address`
+* `phone`
+* `types` - List of place types
+* `photo` - URL for the primary photo for the place
+* `url` - URL for the listing on Google
+* `status` - `planned` or `visited`. Defaults to `planned` on creation
+* `comment` - User comment about the entry
+
+### Get entire trip plan [GET]
+
+TBD
+
+### Get the plan for a trip day [GET /trips/{tripId}/plan/{dayId}]
+
+TBD
+
+### Reorder a trip day [PUT /trips/{tripId}/plan/{dayId}]
+
+TBD
+
+### Create a new Trip Entry [POST /trips/{tripId}/plan/{dayId}]
+
+TBD
+
+### Edit a Trip Entry [PUT /trips/{tripId}/plan/{dayId}/entries/{entryId}]
+
+TBD
+
+### Delete a Trip Entry [DELETE /trips/{tripId}/plan/{dayId}/entries/{entryId}]
+
+TBD
 
 
 ## Journey Entries [/entries]
