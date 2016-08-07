@@ -17,7 +17,6 @@ var ideaSchema = new mongoose.Schema({
   types: [String],
   photo: String,
   url: String,
-  status: { type: String, default: 'active' },
   comment: String
 });
 

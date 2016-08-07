@@ -410,7 +410,6 @@ Each trip idea includes the following properties:
 * `types` - List of place types
 * `photo` - URL for the primary photo for the place
 * `url` - URL for the listing on Google
-* `status` - `active` or `planned`. Defaults to `active` on creation
 * `comment` - User comment about the idea
 
 ### Create a trip idea [POST]
@@ -469,7 +468,6 @@ Creates a new idea for the trip. Only allowed on a trip created by the currently
                     ],
                     "photo": "https://lh5.googleusercontent.com/-rlKEkZQ5hqA/VTS0B2sLp_I/AAAAAAAAH7U/w8ECgtHcpjA470l7hxfA2mDi8qKZrfG1Q/s1600-w500/",
                     "url": "https://maps.google.com/?cid=3545450935484072529",
-                    "status": "active",
                     "comment": "Have to go here for any trip to Sydney"
                 }
             ]
@@ -509,7 +507,6 @@ Returns the list of ideas from a trip, in reverse chronological order. Only allo
                     ],
                     "photo": "https://lh5.googleusercontent.com/-rlKEkZQ5hqA/VTS0B2sLp_I/AAAAAAAAH7U/w8ECgtHcpjA470l7hxfA2mDi8qKZrfG1Q/s1600-w500/",
                     "url": "https://maps.google.com/?cid=3545450935484072529",
-                    "status": "active",
                     "comment": "Have to go here for any trip to Sydney"
                 },
                 {
@@ -528,8 +525,7 @@ Returns the list of ideas from a trip, in reverse chronological order. Only allo
                     "types": [
                       "route"
                     ],
-                    "url": "https://maps.google.com/?q=Sydney+Harbour+Bridge,+Milsons+Point+NSW+2061,+Australia&ftid=0x6b12ae8b15c8ae05:0x2f0c1cf69dd4b59f",
-                    "status": "active"
+                    "url": "https://maps.google.com/?q=Sydney+Harbour+Bridge,+Milsons+Point+NSW+2061,+Australia&ftid=0x6b12ae8b15c8ae05:0x2f0c1cf69dd4b59f"
                 }
             ]
         }
@@ -551,7 +547,7 @@ Clears the list of ideas from a given trip. Only allowed on trips created by the
 
 Updates an idea that belongs to a trip. Useful for reordering an idea in the list, marking an idea as "planned", or marking an idea back as "active". Only allowed on ideas whose trips are created by the currently authenticated user.
 
-Users can update the order of an idea in the list, the comment, or the status.
+Users can update the order of an idea in the list or the comment.
 
 + Parameters
     + tripId (string) - Trip ID
@@ -589,7 +585,6 @@ Users can update the order of an idea in the list, the comment, or the status.
                     ],
                     "photo": "https://lh5.googleusercontent.com/-rlKEkZQ5hqA/VTS0B2sLp_I/AAAAAAAAH7U/w8ECgtHcpjA470l7hxfA2mDi8qKZrfG1Q/s1600-w500/",
                     "url": "https://maps.google.com/?cid=3545450935484072529",
-                    "status": "active",
                     "comment": "See if we can go with Shiv tomorrow."
                 }
             ]

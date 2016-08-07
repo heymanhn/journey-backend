@@ -337,7 +337,7 @@ function createTripIdea(params, trip) {
   };
 
   var optionalParams = [
-    'address', 'phone', 'types', 'photo', 'url', 'status', 'comment'
+    'address', 'phone', 'types', 'photo', 'url', 'comment'
   ];
 
   optionalParams.forEach(function(field) {
@@ -369,10 +369,6 @@ function updateTripIdea(params, ideaId, trip) {
 
   if (params.comment !== undefined && params.comment !== idea.comment) {
     idea.comment = params.comment;
-  }
-
-  if (params.status !== undefined && params.status !== idea.status) {
-    idea.status = params.status;
   }
 
   // Re-order the idea within the list if the index specified has changed vs.
