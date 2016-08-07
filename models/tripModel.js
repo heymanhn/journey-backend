@@ -4,6 +4,36 @@
 var mongoose = require('mongoose');
 var utils = require('./tripUtils');
 
+var planEntrySchema = new mongoose.Schema({
+  googlePlaceId: { type: String, required: true },
+  date: { type: Date, default: Date.now },
+  name: { type: String, required: true },
+  loc: {
+    type: { type: String, required: true },
+    coordinates: { type: [Number], required: true }
+  },
+  address: String,
+  phone: String,
+  types: [String],
+  photo: String,
+  url: String,
+  status: { type: String, default: 'planned' },
+  comment: String
+});
+
+var daySchema = new mongoose.Schema({
+  entries: [planEntrySchema],
+  lodging: {
+    address: String,
+    googlePlaceId: String,
+    loc: {
+      type: { type: String, required: true },
+      coordinates: { type: [Number], required: true }
+    },
+    name: String
+  }
+});
+
 var ideaSchema = new mongoose.Schema({
   googlePlaceId: { type: String, required: true },
   date: { type: Date, default: Date.now },
@@ -42,7 +72,7 @@ var tripSchema = new mongoose.Schema({
   endDate: Date,
   destinations: [destinationSchema],
   ideas: [ideaSchema],
-  plan: [String],
+  plan: [daySchema],
   visibility: { type: String, default: 'private' }
 });
 

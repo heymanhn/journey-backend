@@ -247,6 +247,50 @@ app.delete('/:tripId/ideas/:ideaId', ensureAuth, function (req, res, next) {
 
 
 /*
+ * Trip Plan
+ */
+
+/*
+ * GET /:tripId/plan
+ *
+ * Returns the entire trip plan.
+ *
+ */
+app.get('/:tripId/plan', ensureAuth, function(req, res, next) {
+  var tripId = req.params.tripId;
+
+  findTrip(tripId, req.user._id)
+    .then(function(trip) {
+      res.json({
+        tripId: tripId,
+        plan: trip.plan
+      });
+    })
+    .catch(next);
+});
+
+/*
+ * GET /trips/:tripId/plan/:dayId
+ *
+ * Returns the plan for a trip day. Only allowed on trips created by the
+ * currently authenticated user.
+ *
+ */
+app.get('/:tripId/plan/:dayId', ensureAuth, function(req, res, next) {
+  var tripId = req.params.tripId;
+
+  findTrip(tripId, req.user._id)
+    .then(findTripDay.bind(null, req.params.dayId))
+    .then(function(tripDay) {
+      res.json({
+        tripDay: tripDay
+      });
+    })
+    .catch(next);
+});
+
+
+/*
  * Helper functions
  */
 
@@ -395,6 +439,16 @@ function deleteTripIdea(ideaId, trip) {
   idea.remove();
 
   return trip;
+}
+
+function findTripDay(dayId, trip) {
+  var day = trip.plan.id(dayId);
+
+  if (!day) {
+    return Promise.reject(new Error('Trip day not found'));
+  }
+
+  return day;
 }
 
 module.exports = app;
