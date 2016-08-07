@@ -628,7 +628,6 @@ Trip Day:
   * `googlePlaceId` - optional
   * `name` - optional
   * `loc` - Location (Type and coordinates), optional
-  * `type` (address or place)
 
 The order of the items in the `entries` array determines the order the user intends to visit them during the day.
 
@@ -648,15 +647,156 @@ Trip Entry:
 
 ### Get entire trip plan [GET]
 
-TBD
++ Parameters
+    + tripId (string) - Trip ID
+
++ Response 200 (application/json)
+
+        {
+            "tripId": "578edda250b26fc5d3c6bf22",
+            "plan": [
+                {
+                    "_id": "578edda250b26fc5d3c6bb11",
+                    "entries": [
+                        {
+                            "_id": "578edda250b26fc5d3c6bf28",
+                            "googlePlaceId": "ChIJ3S-JXmauEmsRUcIaWtf4MzE",
+                            "date": "2016-07-29T07:27:02.451Z"
+                            "name": "Sydney Opera House",
+                            "loc": {
+                                "type": "Point",
+                                "coordinates": [
+                                    151.2152967,
+                                    -33.8567844
+                                ]
+                            },
+                            "address": "Bennelong Point, Sydney NSW 2000, Australia",
+                            "phone": "(02) 9250 7111",
+                            "types": [
+                              "point_of_interest",
+                              "establishment"
+                            ],
+                            "photo": "https://lh5.googleusercontent.com/-rlKEkZQ5hqA/VTS0B2sLp_I/AAAAAAAAH7U/w8ECgtHcpjA470l7hxfA2mDi8qKZrfG1Q/s1600-w500/",
+                            "url": "https://maps.google.com/?cid=3545450935484072529",
+                            "status": "planned",
+                            "comment": "See if we can go with Shiv tomorrow."
+                        }
+                    ],
+                    "lodging": {}
+                },
+                {
+                    "_id": "578edda250b26fc5d3c6bb17",
+                    "entries": [],
+                    "lodging": {}
+                },
+                {
+                    "_id": "578edda250b26fc5d3c6bb62",
+                    "entries": [],
+                    "lodging": {}
+                }
+            ]
+        }
 
 ### Get the plan for a trip day [GET /trips/{tripId}/plan/{dayId}]
 
-TBD
++ Parameters
+    + tripId (string) - Trip ID
+    + dayId (string) - Trip Day ID
+
++ Response 200 (application/json)
+
+        {
+            "tripDay": {
+                "_id": "578edda250b26fc5d3c6bb11",
+                "entries": [
+                    {
+                        "_id": "578edda250b26fc5d3c6bf28",
+                        "googlePlaceId": "ChIJ3S-JXmauEmsRUcIaWtf4MzE",
+                        "date": "2016-07-29T07:27:02.451Z"
+                        "name": "Sydney Opera House",
+                        "loc": {
+                            "type": "Point",
+                            "coordinates": [
+                                151.2152967,
+                                -33.8567844
+                            ]
+                        },
+                        "address": "Bennelong Point, Sydney NSW 2000, Australia",
+                        "phone": "(02) 9250 7111",
+                        "types": [
+                          "point_of_interest",
+                          "establishment"
+                        ],
+                        "photo": "https://lh5.googleusercontent.com/-rlKEkZQ5hqA/VTS0B2sLp_I/AAAAAAAAH7U/w8ECgtHcpjA470l7hxfA2mDi8qKZrfG1Q/s1600-w500/",
+                        "url": "https://maps.google.com/?cid=3545450935484072529",
+                        "status": "planned",
+                        "comment": "See if we can go with Shiv tomorrow."
+                    }
+                ],
+                "lodging": {}
+            },
+        }
 
 ### Reorder a trip day [PUT /trips/{tripId}/plan/{dayId}]
 
-TBD
+Moves the plans for an entire day to another day, reordering the affected trip days in the process. Can only update the day # in this endpoint.
+
++ Parameters
+    + tripId (string) - Trip ID
+    + dayId (string) - Trip Day ID
+
++ Request (application/json)
+
+        {
+            "index": 0
+        }
+
++ Response 200 (application/json)
+
+        {
+            "plan": [
+                {
+                    "_id": "578edda250b26fc5d3c6bb17",
+                    "entries": [],
+                    "lodging": {}
+                },
+                {
+                    "_id": "578edda250b26fc5d3c6bb11",
+                    "entries": [
+                        {
+                            "_id": "578edda250b26fc5d3c6bf28",
+                            "googlePlaceId": "ChIJ3S-JXmauEmsRUcIaWtf4MzE",
+                            "date": "2016-07-29T07:27:02.451Z"
+                            "name": "Sydney Opera House",
+                            "loc": {
+                                "type": "Point",
+                                "coordinates": [
+                                    151.2152967,
+                                    -33.8567844
+                                ]
+                            },
+                            "address": "Bennelong Point, Sydney NSW 2000, Australia",
+                            "phone": "(02) 9250 7111",
+                            "types": [
+                              "point_of_interest",
+                              "establishment"
+                            ],
+                            "photo": "https://lh5.googleusercontent.com/-rlKEkZQ5hqA/VTS0B2sLp_I/AAAAAAAAH7U/w8ECgtHcpjA470l7hxfA2mDi8qKZrfG1Q/s1600-w500/",
+                            "url": "https://maps.google.com/?cid=3545450935484072529",
+                            "status": "planned",
+                            "comment": "See if we can go with Shiv tomorrow."
+                        }
+                    ],
+                    "lodging": {}
+                },
+                {
+                    "_id": "578edda250b26fc5d3c6bb62",
+                    "entries": [],
+                    "lodging": {}
+                }
+            ]
+        }
+
 
 ### Create a new Trip Entry [POST /trips/{tripId}/plan/{dayId}]
 
