@@ -235,7 +235,7 @@ Each trip includes the following properties:
 
 ### Create a trip [POST]
 
-Creates a new trip. Only `title` is required during creation, and the user can only specify `title`, `startDate`, `endDate`, and `destinations` during trip creation. Returns the newly created trip upon success.
+Creates a new trip. `title`, `startDate`, and `endDate` are required during creation, and the user can only specify those three fields and `destinations` during trip creation. Returns the newly created trip upon success.
 
 + Request (application/json)
 
@@ -759,9 +759,9 @@ Only allowed on trips created by the currently authenticated user.
         }
 
 
-### Reorder a trip day [PUT /trips/{tripId}/plan/{dayId}]
+### Update a trip day [PUT /trips/{tripId}/plan/{dayId}]
 
-Moves the plans for an entire day to another day, reordering the affected trip days in the process. Can only update the day # in this endpoint. Only allowed on trips created by the currently authenticated user.
+Updates the contents of a trip day. Only allowed on trips created by the currently authenticated user. Can move the entire day to another day, reordering the affected trip days in the process. Can also update the lodging information for the day.
 
 + Parameters
     + tripId (string) - Trip ID
@@ -770,7 +770,19 @@ Moves the plans for an entire day to another day, reordering the affected trip d
 + Request (application/json)
 
         {
-            "index": 0
+            "index": 0,
+            "lodging": {
+                "googlePlaceId": "ChIJC-dWE0KuEmsR_cLanc3QLkc",
+                "address": "30 Pitt St, Sydney NSW 2000, Australia",
+                "name": "Sydney Harbour Marriott Hotel at Circular Quay",
+                "loc": {
+                    "type": "Point",
+                    "coordinates": [
+                        151.2092998,
+                        -33.8627261
+                    ]
+                }
+            }
         }
 
 + Response 200 (application/json)
@@ -780,7 +792,18 @@ Moves the plans for an entire day to another day, reordering the affected trip d
                 {
                     "_id": "578edda250b26fc5d3c6bb17",
                     "entries": [],
-                    "lodging": {}
+                    "lodging": {
+                        "googlePlaceId": "ChIJC-dWE0KuEmsR_cLanc3QLkc",
+                        "address": "30 Pitt St, Sydney NSW 2000, Australia",
+                        "name": "Sydney Harbour Marriott Hotel at Circular Quay",
+                        "loc": {
+                            "type": "Point",
+                            "coordinates": [
+                                151.2092998,
+                                -33.8627261
+                            ]
+                        }
+                    }
                 },
                 {
                     "_id": "578edda250b26fc5d3c6bb11",

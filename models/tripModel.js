@@ -68,8 +68,8 @@ var tripSchema = new mongoose.Schema({
     required: true
   },
   title: { type: String, required: true },
-  startDate: Date,
-  endDate: Date,
+  startDate: { type: Date, required: true },
+  endDate: { type: Date, required: true },
   destinations: [destinationSchema],
   ideas: [ideaSchema],
   plan: [daySchema],
@@ -77,6 +77,7 @@ var tripSchema = new mongoose.Schema({
 });
 
 tripSchema.pre('validate', utils.validateFields);
+tripSchema.pre('save', utils.createTripDays);
 tripSchema.statics.findTrips = utils.findTrips;
 
 module.exports = mongoose.model('Trip', tripSchema);

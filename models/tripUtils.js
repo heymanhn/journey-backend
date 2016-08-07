@@ -13,6 +13,28 @@ module.exports = {
       return next(new Error('Trip ideas have invalid format'));
     }
 
+    if (this.endDate < this.startDate) {
+      return next(new Error('Trip end date is before start date'));
+    }
+
+    next();
+  },
+
+  createTripDays: function(next) {
+    if (!this.startDate || !this.endDate) {
+      return next(new Error('Trip entry is missing a start/end date'));
+    }
+
+    var numDays = ((this.endDate - this.startDate) / (1000 * 3600 * 24)) + 1;
+    for (var i = 0; i < numDays; i++) {
+      var dayParams = {
+        entries: [],
+        lodging: {}
+      };
+
+      this.plan.push(dayParams);
+    }
+
     next();
   },
 

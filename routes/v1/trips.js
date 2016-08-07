@@ -20,14 +20,12 @@ app.post('/', ensureAuth, function(req, res, next) {
   var params = {
     creator: req.user._id,
     title: req.body.title,
+    startDate: req.body.startDate,
+    endDate: req.body.endDate
   };
 
   if (req.body.destinations) {
     params.destinations = req.body.destinations;
-  }
-  if (req.body.startDate && req.body.endDate) {
-    params.startDate = req.body.startDate;
-    params.endDate = req.body.endDate;
   }
 
   var trip = new Trip(params);
