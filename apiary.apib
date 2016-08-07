@@ -8,9 +8,11 @@ Journey helps you organize your trips, allowing you to maximize your experiences
 The Journey API allows consumers to access and create trips, which contain lists of places users want to go for their destinations.
 
 
+
 ## Authentication [/login]
 
 Journey uses JSON Web Tokens for the API server's authentication. This means the server does not maintain sessions for each connection. Once the server authenticates a client and provides a JSON Web Token, all subsequent API requests (except for user account creation) need to include that token in the HTTP `Authorization` header.
+
 
 ### Login [POST]
 
@@ -36,6 +38,7 @@ Log in with either a username or email, as well as the password. The API returns
             },
             "token": "JWT <JWT_TOKEN>"
         }
+
 
 
 ## User Management [/users]
@@ -69,6 +72,7 @@ The API returns the user object and a JSON Web Token if account creation is succ
             "token": "JWT <JWT_TOKEN>"
         }
 
+
 ### Get User Information [GET /users/{userId}]
 
 Retrieve information about a user. Only allowed on currently authenticated user.
@@ -88,6 +92,7 @@ Retrieve information about a user. Only allowed on currently authenticated user.
                 "signupDate": "2016-07-27T02:44:52.928Z"
             }
         }
+
 
 ### Update User Information [PUT /users/{userId}]
 
@@ -115,6 +120,7 @@ Updates the user. Only allowed on currently authenticated user.
                 "signupDate": "2016-07-27T02:44:52.928Z"
             }
         }
+
 
 ### Get User's trips [GET /users/{userId}/trips?page={page}]
 
@@ -156,6 +162,7 @@ Get all the trips created by the currently authenticated user, in reverse chrono
                 }
             ]
         }
+
 
 ### Get User's entries [GET /users/{userId}/entries?count={count}&page={page}&maxDate={maxDate}]
 
@@ -209,6 +216,7 @@ Get all journey entries created by the currently authenticated user, in reverse 
         }
 
 
+
 ## Trip Management [/trips]
 
 Users can create and manage trips on the Journey app. Each trip specifies a list of destinations that the user is visiting, as well as a list of places the user wants to visit (ideas) and a concrete trip plan to execute.
@@ -223,6 +231,7 @@ Each trip includes the following properties:
 * `ideas` - A list of places the user wants to visit
 * `plan` - A day-by-day itinerary for the trip, composed of places the user has decided to visit
 * `visibility` - whether or not the trip is publicly visible
+
 
 ### Create a trip [POST]
 
@@ -256,6 +265,7 @@ Creates a new trip. Only `title` is required during creation, and the user can o
             ]
         }
 
+
 ### Get a trip [GET /trips/{tripId}]
 
 Gets details about a particular trip created by the currently authenticated user. Returns the full details about the trip.
@@ -282,6 +292,7 @@ Gets details about a particular trip created by the currently authenticated user
                 "visibility": "private"
             }
         }
+
 
 ### Update a trip [PUT /trips/{tripId}]
 
@@ -319,6 +330,7 @@ Updates the trip. Only allowed on trips created by currently authenticated user.
             }
         }
 
+
 ### Delete a trip [DELETE /trips/{tripId}]
 
 Deletes the trip. Only allowed on trips created by the currently authenticated user.
@@ -332,9 +344,11 @@ Deletes the trip. Only allowed on trips created by the currently authenticated u
             "message": "Trip deleted."
         }
 
+
 ## Trip Destinations [/trips/{tripId}/destinations]
 
 Each trip contains a list of destinations. The purpose of keeping this list is to help visualize where users are visiting on the map, even before ideas or plans are set.
+
 
 ### Add a trip destination [POST]
 
@@ -379,6 +393,7 @@ Adds a destination to the trip. Only allowed on trips created by the currently a
             ]
         }
 
+
 ### Remove a trip destination [DELETE /trips/{tripId}/destinations/{destinationId}]
 
 Removes a destination from a trip. Only allowed on trips created by the currently authenticated user.
@@ -392,6 +407,7 @@ Removes a destination from a trip. Only allowed on trips created by the currentl
         {
             "message": "Trip destination deleted."
         }
+
 
 
 ## Trip Ideas [/trips/{tripId}/ideas]
@@ -411,6 +427,7 @@ Each trip idea includes the following properties:
 * `photo` - URL for the primary photo for the place
 * `url` - URL for the listing on Google
 * `comment` - User comment about the idea
+
 
 ### Create a trip idea [POST]
 
@@ -436,8 +453,8 @@ Creates a new idea for the trip. Only allowed on a trip created by the currently
             "address": "Bennelong Point, Sydney NSW 2000, Australia",
             "phone": "(02) 9250 7111",
             "types": [
-              "point_of_interest",
-              "establishment"
+                "point_of_interest",
+                "establishment"
             ],
             "photo": "https://lh5.googleusercontent.com/-rlKEkZQ5hqA/VTS0B2sLp_I/AAAAAAAAH7U/w8ECgtHcpjA470l7hxfA2mDi8qKZrfG1Q/s1600-w500/",
             "url": "https://maps.google.com/?cid=3545450935484072529",
@@ -463,8 +480,8 @@ Creates a new idea for the trip. Only allowed on a trip created by the currently
                     "address": "Bennelong Point, Sydney NSW 2000, Australia",
                     "phone": "(02) 9250 7111",
                     "types": [
-                      "point_of_interest",
-                      "establishment"
+                        "point_of_interest",
+                        "establishment"
                     ],
                     "photo": "https://lh5.googleusercontent.com/-rlKEkZQ5hqA/VTS0B2sLp_I/AAAAAAAAH7U/w8ECgtHcpjA470l7hxfA2mDi8qKZrfG1Q/s1600-w500/",
                     "url": "https://maps.google.com/?cid=3545450935484072529",
@@ -472,6 +489,7 @@ Creates a new idea for the trip. Only allowed on a trip created by the currently
                 }
             ]
         }
+
 
 ### Get a trip's ideas [GET /trips/{tripId}/ideas?page={page}]
 
@@ -502,8 +520,8 @@ Returns the list of ideas from a trip, in reverse chronological order. Only allo
                     "address": "Bennelong Point, Sydney NSW 2000, Australia",
                     "phone": "(02) 9250 7111",
                     "types": [
-                      "point_of_interest",
-                      "establishment"
+                        "point_of_interest",
+                        "establishment"
                     ],
                     "photo": "https://lh5.googleusercontent.com/-rlKEkZQ5hqA/VTS0B2sLp_I/AAAAAAAAH7U/w8ECgtHcpjA470l7hxfA2mDi8qKZrfG1Q/s1600-w500/",
                     "url": "https://maps.google.com/?cid=3545450935484072529",
@@ -523,12 +541,13 @@ Returns the list of ideas from a trip, in reverse chronological order. Only allo
                     },
                     "address": "Sydney Harbour Bridge, Milsons Point NSW 2061, Australia",
                     "types": [
-                      "route"
+                        "route"
                     ],
                     "url": "https://maps.google.com/?q=Sydney+Harbour+Bridge,+Milsons+Point+NSW+2061,+Australia&ftid=0x6b12ae8b15c8ae05:0x2f0c1cf69dd4b59f"
                 }
             ]
         }
+
 
 ### Delete a trip's ideas [DELETE]
 
@@ -542,6 +561,7 @@ Clears the list of ideas from a given trip. Only allowed on trips created by the
         {
             "message": "Trip ideas deleted."
         }
+
 
 ### Update a trip idea [PUT /trips/{tripId}/ideas/{ideaId}]
 
@@ -580,8 +600,8 @@ Users can update the order of an idea in the list or the comment.
                     "address": "Bennelong Point, Sydney NSW 2000, Australia",
                     "phone": "(02) 9250 7111",
                     "types": [
-                      "point_of_interest",
-                      "establishment"
+                        "point_of_interest",
+                        "establishment"
                     ],
                     "photo": "https://lh5.googleusercontent.com/-rlKEkZQ5hqA/VTS0B2sLp_I/AAAAAAAAH7U/w8ECgtHcpjA470l7hxfA2mDi8qKZrfG1Q/s1600-w500/",
                     "url": "https://maps.google.com/?cid=3545450935484072529",
@@ -589,6 +609,7 @@ Users can update the order of an idea in the list or the comment.
                 }
             ]
         }
+
 
 ### Delete a trip idea [DELETE /trips/{tripId}/ideas/{ideaId}]
 
@@ -603,6 +624,7 @@ Removes an idea from a trip. Only allowed on ideas from trips created by the cur
         {
             "message": "Trip idea deleted successfully."
         }
+
 
 
 ## Trip Plan [/trips/{tripId}/plan]
@@ -640,6 +662,7 @@ Trip Entry:
 * `status` - `planned` or `visited`. Defaults to `planned` on creation
 * `comment` - User comment about the entry
 
+
 ### Get entire trip plan [GET]
 
 + Parameters
@@ -668,8 +691,8 @@ Trip Entry:
                             "address": "Bennelong Point, Sydney NSW 2000, Australia",
                             "phone": "(02) 9250 7111",
                             "types": [
-                              "point_of_interest",
-                              "establishment"
+                                "point_of_interest",
+                                "establishment"
                             ],
                             "photo": "https://lh5.googleusercontent.com/-rlKEkZQ5hqA/VTS0B2sLp_I/AAAAAAAAH7U/w8ECgtHcpjA470l7hxfA2mDi8qKZrfG1Q/s1600-w500/",
                             "url": "https://maps.google.com/?cid=3545450935484072529",
@@ -692,7 +715,10 @@ Trip Entry:
             ]
         }
 
+
 ### Get the plan for a trip day [GET /trips/{tripId}/plan/{dayId}]
+
+Only allowed on trips created by the currently authenticated user.
 
 + Parameters
     + tripId (string) - Trip ID
@@ -719,8 +745,8 @@ Trip Entry:
                         "address": "Bennelong Point, Sydney NSW 2000, Australia",
                         "phone": "(02) 9250 7111",
                         "types": [
-                          "point_of_interest",
-                          "establishment"
+                            "point_of_interest",
+                            "establishment"
                         ],
                         "photo": "https://lh5.googleusercontent.com/-rlKEkZQ5hqA/VTS0B2sLp_I/AAAAAAAAH7U/w8ECgtHcpjA470l7hxfA2mDi8qKZrfG1Q/s1600-w500/",
                         "url": "https://maps.google.com/?cid=3545450935484072529",
@@ -732,9 +758,10 @@ Trip Entry:
             },
         }
 
+
 ### Reorder a trip day [PUT /trips/{tripId}/plan/{dayId}]
 
-Moves the plans for an entire day to another day, reordering the affected trip days in the process. Can only update the day # in this endpoint.
+Moves the plans for an entire day to another day, reordering the affected trip days in the process. Can only update the day # in this endpoint. Only allowed on trips created by the currently authenticated user.
 
 + Parameters
     + tripId (string) - Trip ID
@@ -773,8 +800,8 @@ Moves the plans for an entire day to another day, reordering the affected trip d
                             "address": "Bennelong Point, Sydney NSW 2000, Australia",
                             "phone": "(02) 9250 7111",
                             "types": [
-                              "point_of_interest",
-                              "establishment"
+                                "point_of_interest",
+                                "establishment"
                             ],
                             "photo": "https://lh5.googleusercontent.com/-rlKEkZQ5hqA/VTS0B2sLp_I/AAAAAAAAH7U/w8ECgtHcpjA470l7hxfA2mDi8qKZrfG1Q/s1600-w500/",
                             "url": "https://maps.google.com/?cid=3545450935484072529",
@@ -795,147 +822,122 @@ Moves the plans for an entire day to another day, reordering the affected trip d
 
 ### Create a new Trip Entry [POST /trips/{tripId}/plan/{dayId}]
 
-TBD
+A Trip Entry can be created either through a trip idea, or directly into the trip plan. Only allowed on trips created by the currently authenticated user.
 
-### Edit a Trip Entry [PUT /trips/{tripId}/plan/{dayId}/entries/{entryId}]
-
-TBD
-
-### Delete a Trip Entry [DELETE /trips/{tripId}/plan/{dayId}/entries/{entryId}]
-
-TBD
-
-
-## Journey Entries [/entries]
-
-The concept of journey entries may be deprecated as I transition the app towards a trip planning experience.
-
-Each journey entry includes the following:
-
-* Date created
-* User who created it
-* a location (lat/lng coordinates)
-* an entry type (text, photos, video, audio)
-* entry contents (URL to media saved to Amazon S3)
-* a message (required for text entries)
-
-### Create an entry [POST]
-
-Create a journey entry. Returns an updated list of the user's entries upon successful creation.
-
-* The type of the entry is required.
-* Contents is required if the user is creating a `video`, `audio`, or `photo` entry.
-* Message is required if the user is creating a `text` entry.
++ Parameters
+    + tripId (string) - Trip ID
+    + dayId (string) - Trip Day ID
 
 + Request (application/json)
 
         {
-            "type": "photo",
-            "contents": "http://s3.amazon.com/journey/photo.jpg",
-            "message": "Picture of Amy and Adam!",
+            "googlePlaceId": "ChIJ3S-JXmauEmsRUcIaWtf4MzE",
+            "name": "Sydney Opera House",
             "loc": {
                 "type": "Point",
                 "coordinates": [
-                    -122.431397,
-                    37.773982
+                    151.2152967,
+                    -33.8567844
                 ]
-            }
+            },
+            "address": "Bennelong Point, Sydney NSW 2000, Australia",
+            "phone": "(02) 9250 7111",
+            "types": [
+                "point_of_interest",
+                "establishment"
+            ],
+            "photo": "https://lh5.googleusercontent.com/-rlKEkZQ5hqA/VTS0B2sLp_I/AAAAAAAAH7U/w8ECgtHcpjA470l7hxfA2mDi8qKZrfG1Q/s1600-w500/",
+            "url": "https://maps.google.com/?cid=3545450935484072529",
+            "status": "planned"
         }
-
-+ Response 302 (application/json)
-
-        {
-            "page": 1,
-            "results": 3,
-            "entries": [
-                {
-                    "_id": "578ede2a50b26fc5d3c6badd",
-                    "creator": "5785e22fdff4328371f8e781",
-                    "type": "photo",
-                    "message": "Picture of Amy and Adam!",
-                    "contents": "http://s3.amazon.com/journey/photo.jpg",
-                    "__v": 0,
-                    "loc": {
-                        "type": "Point",
-                        "coordinates": [
-                            -122.431397,
-                            37.773982
-                        ]
-                    },
-                    "date": "2016-07-27T15:02:57.912Z"
-                },
-                {
-                    "_id": "578ede2a50b26fc5d3c6baaa",
-                    "creator": "5785e22fdff4328371f8e781",
-                    "type": "video",
-                    "message": "And here's a video showing him scooting around",
-                    "contents": "https://s3-us-west-1.amazonaws.com/journey.media/4daba8e3-78c4-4ef2-b187-06b9d97b3228",
-                    "__v": 0,
-                    "loc": {
-                        "type": "Point",
-                        "coordinates": [
-                            -122.431301,
-                            37.773233
-                        ]
-                    },
-                    "date": "2016-07-20T02:12:58.332Z"
-                },
-                {
-                    "_id": "578edda250b26fc5d3c6baa8",
-                    "creator": "5785e22fdff4328371f8e781",
-                    "type": "photo",
-                    "message": "Check out this cute picture of Mochi!",
-                    "contents": "https://s3-us-west-1.amazonaws.com/journey.media/e7b5b426-0d6b-4325-9d4e-8d2ba6fc8502",
-                    "__v": 0,
-                    "loc": {
-                        "type": "Point",
-                        "coordinates": [
-                            -122.431301,
-                            37.773224
-                        ]
-                    },
-                    "date": "2016-07-20T02:10:42.442Z"
-                }
-            ]
-        }
-
-### Get an entry [GET /entries/{entryId}]
-
-Fetches details for a specific entry created by the currently authenticated user.
-
-+ Parameters
-    + entryId (string) - Entry ID
 
 + Response 200 (application/json)
 
         {
+            "dayId": "578edda250b26fc5d3c6bb11",
+            "index": 0,
             "entry": {
-                "_id": "578edda250b26fc5d3c6baa8",
-                "creator": "5785e22fdff4328371f8e781",
-                "type": "photo",
-                "message": "Check out this cute picture of Mochi!",
-                "contents": "https://s3-us-west-1.amazonaws.com/journey.media/e7b5b426-0d6b-4325-9d4e-8d2ba6fc8502",
-                "__v": 0,
+                "_id": "578edda250b26fc5d3c6bf28",
+                "googlePlaceId": "ChIJ3S-JXmauEmsRUcIaWtf4MzE",
+                "date": "2016-07-29T07:27:02.451Z"
+                "name": "Sydney Opera House",
                 "loc": {
                     "type": "Point",
                     "coordinates": [
-                        -122.431301,
-                        37.773224
+                        151.2152967,
+                        -33.8567844
                     ]
                 },
-                "date": "2016-07-20T02:10:42.442Z"
+                "address": "Bennelong Point, Sydney NSW 2000, Australia",
+                "phone": "(02) 9250 7111",
+                "types": [
+                    "point_of_interest",
+                    "establishment"
+                ],
+                "photo": "https://lh5.googleusercontent.com/-rlKEkZQ5hqA/VTS0B2sLp_I/AAAAAAAAH7U/w8ECgtHcpjA470l7hxfA2mDi8qKZrfG1Q/s1600-w500/",
+                "url": "https://maps.google.com/?cid=3545450935484072529",
+                "status": "planned"
             }
         }
 
-### Delete an entry [DELETE /entries/{entryId}]
 
-Removes an entry, first confirming that the entry was created by the current user. The contents are also deleted from S3 if they exist.
+### Edit a Trip Entry [PUT /trips/{tripId}/plan/{dayId}/entries/{entryId}]
+
+Updates the state of a trip entry. Only allowed on trips created by the currently authenticated user. Can update the position of the entry in the list, the day that the entry belongs to, the status, and the comment. Example use cases include checking in at a place, reordering the entry, and moving the entry to another day.
 
 + Parameters
-    + entryId (string) - Entry ID
+    + tripId (string) - Trip ID
+    + dayId (string) - Trip Day ID
+    + entryId (string) - Trip Entry ID
+
++ Request (application/json)
+
+        {
+            "dayId": "578edda250b26fc5d3c6bb17",
+            "index": 0
+        }
 
 + Response 200 (application/json)
 
         {
-            "message": "Entry deleted."
+            "dayId": "578edda250b26fc5d3c6bb17",
+            "index": 0,
+            "entry": {
+                "_id": "578edda250b26fc5d3c6bf28",
+                "googlePlaceId": "ChIJ3S-JXmauEmsRUcIaWtf4MzE",
+                "date": "2016-07-29T07:27:02.451Z"
+                "name": "Sydney Opera House",
+                "loc": {
+                    "type": "Point",
+                    "coordinates": [
+                        151.2152967,
+                        -33.8567844
+                    ]
+                },
+                "address": "Bennelong Point, Sydney NSW 2000, Australia",
+                "phone": "(02) 9250 7111",
+                "types": [
+                    "point_of_interest",
+                    "establishment"
+                ],
+                "photo": "https://lh5.googleusercontent.com/-rlKEkZQ5hqA/VTS0B2sLp_I/AAAAAAAAH7U/w8ECgtHcpjA470l7hxfA2mDi8qKZrfG1Q/s1600-w500/",
+                "url": "https://maps.google.com/?cid=3545450935484072529",
+                "status": "planned"
+            }
+        }
+
+
+### Delete a Trip Entry [DELETE /trips/{tripId}/plan/{dayId}/entries/{entryId}]
+
+Removes a trip entry from a day's schedule. Only allowed on trips created by the currently authenticated user.
+
++ Parameters
+    + tripId (string) - Trip ID
+    + dayId (string) - Trip Day ID
+    + entryId (string) - Trip Entry ID
+
++ Response 200 (application/json)
+
+        {
+            "message": "Trip entry deleted."
         }
