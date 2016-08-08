@@ -27,8 +27,8 @@ var daySchema = new mongoose.Schema({
     address: String,
     googlePlaceId: String,
     loc: {
-      type: { type: String, required: true },
-      coordinates: { type: [Number], required: true }
+      type: String,
+      coordinates: [Number]
     },
     name: String
   }

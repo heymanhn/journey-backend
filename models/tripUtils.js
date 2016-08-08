@@ -13,6 +13,10 @@ module.exports = {
       return next(new Error('Trip ideas have invalid format'));
     }
 
+    if (!Array.isArray(this.plan)) {
+      return next(new Error('Trip plan has invalid format'));
+    }
+
     if (this.endDate < this.startDate) {
       return next(new Error('Trip end date is before start date'));
     }

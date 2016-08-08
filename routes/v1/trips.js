@@ -20,8 +20,8 @@ app.post('/', ensureAuth, function(req, res, next) {
   var params = {
     creator: req.user._id,
     title: req.body.title,
-    startDate: req.body.startDate,
-    endDate: req.body.endDate
+    startDate: new Date(req.body.startDate),
+    endDate: new Date(req.body.endDate)
   };
 
   if (req.body.destinations) {
@@ -275,9 +275,7 @@ app.get('/:tripId/plan', ensureAuth, function(req, res, next) {
  *
  */
 app.get('/:tripId/plan/:dayId', ensureAuth, function(req, res, next) {
-  var tripId = req.params.tripId;
-
-  findTrip(tripId, req.user._id)
+  findTrip(req.params.tripId, req.user._id)
     .then(findTripDay.bind(null, req.params.dayId))
     .then(function(tripDay) {
       res.json({
@@ -286,6 +284,29 @@ app.get('/:tripId/plan/:dayId', ensureAuth, function(req, res, next) {
     })
     .catch(next);
 });
+
+/*
+ * PUT /trips/:tripId/plan/:dayId
+ *
+ * Updates the contents of a trip day. Only allowed on trips created by the
+ * currently authenticated user. Can move the entire day to another day,
+ * reordering the affected trip days in the process. Can also update the
+ * lodging information for the day.
+ *
+ */
+app.put('/:tripId/plan/:dayId', ensureAuth, function(req, res, next) {
+  findTrip(req.params.tripId, req.user._id)
+    .then(updateTripDay.bind(null, req.body, req.params.dayId))
+    .then(saveTrip)
+    .then(function(trip) {
+      res.json({
+        index: req.body.index,
+        tripDay: trip.plan.id(req.params.dayId)
+      });
+    })
+    .catch(next);
+});
+
 
 
 /*
@@ -413,17 +434,8 @@ function updateTripIdea(params, ideaId, trip) {
     idea.comment = params.comment;
   }
 
-  // Re-order the idea within the list if the index specified has changed vs.
-  // the idea's current index in the array
-  if (params.index !== undefined && params.index !== idea.__index) {
-    if (params.index < 0 || params.index > trip.ideas.length - 1) {
-      return Promise.reject(new Error('Invalid position for idea'));
-    }
-
-    trip.ideas.splice(idea.__index, 1);
-    trip.ideas.splice(params.index, 0, idea);
-  }
-
+  // Re-order the idea within the list if the index specified has changed
+  reorderInArray(trip.ideas, idea, params.index);
   return trip;
 }
 
@@ -447,6 +459,33 @@ function findTripDay(dayId, trip) {
   }
 
   return day;
+}
+
+function updateTripDay(params, dayId, trip) {
+  var day = trip.plan.id(dayId);
+
+  if (!day) {
+    return Promise.reject(new Error('Trip day not found'));
+  }
+
+  if (params.lodging !== undefined) {
+    day.lodging = params.lodging;
+  }
+
+  // Re-order the day within the list if the index specified has changed
+  reorderInArray(trip.plan, day, params.index);
+  return trip;
+}
+
+function reorderInArray(array, obj, index) {
+  if (index !== undefined && index !== obj.__index) {
+    if (index < 0 || index > array.length - 1) {
+      return Promise.reject(new Error('Invalid index'));
+    }
+
+    array.splice(obj.__index, 1);
+    array.splice(index, 0, obj);
+  }
 }
 
 module.exports = app;
