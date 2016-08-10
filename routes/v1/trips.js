@@ -308,7 +308,7 @@ app.delete('/:tripId/ideas', ensureAuth, function(req, res, next) {
  */
 app.put('/:tripId/ideas/:ideaId', ensureAuth, function(req, res, next) {
   findTrip(req.params.tripId, req.user._id)
-    .then(checkDayExists.bind(null, req.params.dayId))
+    .then(checkIdeaExists.bind(null, req.params.ideaId))
     .then(updateTripIdea.bind(null, req.body, req.params.ideaId))
     .then(saveTrip)
     .then(function(trip) {
@@ -329,6 +329,7 @@ app.put('/:tripId/ideas/:ideaId', ensureAuth, function(req, res, next) {
  */
 app.delete('/:tripId/ideas/:ideaId', ensureAuth, function (req, res, next) {
   findTrip(req.params.tripId, req.user._id)
+    .then(checkIdeaExists.bind(null, req.params.ideaId))
     .then(deleteTripIdea.bind(null, req.params.ideaId))
     .then(saveTrip)
     .then(function() {
@@ -376,6 +377,14 @@ function createTripIdea(params, trip) {
   return trip;
 }
 
+function checkIdeaExists(ideaId, trip) {
+  if (!trip.ideas.id(ideaId)) {
+    return Promise.reject(new Error('Trip idea not found'));
+  }
+
+  return trip;
+}
+
 function updateTripIdea(params, ideaId, trip) {
   var idea = trip.ideas.id(ideaId);
 
@@ -383,7 +392,7 @@ function updateTripIdea(params, ideaId, trip) {
     idea.comment = params.comment;
   }
 
-  // Re-order the idea within the list if the index specified has changed
+  // Re-order the idea within the list
   reorderInArray(trip.ideas, idea, params.index);
   return trip;
 }
@@ -524,6 +533,28 @@ app.put('/:tripId/plan/:dayId/entries/:entryId', ensureAuth,
     .catch(next);
 });
 
+/*
+ * DELETE /trips/:tripId/plan/:dayId/entries/:entryId
+ *
+ * Removes a trip entry from a day's schedule. Only allowed on trips created by
+ * the currently authenticated user.
+ */
+app.delete('/:tripId/plan/:dayId/entries/:entryId', ensureAuth,
+  function(req, res, next) {
+
+  findTrip(req.params.tripId, req.user._id)
+    .then(checkDayExists.bind(null, req.params.dayId))
+    .then(checkEntryExists.bind(null, req.params.dayId, req.params.entryId))
+    .then(deleteTripEntry.bind(null, req.params.dayId, req.params.entryId))
+    .then(saveTrip)
+    .then(function() {
+      res.json({
+        message: "Trip entry deleted successfully."
+      });
+    })
+    .catch(next);
+});
+
 
 /*
  * Trip Plan - helper functions
@@ -615,6 +646,13 @@ function updateTripEntry(params, dayId, entryId, trip) {
   } else {
     reorderInArray(day.entries, entry, index);
   }
+
+  return trip;
+}
+
+function deleteTripEntry(dayId, entryId, trip) {
+  var entry = trip.plan.id(dayId).entries.id(entryId);
+  entry.remove();
 
   return trip;
 }
