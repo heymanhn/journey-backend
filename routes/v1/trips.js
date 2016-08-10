@@ -541,13 +541,14 @@ function deleteTripEntry(dayId, entryId, trip) {
  */
 
 function insertIntoArray(array, obj, index) {
-  if (index !== undefined) {
-    if (index < 0 || index > array.length) {
-      return Promise.reject(new Error('Invalid index'));
-    }
+  // If index is not defined, default to inserting to end of the array
+  index = index || array.length;
 
-    array.splice(index, 0, obj);
+  if (index < 0 || index > array.length) {
+    return Promise.reject(new Error('Invalid index'));
   }
+
+  array.splice(index, 0, obj);
 }
 
 function reorderInArray(array, obj, index) {

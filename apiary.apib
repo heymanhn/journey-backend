@@ -820,7 +820,7 @@ A Trip Entry can be created either through a trip idea, or directly into the tri
 
 If the request body includes an `idea` field, that indicates the entry is created from an idea. The backend will fetch that idea, create the trip entry using the idea's data, and delete the idea.
 
-If the request body includes an `index` field, the backend will attempt to insert the entry into the `entries` list at the specified array index.
+If the request body includes an `index` field, the backend will attempt to insert the entry into the `entries` list at the specified array index. If no `index` field is provided, the backend inserts the entry to the end of the entries list.
 
 + Parameters
     + tripId (string) - Trip ID
@@ -882,7 +882,9 @@ If the request body includes an `index` field, the backend will attempt to inser
 
 ### Update a Trip Entry [PUT /trips/{tripId}/plan/{dayId}/entries/{entryId}]
 
-Updates the state of a trip entry. Only allowed on trips created by the currently authenticated user. Can update the position of the entry in the list, the day that the entry belongs to, the status, and the comment. Example use cases include checking in at a place, reordering the entry, and moving the entry to another day.
+Updates the state of a trip entry. Only allowed on trips created by the currently authenticated user. Can update the position of the entry in the list (`index`), the day that the entry belongs to, the status, and the comment. Example use cases include checking in at a place, reordering the entry, and moving the entry to another day.
+
+If the API call asks to move the entry to another day, but `index` is not provided, the backend adds the entry to the end of the entries for the new day.
 
 + Parameters
     + tripId (string) - Trip ID
