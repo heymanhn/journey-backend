@@ -382,8 +382,8 @@ function updateTripIdea(params, ideaId, trip) {
   }
 
   // Re-order the idea within the list
-  reorderInArray(trip.ideas, idea, params.index);
-  return trip;
+  var result = reorderInArray(trip.ideas, idea, params.index);
+  return result ? result : trip;
 }
 
 function deleteTripIdeas(trip) {
@@ -561,8 +561,8 @@ function updateTripDay(params, dayId, trip) {
   }
 
   // Re-order the day within the list if the index specified has changed
-  reorderInArray(trip.plan, day, params.index);
-  return trip;
+  var result = reorderInArray(trip.plan, day, params.index);
+  return result ? result : trip;
 }
 
 function checkDayExists(dayId, trip) {
@@ -607,6 +607,7 @@ function updateTripEntry(params, dayId, entryId, trip) {
   var day = trip.plan.id(dayId);
   var entry = day.entries.id(entryId);
   var index = params.index;
+  var result;
 
   if (params.comment !== undefined && params.comment !== entry.comment) {
     entry.comment = params.comment;
@@ -633,10 +634,10 @@ function updateTripEntry(params, dayId, entryId, trip) {
       newDay.entries.splice(index, 0, entry);
     }
   } else {
-    reorderInArray(day.entries, entry, index);
+    result = reorderInArray(day.entries, entry, index);
   }
 
-  return trip;
+  return result ? result : trip;
 }
 
 function deleteTripEntry(dayId, entryId, trip) {
