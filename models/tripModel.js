@@ -17,7 +17,7 @@ var planEntrySchema = new mongoose.Schema({
   types: [String],
   photo: String,
   url: String,
-  status: { type: String, default: 'planned' },
+  status: { type: String, default: 'planned', enum: ['planned', 'visited'] },
   comment: String
 });
 

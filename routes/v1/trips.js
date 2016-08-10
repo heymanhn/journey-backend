@@ -10,6 +10,10 @@ var Trip = require('../../models/tripModel');
 var app = express.Router();
 
 /*
+ * Trips
+ */
+
+/*
  * POST /
  *
  * Creates a new trip. Only a title is required during creation. Returns the
@@ -95,6 +99,59 @@ app.delete('/:tripId', ensureAuth, function(req, res, next) {
     .catch(next);
 });
 
+
+/*
+ * Trips - helper functions
+ */
+
+function findTrip(tripId, userId) {
+  var params = {
+    _id: tripId,
+    creator: userId
+  };
+
+  return Trip
+    .findOne(params)
+    .exec()
+    .then(function(trip) {
+      if (!trip) {
+        var err = new Error('Trip not found');
+        err.status = 404;
+        return Promise.reject(err);
+      }
+
+      return trip;
+    });
+}
+
+function updateTrip(params, trip) {
+  var newParams = {
+    title: params.title,
+    startDate: params.startDate,
+    endDate: params.endDate,
+    destinations: params.destinations,
+    visibility: params.visibility
+  };
+
+  // Only keep the params that need to be modified
+  _.each(newParams, function(value, key) {
+    if (value !== undefined && value !== trip[key]) {
+      trip[key] = value;
+    }
+  });
+
+  return trip;
+}
+
+function saveTrip(trip) {
+  return trip.save();
+}
+
+function removeTrip(trip) {
+  return trip.remove();
+}
+
+
 /*
  * Trip Destinations
  */
@@ -138,6 +195,44 @@ app.delete('/:tripId/destinations/:destinationId', ensureAuth,
     })
     .catch(next);
 });
+
+
+/*
+ * Trip Destinations - helper functions
+ */
+
+function createTripDestination(params, trip) {
+  var destExists = false;
+  var newParams = {
+    googlePlaceId: params.googlePlaceId,
+    name: params.name,
+    loc: params.loc
+  };
+
+  if (params.types) {
+    newParams.types = params.types;
+  }
+
+  trip.destinations.forEach(function(dest) {
+    if (dest.googlePlaceId === newParams.googlePlaceId) {
+      destExists = true;
+    }
+  });
+
+  if (destExists) {
+    return Promise.reject(new Error('Destination already exists.'));
+  }
+
+  trip.destinations.push(newParams);
+  return trip;
+}
+
+function deleteTripDestination(destId, trip) {
+  var dest = trip.destinations.id(destId);
+  dest.remove();
+
+  return trip;
+}
 
 
 /*
@@ -246,6 +341,67 @@ app.delete('/:tripId/ideas/:ideaId', ensureAuth, function (req, res, next) {
 
 
 /*
+ * Trip Destinations - helper functions
+ */
+
+function createTripIdea(params, trip) {
+  var ideaExists = false;
+  var newParams = {
+    googlePlaceId: params.googlePlaceId,
+    name: params.name,
+    loc: params.loc
+  };
+
+  var optionalParams = [
+    'address', 'phone', 'types', 'photo', 'url', 'comment'
+  ];
+
+  optionalParams.forEach(function(field) {
+    if (params[field]) {
+      newParams[field] = params[field];
+    }
+  });
+
+  trip.ideas.forEach(function(idea) {
+    if (idea.googlePlaceId === newParams.googlePlaceId) {
+      ideaExists = true;
+    }
+  });
+
+  if (ideaExists) {
+    return Promise.reject(new Error('Idea already exists.'));
+  }
+
+  trip.ideas.push(newParams);
+  return trip;
+}
+
+function updateTripIdea(params, ideaId, trip) {
+  var idea = trip.ideas.id(ideaId);
+
+  if (params.comment !== undefined && params.comment !== idea.comment) {
+    idea.comment = params.comment;
+  }
+
+  // Re-order the idea within the list if the index specified has changed
+  reorderInArray(trip.ideas, idea, params.index);
+  return trip;
+}
+
+function deleteTripIdeas(trip) {
+  trip.ideas = [];
+  return trip;
+}
+
+function deleteTripIdea(ideaId, trip) {
+  var idea = trip.ideas.id(ideaId);
+  idea.remove();
+
+  return trip;
+}
+
+
+/*
  * Trip Plan
  */
 
@@ -336,146 +492,42 @@ app.post('/:tripId/plan/:dayId/entries', ensureAuth, function(req, res, next) {
     .catch(next);
 });
 
+/*
+ * PUT /trips/:tripId/plan/:dayId/entries/:entryId
+ *
+ * Updates the state of a trip entry. Only allowed on trips created by the
+ * currently authenticated user. Can update the position of the entry in the
+ * list, the day that the entry belongs to, the status, and the comment.
+ * Example use cases include checking in at a place, reordering the entry, and
+ * moving the entry to another day.
+ *
+ */
+app.put('/:tripId/plan/:dayId/entries/:entryId', ensureAuth,
+  function(req, res, next) {
+
+  findTrip(req.params.tripId, req.user._id)
+    .then(checkDayExists.bind(null, req.params.dayId))
+    .then(checkEntryExists.bind(null, req.params.dayId, req.params.entryId))
+    .then(updateTripEntry.bind(
+      null,
+      req.body,
+      req.params.dayId,
+      req.params.entryId
+    ))
+    .then(saveTrip)
+    .then(function(trip) {
+      res.json({
+        dayId: req.params.dayId,
+        entries: trip.plan.id(req.params.dayId).entries
+      });
+    })
+    .catch(next);
+});
+
 
 /*
- * Helper functions
+ * Trip Plan - helper functions
  */
-
-function findTrip(tripId, userId) {
-  var params = {
-    _id: tripId,
-    creator: userId
-  };
-
-  return Trip
-    .findOne(params)
-    .exec()
-    .then(function(trip) {
-      if (!trip) {
-        var err = new Error('Trip not found');
-        err.status = 404;
-        return Promise.reject(err);
-      }
-
-      return trip;
-    });
-}
-
-function updateTrip(params, trip) {
-  var newParams = {
-    title: params.title,
-    startDate: params.startDate,
-    endDate: params.endDate,
-    destinations: params.destinations,
-    visibility: params.visibility
-  };
-
-  // Only keep the params that need to be modified
-  _.each(newParams, function(value, key) {
-    if (value !== undefined && value !== trip[key]) {
-      trip[key] = value;
-    }
-  });
-
-  return trip;
-}
-
-function saveTrip(trip) {
-  return trip.save();
-}
-
-function removeTrip(trip) {
-  return trip.remove();
-}
-
-function createTripDestination(params, trip) {
-  var destExists = false;
-  var newParams = {
-    googlePlaceId: params.googlePlaceId,
-    name: params.name,
-    loc: params.loc
-  };
-
-  if (params.types) {
-    newParams.types = params.types;
-  }
-
-  trip.destinations.forEach(function(dest) {
-    if (dest.googlePlaceId === newParams.googlePlaceId) {
-      destExists = true;
-    }
-  });
-
-  if (destExists) {
-    return Promise.reject(new Error('Destination already exists.'));
-  }
-
-  trip.destinations.push(newParams);
-  return trip;
-}
-
-function deleteTripDestination(destId, trip) {
-  var dest = trip.destinations.id(destId);
-  dest.remove();
-
-  return trip;
-}
-
-function createTripIdea(params, trip) {
-  var ideaExists = false;
-  var newParams = {
-    googlePlaceId: params.googlePlaceId,
-    name: params.name,
-    loc: params.loc
-  };
-
-  var optionalParams = [
-    'address', 'phone', 'types', 'photo', 'url', 'comment'
-  ];
-
-  optionalParams.forEach(function(field) {
-    if (params[field]) {
-      newParams[field] = params[field];
-    }
-  });
-
-  trip.ideas.forEach(function(idea) {
-    if (idea.googlePlaceId === newParams.googlePlaceId) {
-      ideaExists = true;
-    }
-  });
-
-  if (ideaExists) {
-    return Promise.reject(new Error('Idea already exists.'));
-  }
-
-  trip.ideas.push(newParams);
-  return trip;
-}
-
-function updateTripIdea(params, ideaId, trip) {
-  var idea = trip.ideas.id(ideaId);
-
-  if (params.comment !== undefined && params.comment !== idea.comment) {
-    idea.comment = params.comment;
-  }
-
-  // Re-order the idea within the list if the index specified has changed
-  reorderInArray(trip.ideas, idea, params.index);
-  return trip;
-}
-
-function deleteTripIdeas(trip) {
-  trip.ideas = [];
-  return trip;
-}
-
-function deleteTripIdea(ideaId, trip) {
-  var idea = trip.ideas.id(ideaId);
-  idea.remove();
-
-  return trip;
-}
 
 function findTripDay(dayId, trip) {
   return trip.plan.id(dayId);
@@ -521,6 +573,56 @@ function createTripEntry(params, dayId, trip) {
   trip.plan.id(dayId).entries.push(newParams);
   return trip;
 }
+
+function checkEntryExists(dayId, entryId, trip) {
+  var entry = trip.plan.id(dayId).entries.id(entryId);
+  if (!entry) {
+    return Promise.reject(new Error('Trip entry not found'));
+  }
+
+  return trip;
+}
+
+function updateTripEntry(params, dayId, entryId, trip) {
+  var day = trip.plan.id(dayId);
+  var entry = day.entries.id(entryId);
+  var index = params.index;
+
+  if (params.comment !== undefined && params.comment !== entry.comment) {
+    entry.comment = params.comment;
+  }
+
+  if (params.status !== undefined && params.status !== entry.status) {
+    entry.status = params.status;
+  }
+
+  if (params.dayId !== undefined && params.dayId !== dayId) {
+    var newDay = trip.plan.id(params.dayId);
+    if (!newDay) {
+      return Promise.reject(new Error('Target trip day not found'));
+    }
+
+    // Remove entry from current day and insert into the correct position of
+    // the new day
+    entry.remove();
+    if (index !== undefined) {
+      if (index < 0 || index > newDay.entries.length) {
+        return Promise.reject(new Error('Invalid index'));
+      }
+
+      newDay.entries.splice(index, 0, entry);
+    }
+  } else {
+    reorderInArray(day.entries, entry, index);
+  }
+
+  return trip;
+}
+
+
+/*
+ * Other helper functions
+ */
 
 function reorderInArray(array, obj, index) {
   if (index !== undefined && index !== obj.__index) {
