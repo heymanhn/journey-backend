@@ -77,7 +77,7 @@ var tripSchema = new mongoose.Schema({
 });
 
 tripSchema.pre('validate', utils.validateFields);
-tripSchema.pre('save', utils.createTripDays);
+tripSchema.pre('save', utils.updateTripDays);
 tripSchema.statics.findTrips = utils.findTrips;
 
 module.exports = mongoose.model('Trip', tripSchema);

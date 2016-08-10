@@ -24,22 +24,41 @@ module.exports = {
     next();
   },
 
-  createTripDays: function(next) {
+  updateTripDays: function(next) {
     if (!this.startDate || !this.endDate) {
       return next(new Error('Trip entry is missing a start/end date'));
     }
-
-    var numDays = ((this.endDate - this.startDate) / (1000 * 3600 * 24)) + 1;
-    for (var i = 0; i < numDays; i++) {
-      var dayParams = {
-        entries: [],
-        lodging: {}
-      };
-
-      this.plan.push(dayParams);
+    if (!this.isModified('startDate') && !this.isModified('endDate')) {
+      return next();
     }
 
-    next();
+    var numDays = ((this.endDate - this.startDate) / (1000 * 3600 * 24)) + 1;
+    if (numDays > 90) {
+      return next(new Error('Cannot create a trip longer than 90 days'));
+    }
+
+    var delta = numDays - this.plan.length;
+    if (delta > 0) {
+      // Create more empty trip days to the end of the plan
+      for (var i = 0; i < delta; i++) {
+        var dayParams = {
+          entries: [],
+          lodging: {}
+        };
+
+        this.plan.push(dayParams);
+      }
+    } else if (delta < 0) {
+      // Remove trip days
+      var dayToAdd = this.plan[(this.plan.length - 1) + delta];
+      for (var i = 0; i < Math.abs(delta); i++) {
+        var day = this.plan.pop();
+
+        Array.prototype.push.apply(dayToAdd.entries, day.entries);
+      }
+    }
+
+    return next();
   },
 
   findTrips: function(params, page) {

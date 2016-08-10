@@ -227,10 +227,14 @@ Each trip includes the following properties:
 * `date` - Date created
 * `creator` - User who created the trip
 * `title`
+* `startDate`
+* `endDate`
 * `destinations` - A list of cities/countries/continents the user will be visiting
 * `ideas` - A list of places the user wants to visit
 * `plan` - A day-by-day itinerary for the trip, composed of places the user has decided to visit
 * `visibility` - whether or not the trip is publicly visible
+
+For now, trips cannot be longer than 90 days in duration.
 
 
 ### Create a trip [POST]
@@ -631,6 +635,10 @@ Removes an idea from a trip. Only allowed on ideas from trips created by the cur
 
 Each trip contains a plan, which keeps track of all the places users plan to visit during a trip. Each plan is made up of a series of trip days. Each day contains a list of trip entries - places users want to visit on that day. Users add entries to a specific day of the plan, and do so either by moving a Trip Idea into the Trip Plan, or directly into the plan.
 
+When clients request the creation of a new trip, the backend also creates a trip plan with the requisite number of trip days that matches the specified length of the trip.
+
+If the duration of the trip subsequently increases, the backend creates additional trip days. If the duration of the trip subsequently decreases, the backend removes the extraneous trip days (counting back from the end of the list) and adds any entries to the last day on the list.
+
 To facilitate frequent back-and-forths between Trip Ideas and the Trip Plan, the backend will handle updating the state of an idea as users move it to the plan and back.
 
 The below schemas make up a trip plan:
@@ -788,62 +796,27 @@ Updates the contents of a trip day. Only allowed on trips created by the current
 + Response 200 (application/json)
 
         {
-            "plan": [
-                {
-                    "_id": "578edda250b26fc5d3c6bb17",
-                    "entries": [],
-                    "lodging": {
-                        "googlePlaceId": "ChIJC-dWE0KuEmsR_cLanc3QLkc",
-                        "address": "30 Pitt St, Sydney NSW 2000, Australia",
-                        "name": "Sydney Harbour Marriott Hotel at Circular Quay",
-                        "loc": {
-                            "type": "Point",
-                            "coordinates": [
-                                151.2092998,
-                                -33.8627261
-                            ]
-                        }
+            "index": 0,
+            "tripDay": {
+                "_id": "578edda250b26fc5d3c6bb17",
+                "entries": [],
+                "lodging": {
+                    "googlePlaceId": "ChIJC-dWE0KuEmsR_cLanc3QLkc",
+                    "address": "30 Pitt St, Sydney NSW 2000, Australia",
+                    "name": "Sydney Harbour Marriott Hotel at Circular Quay",
+                    "loc": {
+                        "type": "Point",
+                        "coordinates": [
+                            151.2092998,
+                            -33.8627261
+                        ]
                     }
-                },
-                {
-                    "_id": "578edda250b26fc5d3c6bb11",
-                    "entries": [
-                        {
-                            "_id": "578edda250b26fc5d3c6bf28",
-                            "googlePlaceId": "ChIJ3S-JXmauEmsRUcIaWtf4MzE",
-                            "date": "2016-07-29T07:27:02.451Z"
-                            "name": "Sydney Opera House",
-                            "loc": {
-                                "type": "Point",
-                                "coordinates": [
-                                    151.2152967,
-                                    -33.8567844
-                                ]
-                            },
-                            "address": "Bennelong Point, Sydney NSW 2000, Australia",
-                            "phone": "(02) 9250 7111",
-                            "types": [
-                                "point_of_interest",
-                                "establishment"
-                            ],
-                            "photo": "https://lh5.googleusercontent.com/-rlKEkZQ5hqA/VTS0B2sLp_I/AAAAAAAAH7U/w8ECgtHcpjA470l7hxfA2mDi8qKZrfG1Q/s1600-w500/",
-                            "url": "https://maps.google.com/?cid=3545450935484072529",
-                            "status": "planned",
-                            "comment": "See if we can go with Shiv tomorrow."
-                        }
-                    ],
-                    "lodging": {}
-                },
-                {
-                    "_id": "578edda250b26fc5d3c6bb62",
-                    "entries": [],
-                    "lodging": {}
                 }
-            ]
+            }
         }
 
 
-### Create a new Trip Entry [POST /trips/{tripId}/plan/{dayId}]
+### Create a new Trip Entry [POST /trips/{tripId}/plan/{dayId}/entries]
 
 A Trip Entry can be created either through a trip idea, or directly into the trip plan. Only allowed on trips created by the currently authenticated user.
 
@@ -878,29 +851,30 @@ A Trip Entry can be created either through a trip idea, or directly into the tri
 
         {
             "dayId": "578edda250b26fc5d3c6bb11",
-            "index": 0,
-            "entry": {
-                "_id": "578edda250b26fc5d3c6bf28",
-                "googlePlaceId": "ChIJ3S-JXmauEmsRUcIaWtf4MzE",
-                "date": "2016-07-29T07:27:02.451Z"
-                "name": "Sydney Opera House",
-                "loc": {
-                    "type": "Point",
-                    "coordinates": [
-                        151.2152967,
-                        -33.8567844
-                    ]
-                },
-                "address": "Bennelong Point, Sydney NSW 2000, Australia",
-                "phone": "(02) 9250 7111",
-                "types": [
-                    "point_of_interest",
-                    "establishment"
-                ],
-                "photo": "https://lh5.googleusercontent.com/-rlKEkZQ5hqA/VTS0B2sLp_I/AAAAAAAAH7U/w8ECgtHcpjA470l7hxfA2mDi8qKZrfG1Q/s1600-w500/",
-                "url": "https://maps.google.com/?cid=3545450935484072529",
-                "status": "planned"
-            }
+            "entries": [
+                {
+                    "_id": "578edda250b26fc5d3c6bf28",
+                    "googlePlaceId": "ChIJ3S-JXmauEmsRUcIaWtf4MzE",
+                    "date": "2016-07-29T07:27:02.451Z"
+                    "name": "Sydney Opera House",
+                    "loc": {
+                        "type": "Point",
+                        "coordinates": [
+                            151.2152967,
+                            -33.8567844
+                        ]
+                    },
+                    "address": "Bennelong Point, Sydney NSW 2000, Australia",
+                    "phone": "(02) 9250 7111",
+                    "types": [
+                        "point_of_interest",
+                        "establishment"
+                    ],
+                    "photo": "https://lh5.googleusercontent.com/-rlKEkZQ5hqA/VTS0B2sLp_I/AAAAAAAAH7U/w8ECgtHcpjA470l7hxfA2mDi8qKZrfG1Q/s1600-w500/",
+                    "url": "https://maps.google.com/?cid=3545450935484072529",
+                    "status": "planned"
+                }
+            ]
         }
 
 

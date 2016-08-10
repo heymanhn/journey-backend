@@ -213,6 +213,7 @@ app.delete('/:tripId/ideas', ensureAuth, function(req, res, next) {
  */
 app.put('/:tripId/ideas/:ideaId', ensureAuth, function(req, res, next) {
   findTrip(req.params.tripId, req.user._id)
+    .then(checkDayExists.bind(null, req.params.dayId))
     .then(updateTripIdea.bind(null, req.body, req.params.ideaId))
     .then(saveTrip)
     .then(function(trip) {
@@ -276,6 +277,7 @@ app.get('/:tripId/plan', ensureAuth, function(req, res, next) {
  */
 app.get('/:tripId/plan/:dayId', ensureAuth, function(req, res, next) {
   findTrip(req.params.tripId, req.user._id)
+    .then(checkDayExists.bind(null, req.params.dayId))
     .then(findTripDay.bind(null, req.params.dayId))
     .then(function(tripDay) {
       res.json({
@@ -296,6 +298,7 @@ app.get('/:tripId/plan/:dayId', ensureAuth, function(req, res, next) {
  */
 app.put('/:tripId/plan/:dayId', ensureAuth, function(req, res, next) {
   findTrip(req.params.tripId, req.user._id)
+    .then(checkDayExists.bind(null, req.params.dayId))
     .then(updateTripDay.bind(null, req.body, req.params.dayId))
     .then(saveTrip)
     .then(function(trip) {
@@ -307,6 +310,31 @@ app.put('/:tripId/plan/:dayId', ensureAuth, function(req, res, next) {
     .catch(next);
 });
 
+/*
+ * Trip Entries
+ */
+
+/*
+ * POST /trips/:tripId/plan/:dayId/entries
+ *
+ * A Trip Entry can be created either through a trip idea, or directly into the
+ * trip plan. Only allowed on trips created by the currently authenticated
+ * user.
+ *
+ */
+app.post('/:tripId/plan/:dayId/entries', ensureAuth, function(req, res, next) {
+  findTrip(req.params.tripId, req.user._id)
+    .then(checkDayExists.bind(null, req.params.dayId))
+    .then(createTripEntry.bind(null, req.body, req.params.dayId))
+    .then(saveTrip)
+    .then(function(trip) {
+      res.json({
+        dayId: req.params.dayId,
+        entries: trip.plan.id(req.params.dayId).entries
+      });
+    })
+    .catch(next);
+});
 
 
 /*
@@ -336,6 +364,8 @@ function findTrip(tripId, userId) {
 function updateTrip(params, trip) {
   var newParams = {
     title: params.title,
+    startDate: params.startDate,
+    endDate: params.endDate,
     destinations: params.destinations,
     visibility: params.visibility
   };
@@ -426,10 +456,6 @@ function createTripIdea(params, trip) {
 function updateTripIdea(params, ideaId, trip) {
   var idea = trip.ideas.id(ideaId);
 
-  if (!idea) {
-    return Promise.reject(new Error('Trip idea not found'));
-  }
-
   if (params.comment !== undefined && params.comment !== idea.comment) {
     idea.comment = params.comment;
   }
@@ -452,21 +478,11 @@ function deleteTripIdea(ideaId, trip) {
 }
 
 function findTripDay(dayId, trip) {
-  var day = trip.plan.id(dayId);
-
-  if (!day) {
-    return Promise.reject(new Error('Trip day not found'));
-  }
-
-  return day;
+  return trip.plan.id(dayId);
 }
 
 function updateTripDay(params, dayId, trip) {
   var day = trip.plan.id(dayId);
-
-  if (!day) {
-    return Promise.reject(new Error('Trip day not found'));
-  }
 
   if (params.lodging !== undefined) {
     day.lodging = params.lodging;
@@ -474,6 +490,35 @@ function updateTripDay(params, dayId, trip) {
 
   // Re-order the day within the list if the index specified has changed
   reorderInArray(trip.plan, day, params.index);
+  return trip;
+}
+
+function checkDayExists(dayId, trip) {
+  if (!trip.plan.id(dayId)) {
+    return Promise.reject(new Error('Trip day not found'));
+  }
+
+  return trip;
+}
+
+function createTripEntry(params, dayId, trip) {
+  var newParams = {
+    googlePlaceId: params.googlePlaceId,
+    name: params.name,
+    loc: params.loc
+  };
+
+  var optionalParams = [
+    'address', 'phone', 'types', 'photo', 'url', 'comment'
+  ];
+
+  optionalParams.forEach(function(field) {
+    if (params[field]) {
+      newParams[field] = params[field];
+    }
+  });
+
+  trip.plan.id(dayId).entries.push(newParams);
   return trip;
 }
 
