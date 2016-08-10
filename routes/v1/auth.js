@@ -11,15 +11,6 @@ var checkLoginParams = require('../../utils/auth').checkLoginParams;
 
 var app = express.Router();
 
-/*
- * POST /login
- *
- * Log in with either a username or email, as well as the password. The server
- * returns a JSON Web Token if authentication is successful.
- *
- * The checkLoginParams() middleware sets req.loginType based on whether
- * the request provides a username or an email.
- */
 app.post('/login', checkLoginParams, function(req, res, next) {
   var opts = {};
   opts[req.loginType] = req.body[req.loginType];

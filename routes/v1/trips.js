@@ -13,13 +13,6 @@ var app = express.Router();
  * Trips
  */
 
-/*
- * POST /
- *
- * Creates a new trip. Only a title is required during creation. Returns the
- * newly created trip upon success.
- *
- */
 app.post('/', ensureAuth, function(req, res, next) {
   var params = {
     creator: req.user._id,
@@ -41,13 +34,6 @@ app.post('/', ensureAuth, function(req, res, next) {
     .catch(next);
 });
 
-/*
- * GET /:tripId
- *
- * Gets details about a particular trip created by the currently authenticated
- * user.
- *
- */
 app.get('/:tripId', ensureAuth, function(req, res, next) {
   findTrip(req.params.tripId, req.user._id)
     .then(function(trip) {
@@ -58,16 +44,6 @@ app.get('/:tripId', ensureAuth, function(req, res, next) {
     .catch(next);
 });
 
-/*
- * PUT /:tripId
- *
- * Updates the trip. Only allowed on trips created by currently authenticated
- * user.
- *
- * COMING SOON: Figure out how to set and update the ideas and plan
- * properties
- *
- */
 app.put('/:tripId', ensureAuth, function(req, res, next) {
   findTrip(req.params.tripId, req.user._id)
     .then(updateTrip.bind(null, req.body))
@@ -81,13 +57,6 @@ app.put('/:tripId', ensureAuth, function(req, res, next) {
     .catch(next);
 });
 
-/*
- * DELETE /:tripId
- *
- * Deletes the trip. Only allowed on trips created by currently authenticated
- * user.
- *
- */
 app.delete('/:tripId', ensureAuth, function(req, res, next) {
   findTrip(req.params.tripId, req.user._id)
     .then(removeTrip)
@@ -156,13 +125,6 @@ function removeTrip(trip) {
  * Trip Destinations
  */
 
-/*
- * POST /:tripId/destinations
- *
- * Add a new destination to the trip. Only allowed on trips created by the
- * currently authenticated user.
- *
- */
 app.post('/:tripId/destinations', ensureAuth, function(req, res, next) {
   findTrip(req.params.tripId, req.user._id)
     .then(createTripDestination.bind(null, req.body))
@@ -175,13 +137,6 @@ app.post('/:tripId/destinations', ensureAuth, function(req, res, next) {
     .catch(next);
 });
 
-/*
- * DELETE /:tripId/destinations/:destinationId
- *
- * Removes a destination from a trip. Only allowed on trips created by the
- * currently authenticated user.
- *
- */
 app.delete('/:tripId/destinations/:destinationId', ensureAuth,
   function(req, res, next) {
 
@@ -239,13 +194,6 @@ function deleteTripDestination(destId, trip) {
  * Trip Ideas
  */
 
-/*
- * POST /:tripId/ideas
- *
- * Add a new idea to the trip. Only allowed on trips created by the currently
- * authenticated user.
- *
- */
 app.post('/:tripId/ideas', ensureAuth, function(req, res, next) {
   var tripId = req.params.tripId;
 
@@ -258,13 +206,6 @@ app.post('/:tripId/ideas', ensureAuth, function(req, res, next) {
     .catch(next);
 });
 
-/*
- * GET /:tripId/ideas
- *
- * Get the list of ideas from a given trip. Only allowed on trips created by
- * the currently authenticated user.
- *
- */
 app.get('/:tripId/ideas', ensureAuth, function(req, res, next) {
   findTrip(req.params.tripId, req.user._id)
     .then(function(trip) {
@@ -275,13 +216,6 @@ app.get('/:tripId/ideas', ensureAuth, function(req, res, next) {
     .catch(next);
 });
 
-/*
- * DELETE /:tripId/ideas
- *
- * Clears the list of ideas from a given trip. Only allowed on trips created by
- * the currently authenticated user.
- *
- */
 app.delete('/:tripId/ideas', ensureAuth, function(req, res, next) {
   findTrip(req.params.tripId, req.user._id)
     .then(deleteTripIdeas)
@@ -294,18 +228,6 @@ app.delete('/:tripId/ideas', ensureAuth, function(req, res, next) {
     .catch(next);
 });
 
-/*
- * PUT /:tripId/ideas/:ideaId
- *
- * Updates an idea that belongs to a trip. Useful for reordering an idea in the
- * list, marking an idea as "planned", or marking an idea back as "active".
- * Only allowed on ideas whose trips are created by the currently authenticated
- * user.
- *
- * Users can update the order of an idea in the list, or the comments the users
- * provided.
- *
- */
 app.put('/:tripId/ideas/:ideaId', ensureAuth, function(req, res, next) {
   findTrip(req.params.tripId, req.user._id)
     .then(checkIdeaExists.bind(null, req.params.ideaId))
@@ -320,13 +242,6 @@ app.put('/:tripId/ideas/:ideaId', ensureAuth, function(req, res, next) {
     .catch(next);
 });
 
-/*
- * DELETE /:tripId/ideas/:ideaId
- *
- * Removes an idea from a trip. Only allowed on ideas from trips created by the
- * currently authenticated user.
- *
- */
 app.delete('/:tripId/ideas/:ideaId', ensureAuth, function (req, res, next) {
   findTrip(req.params.tripId, req.user._id)
     .then(checkIdeaExists.bind(null, req.params.ideaId))
@@ -400,15 +315,9 @@ function deleteTripIdea(ideaId, trip) {
 
 
 /*
- * Trip Plan
+ * Trip Plan and Trip Days
  */
 
-/*
- * GET /:tripId/plan
- *
- * Returns the entire trip plan.
- *
- */
 app.get('/:tripId/plan', ensureAuth, function(req, res, next) {
   var tripId = req.params.tripId;
 
@@ -422,13 +331,6 @@ app.get('/:tripId/plan', ensureAuth, function(req, res, next) {
     .catch(next);
 });
 
-/*
- * GET /trips/:tripId/plan/:dayId
- *
- * Returns the plan for a trip day. Only allowed on trips created by the
- * currently authenticated user.
- *
- */
 app.get('/:tripId/plan/:dayId', ensureAuth, function(req, res, next) {
   findTrip(req.params.tripId, req.user._id)
     .then(checkDayExists.bind(null, req.params.dayId))
@@ -441,15 +343,6 @@ app.get('/:tripId/plan/:dayId', ensureAuth, function(req, res, next) {
     .catch(next);
 });
 
-/*
- * PUT /trips/:tripId/plan/:dayId
- *
- * Updates the contents of a trip day. Only allowed on trips created by the
- * currently authenticated user. Can move the entire day to another day,
- * reordering the affected trip days in the process. Can also update the
- * lodging information for the day.
- *
- */
 app.put('/:tripId/plan/:dayId', ensureAuth, function(req, res, next) {
   findTrip(req.params.tripId, req.user._id)
     .then(checkDayExists.bind(null, req.params.dayId))
@@ -464,86 +357,10 @@ app.put('/:tripId/plan/:dayId', ensureAuth, function(req, res, next) {
     .catch(next);
 });
 
-/*
- * Trip Entries
- */
 
 /*
- * POST /trips/:tripId/plan/:dayId/entries
- *
- * A Trip Entry can be created either through a trip idea, or directly into the
- * trip plan. Only allowed on trips created by the currently authenticated
- * user.
- *
+ * Trip Plan and Trip Days helper functions
  */
-app.post('/:tripId/plan/:dayId/entries', ensureAuth, function(req, res, next) {
-  findTrip(req.params.tripId, req.user._id)
-    .then(checkDayExists.bind(null, req.params.dayId))
-    .then(createTripEntry.bind(null, req.body, req.params.dayId))
-    .then(saveTrip)
-    .then(function(trip) {
-      res.json({
-        dayId: req.params.dayId,
-        entries: trip.plan.id(req.params.dayId).entries
-      });
-    })
-    .catch(next);
-});
-
-/*
- * PUT /trips/:tripId/plan/:dayId/entries/:entryId
- *
- * Updates the state of a trip entry. Only allowed on trips created by the
- * currently authenticated user. Can update the position of the entry in the
- * list, the day that the entry belongs to, the status, and the comment.
- * Example use cases include checking in at a place, reordering the entry, and
- * moving the entry to another day.
- *
- */
-app.put('/:tripId/plan/:dayId/entries/:entryId', ensureAuth,
-  function(req, res, next) {
-
-  findTrip(req.params.tripId, req.user._id)
-    .then(checkDayExists.bind(null, req.params.dayId))
-    .then(checkEntryExists.bind(null, req.params.dayId, req.params.entryId))
-    .then(updateTripEntry.bind(
-      null,
-      req.body,
-      req.params.dayId,
-      req.params.entryId
-    ))
-    .then(saveTrip)
-    .then(function(trip) {
-      res.json({
-        dayId: req.params.dayId,
-        entries: trip.plan.id(req.params.dayId).entries
-      });
-    })
-    .catch(next);
-});
-
-/*
- * DELETE /trips/:tripId/plan/:dayId/entries/:entryId
- *
- * Removes a trip entry from a day's schedule. Only allowed on trips created by
- * the currently authenticated user.
- */
-app.delete('/:tripId/plan/:dayId/entries/:entryId', ensureAuth,
-  function(req, res, next) {
-
-  findTrip(req.params.tripId, req.user._id)
-    .then(checkDayExists.bind(null, req.params.dayId))
-    .then(checkEntryExists.bind(null, req.params.dayId, req.params.entryId))
-    .then(deleteTripEntry.bind(null, req.params.dayId, req.params.entryId))
-    .then(saveTrip)
-    .then(function() {
-      res.json({
-        message: "Trip entry deleted successfully."
-      });
-    })
-    .catch(next);
-});
-
 
 /*
  * Trip Plan - helper functions
@@ -572,6 +389,68 @@ function checkDayExists(dayId, trip) {
 
   return trip;
 }
+
+
+/*
+ * Trip Entries
+ */
+
+app.post('/:tripId/plan/:dayId/entries', ensureAuth, function(req, res, next) {
+  findTrip(req.params.tripId, req.user._id)
+    .then(checkDayExists.bind(null, req.params.dayId))
+    .then(createTripEntry.bind(null, req.body, req.params.dayId))
+    .then(saveTrip)
+    .then(function(trip) {
+      res.json({
+        dayId: req.params.dayId,
+        entries: trip.plan.id(req.params.dayId).entries
+      });
+    })
+    .catch(next);
+});
+
+app.put('/:tripId/plan/:dayId/entries/:entryId', ensureAuth,
+  function(req, res, next) {
+
+  findTrip(req.params.tripId, req.user._id)
+    .then(checkDayExists.bind(null, req.params.dayId))
+    .then(checkEntryExists.bind(null, req.params.dayId, req.params.entryId))
+    .then(updateTripEntry.bind(
+      null,
+      req.body,
+      req.params.dayId,
+      req.params.entryId
+    ))
+    .then(saveTrip)
+    .then(function(trip) {
+      res.json({
+        dayId: req.params.dayId,
+        entries: trip.plan.id(req.params.dayId).entries
+      });
+    })
+    .catch(next);
+});
+
+app.delete('/:tripId/plan/:dayId/entries/:entryId', ensureAuth,
+  function(req, res, next) {
+
+  findTrip(req.params.tripId, req.user._id)
+    .then(checkDayExists.bind(null, req.params.dayId))
+    .then(checkEntryExists.bind(null, req.params.dayId, req.params.entryId))
+    .then(deleteTripEntry.bind(null, req.params.dayId, req.params.entryId))
+    .then(saveTrip)
+    .then(function() {
+      res.json({
+        message: "Trip entry deleted successfully."
+      });
+    })
+    .catch(next);
+});
+
+
+/*
+ * Trip Entries helper functions
+ */
 
 function createTripEntry(params, dayId, trip) {
   var newParams = {

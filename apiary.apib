@@ -569,9 +569,7 @@ Clears the list of ideas from a given trip. Only allowed on trips created by the
 
 ### Update a trip idea [PUT /trips/{tripId}/ideas/{ideaId}]
 
-Updates an idea that belongs to a trip. Useful for reordering an idea in the list, marking an idea as "planned", or marking an idea back as "active". Only allowed on ideas whose trips are created by the currently authenticated user.
-
-Users can update the order of an idea in the list or the comment.
+Updates an idea that belongs to a trip. Useful for reordering an idea in the list or adding a comment. Only allowed on ideas whose trips are created by the currently authenticated user.
 
 + Parameters
     + tripId (string) - Trip ID
@@ -820,6 +818,10 @@ Updates the contents of a trip day. Only allowed on trips created by the current
 
 A Trip Entry can be created either through a trip idea, or directly into the trip plan. Only allowed on trips created by the currently authenticated user.
 
+If the request body includes an `idea` field, that indicates the entry is created from an idea. The backend will fetch that idea, create the trip entry using the idea's data, and delete the idea.
+
+If the request body includes an `index` field, the backend will attempt to insert the entry into the `entries` list at the specified array index.
+
 + Parameters
     + tripId (string) - Trip ID
     + dayId (string) - Trip Day ID
@@ -878,7 +880,7 @@ A Trip Entry can be created either through a trip idea, or directly into the tri
         }
 
 
-### Edit a Trip Entry [PUT /trips/{tripId}/plan/{dayId}/entries/{entryId}]
+### Update a Trip Entry [PUT /trips/{tripId}/plan/{dayId}/entries/{entryId}]
 
 Updates the state of a trip entry. Only allowed on trips created by the currently authenticated user. Can update the position of the entry in the list, the day that the entry belongs to, the status, and the comment. Example use cases include checking in at a place, reordering the entry, and moving the entry to another day.
 
@@ -928,6 +930,8 @@ Updates the state of a trip entry. Only allowed on trips created by the currentl
 ### Delete a Trip Entry [DELETE /trips/{tripId}/plan/{dayId}/entries/{entryId}]
 
 Removes a trip entry from a day's schedule. Only allowed on trips created by the currently authenticated user.
+
+Upon removing the entry, the backend creates a new idea for that entry in the ideas list. If the request body includes a `createIdea` field set to `false`, the backend will not create an idea for the deleted entry.
 
 + Parameters
     + tripId (string) - Trip ID

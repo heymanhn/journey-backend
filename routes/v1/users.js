@@ -14,14 +14,6 @@ var User = require('../../models/userModel');
 
 var app = express.Router();
 
-/*
- * POST /users
- *
- * Create a new user account. Requires user to provide a username, email, and
- * password. Optionally, user can provide a full name. Doesn't require
- * authentication.
- *
- */
 app.post('/', function(req, res, next) {
   var params = {
     username: req.body.username,
@@ -63,26 +55,12 @@ app.post('/', function(req, res, next) {
   });
 });
 
-
-/*
- * GET /users/:userId
- *
- * Retrieve information about a user. Only allowed on currently authenticated
- * user.
- *
- */
 app.get('/:userId', ensureAuth, isCurrentUser, function(req, res) {
   res.json({
     user: _.omit(req.userDoc._doc, 'password')
   });
 });
 
-/*
- * PUT /users/:userId
- *
- * Updates the user. Only allowed on currently authenticated user.
- *
- */
 app.put('/:userId', ensureAuth, isCurrentUser, function(req, res, next) {
   var user = req.userDoc;
   var newParams = {
@@ -116,11 +94,6 @@ app.put('/:userId', ensureAuth, isCurrentUser, function(req, res, next) {
   });
 });
 
-/*
- * DELETE /users/:userId
- *
- * Deletes the user. Only allowed on currently authenticated user.
- */
 app.delete('/:userId', ensureAuth, isCurrentUser, function(req, res, next) {
   var user = req.userDoc;
   user.remove(function(err) {
@@ -134,13 +107,6 @@ app.delete('/:userId', ensureAuth, isCurrentUser, function(req, res, next) {
   });
 });
 
-/*
- * GET /users/:userId/trips
- *
- * Get all the trips created by the currently authenticated user, in reverse
- * chronological order.
- *
- */
 app.get('/:userId/trips', ensureAuth, isCurrentUser, function(req, res, next) {
   var page = Number(req.query.page) || 1;
   var params = {
@@ -165,18 +131,6 @@ app.get('/:userId/trips', ensureAuth, isCurrentUser, function(req, res, next) {
     .catch(next);
 });
 
-/*
- * GET /users/:userId/entries
- *
- * Get all journey entries created by this user, in reverse chronological
- * order.
- *
- * Query params:
- * - count: Number of items to return, default 20
- * - page: Page #, calculated based on 'count', default 1
- * - maxDate: Cut-off date for first entry to return
- *
- */
 app.get('/:userId/entries', ensureAuth, isCurrentUser,
   function(req, res, next) {
   var count = Number(req.query.count) || config.database.DEFAULT_ENTRY_COUNT;
