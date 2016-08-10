@@ -346,7 +346,6 @@ app.delete('/:tripId/ideas/:ideaId', ensureAuth, function (req, res, next) {
  */
 
 function createTripIdea(params, trip) {
-  var ideaExists = false;
   var newParams = {
     googlePlaceId: params.googlePlaceId,
     name: params.name,
@@ -362,16 +361,6 @@ function createTripIdea(params, trip) {
       newParams[field] = params[field];
     }
   });
-
-  trip.ideas.forEach(function(idea) {
-    if (idea.googlePlaceId === newParams.googlePlaceId) {
-      ideaExists = true;
-    }
-  });
-
-  if (ideaExists) {
-    return Promise.reject(new Error('Idea already exists.'));
-  }
 
   trip.ideas.push(newParams);
   return trip;
