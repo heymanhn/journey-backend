@@ -933,7 +933,7 @@ If the API call asks to move the entry to another day, but `index` is not provid
 
 Removes a trip entry from a day's schedule. Only allowed on trips created by the currently authenticated user.
 
-Upon removing the entry, the backend creates a new idea for that entry in the ideas list. If the request body includes a `createIdea` field set to `false`, the backend will not create an idea for the deleted entry.
+Upon removing the entry, the backend creates a new idea for that entry in the ideas list. If the request body includes a `ignoreIdeaCreate` field set to `true`, the backend will not create an idea for the deleted entry.
 
 + Parameters
     + tripId (string) - Trip ID

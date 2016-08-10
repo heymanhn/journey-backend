@@ -437,7 +437,11 @@ app.delete('/:tripId/plan/:dayId/entries/:entryId', ensureAuth,
   findTrip(req.params.tripId, req.user._id)
     .then(checkDayExists.bind(null, req.params.dayId))
     .then(checkEntryExists.bind(null, req.params.dayId, req.params.entryId))
-    .then(deleteTripEntry.bind(null, req.params.dayId, req.params.entryId))
+    .then(deleteTripEntry.bind(null,
+      req.params.dayId,
+      req.params.entryId,
+      req.query.ignoreIdeaCreate
+    ))
     .then(saveTrip)
     .then(function() {
       res.json({
@@ -462,10 +466,10 @@ function createTripEntry(params, dayId, trip) {
       return Promise.reject(new Error('Trip idea not found'));
     }
 
-    newParams = populateEntryParams(idea);
+    newParams = populateNewParams(idea);
     idea.remove();
   } else {
-    newParams = populateEntryParams(params);
+    newParams = populateNewParams(params);
   }
 
   var entries = trip.plan.id(dayId).entries;
@@ -474,12 +478,12 @@ function createTripEntry(params, dayId, trip) {
   return result ? result : trip;
 }
 
-function populateEntryParams(params) {
+function populateNewParams(params) {
   var newParams = {};
-  var entryParams = ['googlePlaceId', 'name', 'loc', 'address', 'phone',
+  var targetParams = ['googlePlaceId', 'name', 'loc', 'address', 'phone',
     'types', 'photo', 'url', 'comment'];
 
-  entryParams.forEach(function(field) {
+  targetParams.forEach(function(field) {
     if (params[field]) {
       newParams[field] = params[field];
     }
@@ -528,9 +532,14 @@ function updateTripEntry(params, dayId, entryId, trip) {
   return result ? result : trip;
 }
 
-function deleteTripEntry(dayId, entryId, trip) {
+function deleteTripEntry(dayId, entryId, ignoreIdeaCreate, trip) {
   var entry = trip.plan.id(dayId).entries.id(entryId);
   entry.remove();
+
+  if (!ignoreIdeaCreate) {
+    var newParams = populateNewParams(entry);
+    trip.ideas.push(newParams);
+  }
 
   return trip;
 }
