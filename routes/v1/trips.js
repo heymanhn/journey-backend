@@ -453,24 +453,39 @@ app.delete('/:tripId/plan/:dayId/entries/:entryId', ensureAuth,
  */
 
 function createTripEntry(params, dayId, trip) {
-  var newParams = {
-    googlePlaceId: params.googlePlaceId,
-    name: params.name,
-    loc: params.loc
-  };
+  var newParams = {};
 
-  var optionalParams = [
-    'address', 'phone', 'types', 'photo', 'url', 'comment'
-  ];
+  // Create the entry from the provided idea's data if available
+  if (params.idea !== undefined) {
+    var idea = trip.ideas.id(params.idea);
+    if (!idea) {
+      return Promise.reject(new Error('Trip idea not found'));
+    }
 
-  optionalParams.forEach(function(field) {
+    newParams = populateEntryParams(idea);
+    idea.remove();
+  } else {
+    newParams = populateEntryParams(params);
+  }
+
+  var entries = trip.plan.id(dayId).entries;
+  var result = insertIntoArray(entries, newParams, params.index);
+
+  return result ? result : trip;
+}
+
+function populateEntryParams(params) {
+  var newParams = {};
+  var entryParams = ['googlePlaceId', 'name', 'loc', 'address', 'phone',
+    'types', 'photo', 'url', 'comment'];
+
+  entryParams.forEach(function(field) {
     if (params[field]) {
       newParams[field] = params[field];
     }
   });
 
-  trip.plan.id(dayId).entries.push(newParams);
-  return trip;
+  return newParams;
 }
 
 function checkEntryExists(dayId, entryId, trip) {
@@ -505,13 +520,7 @@ function updateTripEntry(params, dayId, entryId, trip) {
     // Remove entry from current day and insert into the correct position of
     // the new day
     entry.remove();
-    if (index !== undefined) {
-      if (index < 0 || index > newDay.entries.length) {
-        return Promise.reject(new Error('Invalid index'));
-      }
-
-      newDay.entries.splice(index, 0, entry);
-    }
+    result = insertIntoArray(newDay.entries, entry, index);
   } else {
     result = reorderInArray(day.entries, entry, index);
   }
@@ -530,6 +539,16 @@ function deleteTripEntry(dayId, entryId, trip) {
 /*
  * Other helper functions
  */
+
+function insertIntoArray(array, obj, index) {
+  if (index !== undefined) {
+    if (index < 0 || index > array.length) {
+      return Promise.reject(new Error('Invalid index'));
+    }
+
+    array.splice(index, 0, obj);
+  }
+}
 
 function reorderInArray(array, obj, index) {
   if (index !== undefined && index !== obj.__index) {
