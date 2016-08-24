@@ -3,6 +3,7 @@
 
 var bodyParser = require('body-parser');
 var cookieParser = require('cookie-parser');
+var cors = require('cors');
 var debug = require('debug')('journey-backend');
 var express = require('express');
 var fs = require('fs');
@@ -27,6 +28,8 @@ mongoose.connect(config.database.development.url);
 mongoose.Promise = Promise;
 
 var app = express();
+app.use(cors());
+app.options('*', cors());
 app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
