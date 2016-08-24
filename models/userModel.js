@@ -15,6 +15,7 @@ var userSchema = new mongoose.Schema({
 
 userSchema.pre('save', utils.checkUsernameExists);
 userSchema.pre('save', utils.checkEmailExists);
+userSchema.pre('save', utils.checkEmailValid);
 userSchema.pre('save', utils.checkPasswordLength);
 userSchema.pre('save', utils.hashPassword);
 
