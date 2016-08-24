@@ -16,9 +16,8 @@ var app = express.Router();
 
 app.post('/', function(req, res, next) {
   var params = {
-    username: req.body.username,
-    password: req.body.password,
     email: req.body.email,
+    password: req.body.password,
     name: req.body.name
   };
 

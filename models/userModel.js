@@ -7,10 +7,10 @@ var utils = require('./userUtils');
 
 var userSchema = new mongoose.Schema({
   signupDate: { type: Date, default: Date.now },
-  username: { type: String, required: true, unique: true },
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
-  name: { type: String }
+  name: { type: String },
+  username: { type: String, unique: true }
 });
 
 userSchema.pre('save', utils.checkUsernameExists);
