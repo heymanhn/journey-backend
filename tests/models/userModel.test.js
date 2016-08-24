@@ -218,19 +218,6 @@ describe('User Model', function() {
   });
 
   describe('#validation:', function() {
-    it('fails if username is not provided', function(done) {
-      var testUser = new User({
-        password: 'abc123',
-        email: 'herman@journey.com'
-      });
-
-      testUser.validate(function(err) {
-        should.exist(err);
-        err.name.should.equal('ValidationError');
-        done();
-      });
-    });
-
     it('fails if password is not provided', function(done) {
       var testUser = new User({
         username: 'herman',
