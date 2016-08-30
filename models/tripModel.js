@@ -53,6 +53,7 @@ var ideaSchema = new mongoose.Schema({
 var destinationSchema = new mongoose.Schema({
   googlePlaceId: { type: String, required: true },
   name: { type: String, required: true },
+  formattedAddress: { type: String, required: true },
   loc: {
     type: { type: String, required: true },
     coordinates: { type: [Number], required: true }
