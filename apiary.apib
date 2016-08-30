@@ -673,6 +673,27 @@ Trip Entry:
         }
 
 
+### Add a trip day [POST /trips/{tripId}/plan]
+
+Adds a new empty day to the trip. Only allowed on trips created by the currently authenticated user.
+
++ Parameters
+    + tripId (string) - Trip ID
+
++ Response (application/json)
+
+        {
+            "tripId": "578edda250b26fc5d3c6bf22",
+            "plan": [
+                {
+                    "_id": "578edda250b26fc5d3c6bb11",
+                    "entries": [],
+                    "lodging": {}
+                }
+            ]
+        }
+
+
 ### Get the plan for a trip day [GET /trips/{tripId}/plan/{dayId}]
 
 Only allowed on trips created by the currently authenticated user.
@@ -763,6 +784,21 @@ Updates the contents of a trip day. Only allowed on trips created by the current
                 }
             }
         }
+
+
+### Remove a trip day [DELETE /trips/{tripId}/plan/{dayId}]
+
+Removes a day from the trip plan. The other days readjust based on their position in the trip plan list. Only allowed on trips created by the currently authenticated user.
+
++ Parameters
+    + tripId (string) - Trip ID
+    + dayId (string) - Trip Day ID
+
+    + Response 200 (application/json)
+
+            {
+                "message": "Trip day deleted successfully."
+            }
 
 
 ### Create a new Trip Entry [POST /trips/{tripId}/plan/{dayId}/entries]

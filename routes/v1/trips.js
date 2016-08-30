@@ -194,7 +194,7 @@ app.delete('/:tripId/ideas/:ideaId', ensureAuth, function (req, res, next) {
 
 
 /*
- * Trip Destinations - helper functions
+ * Trip Ideas - helper functions
  */
 
 function createTripIdea(params, trip) {
@@ -268,6 +268,18 @@ app.get('/:tripId/plan', ensureAuth, function(req, res, next) {
     .catch(next);
 });
 
+app.post('/:tripId/plan/', ensureAuth, function(req, res, next) {
+  var tripId = req.params.tripId;
+
+  findTrip(tripId, req.user._id)
+    .then(createTripDay)
+    .then(saveTrip)
+    .then(function() {
+      res.redirect('/v1/trips/' + tripId + '/plan');
+    })
+    .catch(next);
+});
+
 app.get('/:tripId/plan/:dayId', ensureAuth, function(req, res, next) {
   findTrip(req.params.tripId, req.user._id)
     .then(checkDayExists.bind(null, req.params.dayId))
@@ -294,14 +306,33 @@ app.put('/:tripId/plan/:dayId', ensureAuth, function(req, res, next) {
     .catch(next);
 });
 
+app.delete('/:tripId/plan/:dayId', ensureAuth, function(req, res, next) {
+  findTrip(req.params.tripId, req.user._id)
+    .then(checkDayExists.bind(null, req.params.dayId))
+    .then(removeTripDay.bind(null, req.params.dayId))
+    .then(saveTrip)
+    .then(function() {
+      res.json({
+        message: "Trip day deleted successfully."
+      });
+    })
+    .catch(next);
+});
+
 
 /*
  * Trip Plan and Trip Days helper functions
  */
 
-/*
- * Trip Plan - helper functions
- */
+function createTripDay(trip) {
+  var params = {
+    entries: [],
+    lodging: {}
+  };
+
+  trip.plan.push(params);
+  return trip;
+}
 
 function findTripDay(dayId, trip) {
   return trip.plan.id(dayId);
@@ -323,6 +354,13 @@ function checkDayExists(dayId, trip) {
   if (!trip.plan.id(dayId)) {
     return Promise.reject(new Error('Trip day not found'));
   }
+
+  return trip;
+}
+
+function removeTripDay(dayId, trip) {
+  var day = trip.plan.id(dayId);
+  day.remove();
 
   return trip;
 }
