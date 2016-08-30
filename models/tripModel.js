@@ -70,7 +70,7 @@ var tripSchema = new mongoose.Schema({
   title: { type: String, required: true },
   startDate: { type: Date, required: true },
   endDate: { type: Date, required: true },
-  destinations: [destinationSchema],
+  destination: destinationSchema,
   ideas: [ideaSchema],
   plan: [daySchema],
   visibility: { type: String, default: 'private' }
