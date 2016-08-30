@@ -6,7 +6,7 @@ var config = require('../config/config');
 module.exports = {
   validateFields: function(next) {
     if (!this.title) {
-      return next(new Error('Trip entry is missing a title'));
+      return next(new Error('Trip is missing a title'));
     }
 
     if (!Array.isArray(this.ideas)) {
