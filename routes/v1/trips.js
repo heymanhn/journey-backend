@@ -16,13 +16,19 @@ var app = express.Router();
 app.post('/', ensureAuth, function(req, res, next) {
   var params = {
     creator: req.user._id,
-    title: req.body.title,
-    startDate: new Date(req.body.startDate),
-    endDate: new Date(req.body.endDate)
+    title: req.body.title
   };
 
-  if (req.body.destinations) {
-    params.destinations = req.body.destinations;
+  if (req.body.startDate) {
+    params.startDate = new Date(req.body.startDate);
+  }
+
+  if (req.body.endDate) {
+    params.endDate = new Date(req.body.endDate);
+  }
+
+  if (req.body.destination) {
+    params.destination = req.body.destination;
   }
 
   var trip = new Trip(params);
@@ -95,10 +101,10 @@ function findTrip(tripId, userId) {
 
 function updateTrip(params, trip) {
   var newParams = {
+    destination: params.destination,
     title: params.title,
-    startDate: params.startDate,
-    endDate: params.endDate,
-    destinations: params.destinations,
+    startDate: new Date(params.startDate),
+    endDate: new Date(params.endDate),
     visibility: params.visibility
   };
 
@@ -118,75 +124,6 @@ function saveTrip(trip) {
 
 function removeTrip(trip) {
   return trip.remove();
-}
-
-
-/*
- * Trip Destinations
- */
-
-app.post('/:tripId/destinations', ensureAuth, function(req, res, next) {
-  findTrip(req.params.tripId, req.user._id)
-    .then(createTripDestination.bind(null, req.body))
-    .then(saveTrip)
-    .then(function(trip) {
-      res.json({
-        destinations: trip.destinations
-      });
-    })
-    .catch(next);
-});
-
-app.delete('/:tripId/destinations/:destinationId', ensureAuth,
-  function(req, res, next) {
-
-  findTrip(req.params.tripId, req.user._id)
-    .then(deleteTripDestination.bind(null, req.params.destinationId))
-    .then(saveTrip)
-    .then(function() {
-      res.json({
-        message: "Trip destination deleted successfully."
-      });
-    })
-    .catch(next);
-});
-
-
-/*
- * Trip Destinations - helper functions
- */
-
-function createTripDestination(params, trip) {
-  var destExists = false;
-  var newParams = {
-    googlePlaceId: params.googlePlaceId,
-    name: params.name,
-    loc: params.loc
-  };
-
-  if (params.types) {
-    newParams.types = params.types;
-  }
-
-  trip.destinations.forEach(function(dest) {
-    if (dest.googlePlaceId === newParams.googlePlaceId) {
-      destExists = true;
-    }
-  });
-
-  if (destExists) {
-    return Promise.reject(new Error('Destination already exists.'));
-  }
-
-  trip.destinations.push(newParams);
-  return trip;
-}
-
-function deleteTripDestination(destId, trip) {
-  var dest = trip.destinations.id(destId);
-  dest.remove();
-
-  return trip;
 }
 
 
@@ -257,7 +194,7 @@ app.delete('/:tripId/ideas/:ideaId', ensureAuth, function (req, res, next) {
 
 
 /*
- * Trip Destinations - helper functions
+ * Trip Ideas - helper functions
  */
 
 function createTripIdea(params, trip) {
@@ -331,6 +268,18 @@ app.get('/:tripId/plan', ensureAuth, function(req, res, next) {
     .catch(next);
 });
 
+app.post('/:tripId/plan/', ensureAuth, function(req, res, next) {
+  var tripId = req.params.tripId;
+
+  findTrip(tripId, req.user._id)
+    .then(createTripDay)
+    .then(saveTrip)
+    .then(function() {
+      res.redirect('/v1/trips/' + tripId + '/plan');
+    })
+    .catch(next);
+});
+
 app.get('/:tripId/plan/:dayId', ensureAuth, function(req, res, next) {
   findTrip(req.params.tripId, req.user._id)
     .then(checkDayExists.bind(null, req.params.dayId))
@@ -357,14 +306,33 @@ app.put('/:tripId/plan/:dayId', ensureAuth, function(req, res, next) {
     .catch(next);
 });
 
+app.delete('/:tripId/plan/:dayId', ensureAuth, function(req, res, next) {
+  findTrip(req.params.tripId, req.user._id)
+    .then(checkDayExists.bind(null, req.params.dayId))
+    .then(removeTripDay.bind(null, req.params.dayId))
+    .then(saveTrip)
+    .then(function() {
+      res.json({
+        message: "Trip day deleted successfully."
+      });
+    })
+    .catch(next);
+});
+
 
 /*
  * Trip Plan and Trip Days helper functions
  */
 
-/*
- * Trip Plan - helper functions
- */
+function createTripDay(trip) {
+  var params = {
+    entries: [],
+    lodging: {}
+  };
+
+  trip.plan.push(params);
+  return trip;
+}
 
 function findTripDay(dayId, trip) {
   return trip.plan.id(dayId);
@@ -386,6 +354,13 @@ function checkDayExists(dayId, trip) {
   if (!trip.plan.id(dayId)) {
     return Promise.reject(new Error('Trip day not found'));
   }
+
+  return trip;
+}
+
+function removeTripDay(dayId, trip) {
+  var day = trip.plan.id(dayId);
+  day.remove();
 
   return trip;
 }

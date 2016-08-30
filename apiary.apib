@@ -143,7 +143,6 @@ Get all the trips created by the currently authenticated user, in reverse chrono
                     "title": "Paris and Marseille",
                     "startDate": "2016-08-15"
                     "endDate": "2016-08-20",
-                    "destinations": [],
                     "ideas": [],
                     "plan": [],
                     "visibility": "private"
@@ -155,7 +154,6 @@ Get all the trips created by the currently authenticated user, in reverse chrono
                     "title": "Amy and Adam Take Vietnam!",
                     "startDate": "2016-09-22"
                     "endDate": "2016-09-27",
-                    "destinations": [],
                     "ideas": [],
                     "plan": [],
                     "visibility": "public"
@@ -219,7 +217,7 @@ Get all journey entries created by the currently authenticated user, in reverse 
 
 ## Trip Management [/trips]
 
-Users can create and manage trips on the Journey app. Each trip specifies a list of destinations that the user is visiting, as well as a list of places the user wants to visit (ideas) and a concrete trip plan to execute.
+Users can create and manage trips on the Journey app. Each trip specifies a destination that the user is visiting, as well as a list of places the user wants to visit (ideas) and a concrete trip plan to execute.
 
 Each trip includes the following properties:
 
@@ -229,7 +227,7 @@ Each trip includes the following properties:
 * `title`
 * `startDate`
 * `endDate`
-* `destinations` - A list of cities/countries/continents the user will be visiting
+* `destination` - The city/country/continent the user will be visiting
 * `ideas` - A list of places the user wants to visit
 * `plan` - A day-by-day itinerary for the trip, composed of places the user has decided to visit
 * `visibility` - whether or not the trip is publicly visible
@@ -239,7 +237,7 @@ For now, trips cannot be longer than 90 days in duration.
 
 ### Create a trip [POST]
 
-Creates a new trip. `title`, `startDate`, and `endDate` are required during creation, and the user can only specify those three fields and `destinations` during trip creation. Returns the newly created trip upon success.
+Creates a new trip. `title`, `startDate`, and `endDate` are required during creation, and the user can only specify those three fields and `destination` during trip creation. Returns the newly created trip upon success.
 
 + Request (application/json)
 
@@ -261,7 +259,6 @@ Creates a new trip. `title`, `startDate`, and `endDate` are required during crea
                     "title": "Paris and Marseille",
                     "startDate": "2016-08-15"
                     "endDate": "2016-08-20",
-                    "destinations": [],
                     "ideas": [],
                     "plan": [],
                     "visibility": "private"
@@ -287,10 +284,6 @@ Gets details about a particular trip created by the currently authenticated user
                 "title": "Paris and Marseille",
                 "startDate": "2016-08-15"
                 "endDate": "2016-08-20",
-                "destinations": [
-                    "Paris, France",
-                    "Marseille, France"
-                ],
                 "ideas": [],
                 "plan": [],
                 "visibility": "private"
@@ -308,13 +301,22 @@ Updates the trip. Only allowed on trips created by currently authenticated user.
 + Request (application/json)
 
         {
-            "title": "Amy goes to Paris and Marseille",
+            "title": "Amy goes to Korea",
             "startDate": "2016-08-12",
-            "destinations": [
-                "Paris, France",
-                "Marseille, France",
-                "Nice, France"
-            ]
+            "destination": {
+                "googlePlaceId": "ChIJm7oRy-tVZDURS9uIugCbJJE",
+                "name": "South Korea",
+                "loc": {
+                    "type": "Point",
+                    "coordinates": [
+                        151.2125697,
+                        -33.8487927
+                    ]
+                },
+                "types": [
+                    "country"
+                ]
+            }
         }
 
 + Response 200 (application/json)
@@ -324,10 +326,23 @@ Updates the trip. Only allowed on trips created by currently authenticated user.
                 "_id": "578edda250b26fc5d3c6baa8",
                 "creator": "5785e22fdff4328371f8e781",
                 "date": "2016-07-25T15:58:32.404Z",
-                "title": "Amy goes to Paris and Marseille",
+                "title": "Amy goes to Korea",
+                "destination": {
+                    "googlePlaceId": "ChIJm7oRy-tVZDURS9uIugCbJJE",
+                    "name": "South Korea",
+                    "loc": {
+                        "type": "Point",
+                        "coordinates": [
+                            151.2125697,
+                            -33.8487927
+                        ]
+                    },
+                    "types": [
+                        "country"
+                    ]
+                },
                 "startDate": "2016-08-12"
                 "endDate": "2016-08-20",
-                "destinations": [],
                 "ideas": [],
                 "plan": [],
                 "visibility": "private"
@@ -346,70 +361,6 @@ Deletes the trip. Only allowed on trips created by the currently authenticated u
 
         {
             "message": "Trip deleted."
-        }
-
-
-## Trip Destinations [/trips/{tripId}/destinations]
-
-Each trip contains a list of destinations. The purpose of keeping this list is to help visualize where users are visiting on the map, even before ideas or plans are set.
-
-
-### Add a trip destination [POST]
-
-Adds a destination to the trip. Only allowed on trips created by the currently authenticated user.
-
-+ Request (application/json)
-
-        {
-            "googlePlaceId": "ChIJm7oRy-tVZDURS9uIugCbJJE",
-            "name": "South Korea",
-            "loc": {
-                "type": "Point",
-                "coordinates": [
-                    151.2125697,
-                    -33.8487927
-                ]
-            },
-            "types": [
-                "country"
-            ]
-        }
-
-+ Response 200 (application/json)
-
-        {
-            "destinations": [
-                {
-                    "_id": "579e7853181f58d5412ab908",
-                    "googlePlaceId": "ChIJm7oRy-tVZDURS9uIugCbJJE",
-                    "name": "South Korea",
-                    "loc": {
-                        "type": "Point",
-                        "coordinates": [
-                            151.2125697,
-                            -33.8487927
-                        ]
-                    },
-                    "types": [
-                        "country"
-                    ]
-                }
-            ]
-        }
-
-
-### Remove a trip destination [DELETE /trips/{tripId}/destinations/{destinationId}]
-
-Removes a destination from a trip. Only allowed on trips created by the currently authenticated user.
-
-+ Parameters
-    + tripId (string) - Trip ID to get details for.
-    + destinationId (string) - Destination ID in the trip.
-
-+ Response 200 (application/json)
-
-        {
-            "message": "Trip destination deleted."
         }
 
 
@@ -722,6 +673,27 @@ Trip Entry:
         }
 
 
+### Add a trip day [POST /trips/{tripId}/plan]
+
+Adds a new empty day to the trip. Only allowed on trips created by the currently authenticated user.
+
++ Parameters
+    + tripId (string) - Trip ID
+
++ Response (application/json)
+
+        {
+            "tripId": "578edda250b26fc5d3c6bf22",
+            "plan": [
+                {
+                    "_id": "578edda250b26fc5d3c6bb11",
+                    "entries": [],
+                    "lodging": {}
+                }
+            ]
+        }
+
+
 ### Get the plan for a trip day [GET /trips/{tripId}/plan/{dayId}]
 
 Only allowed on trips created by the currently authenticated user.
@@ -812,6 +784,21 @@ Updates the contents of a trip day. Only allowed on trips created by the current
                 }
             }
         }
+
+
+### Remove a trip day [DELETE /trips/{tripId}/plan/{dayId}]
+
+Removes a day from the trip plan. The other days readjust based on their position in the trip plan list. Only allowed on trips created by the currently authenticated user.
+
++ Parameters
+    + tripId (string) - Trip ID
+    + dayId (string) - Trip Day ID
+
+    + Response 200 (application/json)
+
+            {
+                "message": "Trip day deleted successfully."
+            }
 
 
 ### Create a new Trip Entry [POST /trips/{tripId}/plan/{dayId}/entries]
