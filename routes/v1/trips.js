@@ -16,10 +16,16 @@ var app = express.Router();
 app.post('/', ensureAuth, function(req, res, next) {
   var params = {
     creator: req.user._id,
-    title: req.body.title,
-    startDate: new Date(req.body.startDate),
-    endDate: new Date(req.body.endDate)
+    title: req.body.title
   };
+
+  if (req.body.startDate) {
+    params.startDate = new Date(req.body.startDate);
+  }
+
+  if (req.body.endDate) {
+    params.endDate = new Date(req.body.endDate);
+  }
 
   if (req.body.destination) {
     params.destination = req.body.destination;
@@ -97,8 +103,8 @@ function updateTrip(params, trip) {
   var newParams = {
     destination: params.destination,
     title: params.title,
-    startDate: params.startDate,
-    endDate: params.endDate,
+    startDate: new Date(params.startDate),
+    endDate: new Date(params.endDate),
     visibility: params.visibility
   };
 

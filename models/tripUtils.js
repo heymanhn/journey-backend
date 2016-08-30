@@ -17,13 +17,16 @@ module.exports = {
       return next(new Error('Trip plan has invalid format'));
     }
 
-    if (this.endDate < this.startDate) {
-      return next(new Error('Trip end date is before start date'));
+    if (this.endDate && this.startDate) {
+      if (this.endDate < this.startDate) {
+        return next(new Error('Trip end date is before start date'));
+      }
     }
 
     next();
   },
 
+  // Not currently used
   updateTripDays: function(next) {
     if (!this.startDate || !this.endDate) {
       return next(new Error('Trip entry is missing a start/end date'));
