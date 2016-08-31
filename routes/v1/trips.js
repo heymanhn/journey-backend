@@ -34,8 +34,10 @@ app.post('/', ensureAuth, function(req, res, next) {
   var trip = new Trip(params);
   trip
     .save()
-    .then(function() {
-      res.redirect('/v1/users/' + req.user._id + '/trips/');
+    .then(function(trip) {
+      res.json({
+        trip: trip
+      });
     })
     .catch(next);
 });
