@@ -14,7 +14,6 @@ require('mongoose').Promise = Promise;
 chai.use(chaiAsPromised);
 
 var Entry = require('../../models/entryModel');
-var s3config = require('../../config/secrets').s3;
 
 describe('Entry Routes', function() {
   var sandbox, router, findEntry, deleteS3Contents, removeEntry, s3;
@@ -303,7 +302,6 @@ describe('Entry Routes', function() {
       };
 
       sandbox.stub(s3, 'deleteObject', function(params) {
-        params.Bucket.should.equal(s3config.mediaBucket);
         params.Key.should.equal(stubKey);
 
         return {

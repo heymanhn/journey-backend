@@ -11,7 +11,7 @@ var sinon = require('sinon');
 require('sinon-as-promised');
 chai.use(chaiAsPromised);
 
-var s3config = require('../../config/secrets').s3;
+var s3config = require('../../config/s3');
 
 describe('Uploads Routes', function() {
   var sandbox;

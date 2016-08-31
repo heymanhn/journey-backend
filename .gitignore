@@ -47,6 +47,3 @@ apiary.html
 
 # Heroku local config variables
 .env
-
-# App secrets
-config/secrets.js

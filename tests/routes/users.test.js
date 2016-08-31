@@ -6,7 +6,7 @@ var jwt = require('jsonwebtoken');
 var should = require('chai').should(); // jshint ignore:line
 var sinon = require('sinon');
 
-var config = require('../../config/config');
+var database = require('../../config/database');
 var Entry = require('../../models/entryModel');
 var User = require('../../models/userModel');
 
@@ -69,7 +69,6 @@ describe('User Routes', function() {
 
       sandbox.stub(jwt, 'sign', function(payload, secret, expiry) {
         payload.should.eql(stubUser._doc);
-        secret.should.equal(config.secrets.jwt);
       });
       sandbox.stub(User.prototype, 'save').yields(null, stubUser);
 
@@ -313,7 +312,7 @@ describe('User Routes', function() {
     it('looks for entries by the current user', function(done) {
       sandbox.stub(Entry, 'findEntries', function(params, count, page) {
         params.creator.should.equal(req.params.userId);
-        count.should.equal(config.database.DEFAULT_ENTRY_COUNT);
+        count.should.equal(database.DEFAULT_ENTRY_COUNT);
         page.should.equal(1);
 
         return {

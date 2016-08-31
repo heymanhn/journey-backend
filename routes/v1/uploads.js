@@ -5,7 +5,7 @@ var AWS = require('aws-sdk');
 var express = require('express');
 
 var ensureAuth = require('../../utils/auth').ensureAuth;
-var s3config = require('../../config/secrets').s3;
+var s3config = require('../../config/s3');
 
 var app = express.Router();
 AWS.config.update({ region: s3config.region });
