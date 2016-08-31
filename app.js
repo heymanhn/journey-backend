@@ -8,6 +8,7 @@ var debug = require('debug')('journey-backend');
 var express = require('express');
 var fs = require('fs');
 var https = require('https');
+var http = require('http');
 var logger = require('morgan');
 var mongoose = require('mongoose');
 var passport = require('passport');
@@ -86,12 +87,15 @@ if (app.get('env') === 'production') {
 /*
  * Create HTTPS server
  */
-var options = {
-  key: fs.readFileSync('key.pem'),
-  cert: fs.readFileSync('cert.pem')
-};
 
-var server = https.createServer(options, app);
+// NOTE: HTTPS disabled until we go into a more serious production mode
+// var options = {
+//   key: fs.readFileSync('key.pem'),
+//   cert: fs.readFileSync('cert.pem')
+// };
+// var server = http.createServer(options, app);
+
+var server = http.createServer(app);
 server.listen(port);
 server.on('error', onError);
 server.on('listening', onListening);
