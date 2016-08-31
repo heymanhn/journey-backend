@@ -25,7 +25,7 @@ app.post('/', function(req, res, next) {
   // Input checking
   var missingKeys = [];
   _.each(params, function(value, key) {
-    if (key !== 'name' && !value) {
+    if (key !== 'name' && key !== 'username' && !value) {
       missingKeys.push(key);
     }
   });
