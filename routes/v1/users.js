@@ -18,7 +18,8 @@ app.post('/', function(req, res, next) {
   var params = {
     email: req.body.email,
     password: req.body.password,
-    name: req.body.name
+    name: req.body.name,
+    username: req.body.username
   };
 
   // Input checking
