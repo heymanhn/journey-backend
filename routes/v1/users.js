@@ -42,7 +42,7 @@ app.post('/', function(req, res, next) {
     // Generate JWT once account is created successfully
     var token = jwt.sign(
       user._doc,
-      config.secrets.jwt,
+      process.env.JWT || config.secrets.jwt,
       { expiresIn: '90 days' }
     );
 

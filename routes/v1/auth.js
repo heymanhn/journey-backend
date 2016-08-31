@@ -29,7 +29,7 @@ app.post('/login', checkLoginParams, function(req, res, next) {
     } else {
       var token = jwt.sign(
         user._doc,
-        config.secrets.jwt,
+        process.env.JWT || config.secrets.jwt,
         { expiresIn: '90 days' }
       );
 

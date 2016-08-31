@@ -44,3 +44,9 @@ jspm_packages
 
 # Apiary rendered files
 apiary.html
+
+# Heroku local config variables
+.env
+
+# App secrets
+config/secrets.js

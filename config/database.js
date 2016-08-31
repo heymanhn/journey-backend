@@ -2,6 +2,10 @@
 'use strict';
 
 module.exports = {
+  production: {
+    url: process.env.MONGODB_URI
+  },
+
   development: {
     url: 'mongodb://localhost:27017/journey'
   },

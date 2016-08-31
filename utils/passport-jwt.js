@@ -13,7 +13,7 @@ var User = require('../models/userModel');
 module.exports = function(passport) {
   var options = {
     jwtFromRequest: ExtractJwt.fromAuthHeader(),
-    secretOrKey: config.secrets.jwt
+    secretOrKey: process.env.JWT || config.secrets.jwt
   };
 
   passport.use(new JwtStrategy(options, function(jwt_payload, cb) {
