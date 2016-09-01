@@ -5,7 +5,7 @@ var bcrypt = require('bcrypt');
 const saltRounds = 8;
 
 function fieldExistsCheck(field, value, next) {
-  if (!this.isModified(field) || !this[field]) {
+  if (!this.isModified(field) || !value) {
     return next();
   }
 
