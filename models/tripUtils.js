@@ -23,6 +23,11 @@ module.exports = {
       }
     }
 
+    var vis = this.visibility;
+    if (vis && vis !== 'public' && vis !== 'private') {
+      return next(new Error('Trip has invalid visibility set'));
+    }
+
     next();
   },
 
