@@ -6,7 +6,7 @@ var passport = require('passport');
 module.exports = {
   ensureAuth: function(req, res, next) {
     /*
-     * This custom implementation of the authenticate() sets req.user to the
+     * This custom implementation of authenticate() sets req.user to the
      * user object every time, overriding the default session-based behavior.
      */
     passport.authenticate('jwt', function(err, user) {

@@ -42,8 +42,9 @@ app.post('/', ensureAuth, function(req, res, next) {
     .catch(next);
 });
 
-app.get('/:tripId', ensureAuth, function(req, res, next) {
-  findTrip(req.params.tripId, req.user._id)
+app.get('/:tripId', function(req, res, next) {
+  findTrip(req.params.tripId)
+    .then(checkOwnership.bind(null, req, res))
     .then(function(trip) {
       res.json({
         trip: trip
@@ -52,8 +53,9 @@ app.get('/:tripId', ensureAuth, function(req, res, next) {
     .catch(next);
 });
 
-app.put('/:tripId', ensureAuth, function(req, res, next) {
-  findTrip(req.params.tripId, req.user._id)
+app.put('/:tripId', function(req, res, next) {
+  findTrip(req.params.tripId)
+    .then(checkOwnership.bind(null, req, res))
     .then(updateTrip.bind(null, req.body))
     .then(saveTrip)
     .then(function(trip) {
@@ -66,7 +68,7 @@ app.put('/:tripId', ensureAuth, function(req, res, next) {
 });
 
 app.delete('/:tripId', ensureAuth, function(req, res, next) {
-  findTrip(req.params.tripId, req.user._id)
+  findTripWithOwner(req.params.tripId, req.user._id)
     .then(removeTrip)
     .then(function() {
       res.json({
@@ -81,11 +83,19 @@ app.delete('/:tripId', ensureAuth, function(req, res, next) {
  * Trips - helper functions
  */
 
-function findTrip(tripId, userId) {
-  var params = {
-    _id: tripId,
-    creator: userId
-  };
+function findTripWithOwner(tripId, userId) {
+  return findTrip(tripId)
+    .next(function(trip) {
+      if (userId.toString() !== trip.creator.toString()) {
+        return Promise.reject(new Error('Not Authorized'));
+      } else {
+        return trip;
+      }
+    });
+}
+
+function findTrip(tripId) {
+  var params = { _id: tripId };
 
   return Trip
     .findOne(params)
@@ -99,6 +109,41 @@ function findTrip(tripId, userId) {
 
       return trip;
     });
+}
+
+/*
+ * Allow public trips to pass through; only allow private trips to pass through
+ * if the trip is created by the currently authenticated user
+ */
+function checkOwnership(req, res, trip) {
+  var vis = trip.visibility;
+  if (vis === 'public') {
+    return trip;
+  } else if (vis === 'private') {
+
+    // Construct a promise for the async ensureAuth() call
+    var authPromise = new Promise(function(resolve, reject) {
+      var cb = function(err) {
+        if (err) {
+          return reject(err);
+        }
+
+        if (req.user._id.toString() !== trip.creator.toString()) {
+          var newErr = new Error('Not Authorized');
+          newErr.status = 401;
+          return reject(newErr);
+        }
+
+        return resolve(trip);
+      };
+
+      ensureAuth(req, res, cb);
+    });
+
+    return authPromise;
+  } else {
+    return Promise.reject(new Error('Trip has invalid visibility setting'));
+  }
 }
 
 function updateTrip(params, trip) {
@@ -133,10 +178,11 @@ function removeTrip(trip) {
  * Trip Ideas
  */
 
-app.post('/:tripId/ideas', ensureAuth, function(req, res, next) {
+app.post('/:tripId/ideas', function(req, res, next) {
   var tripId = req.params.tripId;
 
-  findTrip(tripId, req.user._id)
+  findTrip(tripId)
+    .then(checkOwnership.bind(null, req, res))
     .then(createTripIdea.bind(null, req.body))
     .then(saveTrip)
     .then(function(trip) {
@@ -148,10 +194,11 @@ app.post('/:tripId/ideas', ensureAuth, function(req, res, next) {
     .catch(next);
 });
 
-app.get('/:tripId/ideas', ensureAuth, function(req, res, next) {
+app.get('/:tripId/ideas', function(req, res, next) {
   var tripId = req.params.tripId;
 
-  findTrip(tripId, req.user._id)
+  findTrip(tripId)
+    .then(checkOwnership.bind(null, req, res))
     .then(function(trip) {
       res.json({
         tripId: tripId,
@@ -161,20 +208,9 @@ app.get('/:tripId/ideas', ensureAuth, function(req, res, next) {
     .catch(next);
 });
 
-app.delete('/:tripId/ideas', ensureAuth, function(req, res, next) {
-  findTrip(req.params.tripId, req.user._id)
-    .then(deleteTripIdeas)
-    .then(saveTrip)
-    .then(function() {
-      res.json({
-        message: 'Trip ideas deleted.'
-      });
-    })
-    .catch(next);
-});
-
-app.put('/:tripId/ideas/:ideaId', ensureAuth, function(req, res, next) {
-  findTrip(req.params.tripId, req.user._id)
+app.put('/:tripId/ideas/:ideaId', function(req, res, next) {
+  findTrip(req.params.tripId)
+    .then(checkOwnership.bind(null, req, res))
     .then(checkIdeaExists.bind(null, req.params.ideaId))
     .then(updateTripIdea.bind(null, req.body, req.params.ideaId))
     .then(saveTrip)
@@ -187,14 +223,28 @@ app.put('/:tripId/ideas/:ideaId', ensureAuth, function(req, res, next) {
     .catch(next);
 });
 
-app.delete('/:tripId/ideas/:ideaId', ensureAuth, function (req, res, next) {
-  findTrip(req.params.tripId, req.user._id)
+app.delete('/:tripId/ideas/:ideaId', function (req, res, next) {
+  findTrip(req.params.tripId)
+    .then(checkOwnership.bind(null, req, res))
     .then(checkIdeaExists.bind(null, req.params.ideaId))
     .then(deleteTripIdea.bind(null, req.params.ideaId))
     .then(saveTrip)
     .then(function() {
       res.json({
         message: "Trip idea deleted successfully."
+      });
+    })
+    .catch(next);
+});
+
+app.delete('/:tripId/ideas', function(req, res, next) {
+  findTrip(req.params.tripId)
+    .then(checkOwnership.bind(null, req, res))
+    .then(deleteTripIdeas)
+    .then(saveTrip)
+    .then(function() {
+      res.json({
+        message: 'Trip ideas deleted.'
       });
     })
     .catch(next);
@@ -263,10 +313,11 @@ function deleteTripIdea(ideaId, trip) {
  * Trip Plan and Trip Days
  */
 
-app.get('/:tripId/plan', ensureAuth, function(req, res, next) {
+app.get('/:tripId/plan', function(req, res, next) {
   var tripId = req.params.tripId;
 
-  findTrip(tripId, req.user._id)
+  findTrip(tripId)
+    .then(checkOwnership.bind(null, req, res))
     .then(function(trip) {
       res.json({
         tripId: tripId,
@@ -276,10 +327,11 @@ app.get('/:tripId/plan', ensureAuth, function(req, res, next) {
     .catch(next);
 });
 
-app.post('/:tripId/plan', ensureAuth, function(req, res, next) {
+app.post('/:tripId/plan', function(req, res, next) {
   var tripId = req.params.tripId;
 
-  findTrip(tripId, req.user._id)
+  findTrip(tripId)
+    .then(checkOwnership.bind(null, req, res))
     .then(createTripDay)
     .then(saveTrip)
     .then(function(trip) {
@@ -291,8 +343,9 @@ app.post('/:tripId/plan', ensureAuth, function(req, res, next) {
     .catch(next);
 });
 
-app.get('/:tripId/plan/:dayId', ensureAuth, function(req, res, next) {
-  findTrip(req.params.tripId, req.user._id)
+app.get('/:tripId/plan/:dayId', function(req, res, next) {
+  findTrip(req.params.tripId)
+    .then(checkOwnership.bind(null, req, res))
     .then(checkDayExists.bind(null, req.params.dayId))
     .then(findTripDay.bind(null, req.params.dayId))
     .then(function(tripDay) {
@@ -303,8 +356,9 @@ app.get('/:tripId/plan/:dayId', ensureAuth, function(req, res, next) {
     .catch(next);
 });
 
-app.put('/:tripId/plan/:dayId', ensureAuth, function(req, res, next) {
-  findTrip(req.params.tripId, req.user._id)
+app.put('/:tripId/plan/:dayId', function(req, res, next) {
+  findTrip(req.params.tripId)
+    .then(checkOwnership.bind(null, req, res))
     .then(checkDayExists.bind(null, req.params.dayId))
     .then(updateTripDay.bind(null, req.body, req.params.dayId))
     .then(saveTrip)
@@ -317,8 +371,9 @@ app.put('/:tripId/plan/:dayId', ensureAuth, function(req, res, next) {
     .catch(next);
 });
 
-app.delete('/:tripId/plan/:dayId', ensureAuth, function(req, res, next) {
-  findTrip(req.params.tripId, req.user._id)
+app.delete('/:tripId/plan/:dayId', function(req, res, next) {
+  findTrip(req.params.tripId)
+    .then(checkOwnership.bind(null, req, res))
     .then(checkDayExists.bind(null, req.params.dayId))
     .then(removeTripDay.bind(null, req.params.dayId))
     .then(saveTrip)
@@ -381,8 +436,9 @@ function removeTripDay(dayId, trip) {
  * Trip Entries
  */
 
-app.post('/:tripId/plan/:dayId/entries', ensureAuth, function(req, res, next) {
-  findTrip(req.params.tripId, req.user._id)
+app.post('/:tripId/plan/:dayId/entries', function(req, res, next) {
+  findTrip(req.params.tripId)
+    .then(checkOwnership.bind(null, req, res))
     .then(checkDayExists.bind(null, req.params.dayId))
     .then(createTripEntry.bind(null, req.body, req.params.dayId))
     .then(saveTrip)
@@ -395,10 +451,9 @@ app.post('/:tripId/plan/:dayId/entries', ensureAuth, function(req, res, next) {
     .catch(next);
 });
 
-app.put('/:tripId/plan/:dayId/entries/:entryId', ensureAuth,
-  function(req, res, next) {
-
-  findTrip(req.params.tripId, req.user._id)
+app.put('/:tripId/plan/:dayId/entries/:entryId', function(req, res, next) {
+  findTrip(req.params.tripId)
+    .then(checkOwnership.bind(null, req, res))
     .then(checkDayExists.bind(null, req.params.dayId))
     .then(checkEntryExists.bind(null, req.params.dayId, req.params.entryId))
     .then(updateTripEntry.bind(
@@ -417,10 +472,9 @@ app.put('/:tripId/plan/:dayId/entries/:entryId', ensureAuth,
     .catch(next);
 });
 
-app.delete('/:tripId/plan/:dayId/entries/:entryId', ensureAuth,
-  function(req, res, next) {
-
-  findTrip(req.params.tripId, req.user._id)
+app.delete('/:tripId/plan/:dayId/entries/:entryId', function(req, res, next) {
+  findTrip(req.params.tripId)
+    .then(checkOwnership.bind(null, req, res))
     .then(checkDayExists.bind(null, req.params.dayId))
     .then(checkEntryExists.bind(null, req.params.dayId, req.params.entryId))
     .then(deleteTripEntry.bind(null,
