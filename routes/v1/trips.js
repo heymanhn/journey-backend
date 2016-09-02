@@ -139,16 +139,22 @@ app.post('/:tripId/ideas', ensureAuth, function(req, res, next) {
   findTrip(tripId, req.user._id)
     .then(createTripIdea.bind(null, req.body))
     .then(saveTrip)
-    .then(function() {
-      res.redirect('/v1/trips/' + tripId + '/ideas');
+    .then(function(trip) {
+      res.json({
+        tripId: tripId,
+        ideas: trip.ideas
+      });
     })
     .catch(next);
 });
 
 app.get('/:tripId/ideas', ensureAuth, function(req, res, next) {
-  findTrip(req.params.tripId, req.user._id)
+  var tripId = req.params.tripId;
+
+  findTrip(tripId, req.user._id)
     .then(function(trip) {
       res.json({
+        tripId: tripId,
         ideas: trip.ideas
       });
     })
@@ -270,14 +276,17 @@ app.get('/:tripId/plan', ensureAuth, function(req, res, next) {
     .catch(next);
 });
 
-app.post('/:tripId/plan/', ensureAuth, function(req, res, next) {
+app.post('/:tripId/plan', ensureAuth, function(req, res, next) {
   var tripId = req.params.tripId;
 
   findTrip(tripId, req.user._id)
     .then(createTripDay)
     .then(saveTrip)
-    .then(function() {
-      res.redirect('/v1/trips/' + tripId + '/plan');
+    .then(function(trip) {
+      res.json({
+        tripId: tripId,
+        plan: trip.plan
+      });
     })
     .catch(next);
 });
