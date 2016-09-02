@@ -19,17 +19,17 @@ app.post('/', ensureAuth, function(req, res, next) {
     title: req.body.title
   };
 
-  if (req.body.startDate) {
-    params.startDate = new Date(req.body.startDate);
-  }
+  var optionalFields = ['startDate', 'endDate', 'destination', 'visibility'];
 
-  if (req.body.endDate) {
-    params.endDate = new Date(req.body.endDate);
-  }
-
-  if (req.body.destination) {
-    params.destination = req.body.destination;
-  }
+  optionalFields.forEach(function(field) {
+    if (req.body[field]) {
+      if (field === 'startDate' || field === 'endDate') {
+        params[field] = new Date(req.body[field]);
+      } else {
+        params[field] = req.body[field];
+      }
+    }
+  });
 
   var trip = new Trip(params);
   trip
