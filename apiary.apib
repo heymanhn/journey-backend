@@ -269,7 +269,7 @@ Creates a new trip. `title` is required during creation, and the user can only s
 
 ### Get a trip [GET /trips/{tripId}]
 
-Gets details about a particular trip created by the currently authenticated user. Returns the full details about the trip.
+Gets details about a particular trip. Returns the full details about the trip. Trips with `public` visibility are openly accessible. Trips with `private` visibility are only accessible to the creator.
 
 + Parameters
     + tripId (string) - Trip ID to get details for.
@@ -293,7 +293,7 @@ Gets details about a particular trip created by the currently authenticated user
 
 ### Update a trip [PUT /trips/{tripId}]
 
-Updates the trip. Only allowed on trips created by currently authenticated user.
+Updates the trip. Trips with `public` visibility are openly accessible. Trips with `private` visibility are only accessible to the creator.
 
 + Parameters
     + tripId (string) - Trip ID to update.
@@ -369,7 +369,7 @@ Deletes the trip. Only allowed on trips created by the currently authenticated u
 
 ## Trip Ideas [/trips/{tripId}/ideas]
 
-Each trip contains a list of ideas, each of which is a place that the user wants to visit on the trip. The order of the ideas in the array dictates the order they'll be displayed to the user. Each trip only has one list of ideas. Users can add, remove, reorder, or move an idea to the trip plan.
+Each trip contains a list of ideas, each of which is a place that the user wants to visit on the trip. The order of the ideas in the array dictates the order they'll be displayed to the user. Each trip only has one list of ideas. Users can add, remove, reorder, or move an idea to the trip plan. Trips with `public` visibility are openly accessible. Trips with `private` visibility are only accessible to the creator.
 
 Each trip idea includes the following properties:
 
@@ -388,7 +388,7 @@ Each trip idea includes the following properties:
 
 ### Create a trip idea [POST]
 
-Creates a new idea for the trip. Only allowed on a trip created by the currently authenticated user. The following properties are required to be provided for creation:
+Creates a new idea for the trip. The following properties are required to be provided for creation:
 
 * `googlePlaceId`
 * `name`
@@ -450,7 +450,7 @@ Creates a new idea for the trip. Only allowed on a trip created by the currently
 
 ### Get a trip's ideas [GET /trips/{tripId}/ideas?page={page}]
 
-Returns the list of ideas from a trip, in reverse chronological order. Only allowed on trips created by the currently authenticated user. Returns 20 ideas at a time.
+Returns the list of ideas from a trip, in reverse chronological order. Returns 20 ideas at a time.
 
 + Parameters
     + tripId (string) - Trip ID
@@ -508,7 +508,7 @@ Returns the list of ideas from a trip, in reverse chronological order. Only allo
 
 ### Delete a trip's ideas [DELETE]
 
-Clears the list of ideas from a given trip. Only allowed on trips created by the currently authenticated user.
+Clears the list of ideas from a given trip.
 
 + Parameters
     + tripId (string) - Trip ID
@@ -522,7 +522,7 @@ Clears the list of ideas from a given trip. Only allowed on trips created by the
 
 ### Update a trip idea [PUT /trips/{tripId}/ideas/{ideaId}]
 
-Updates an idea that belongs to a trip. Useful for reordering an idea in the list or adding a comment. Only allowed on ideas whose trips are created by the currently authenticated user.
+Updates an idea that belongs to a trip. Useful for reordering an idea in the list or adding a comment.
 
 + Parameters
     + tripId (string) - Trip ID
@@ -568,7 +568,7 @@ Updates an idea that belongs to a trip. Useful for reordering an idea in the lis
 
 ### Delete a trip idea [DELETE /trips/{tripId}/ideas/{ideaId}]
 
-Removes an idea from a trip. Only allowed on ideas from trips created by the currently authenticated user.
+Removes an idea from a trip.
 
 + Parameters
     + tripId (string) - Trip ID
@@ -591,6 +591,8 @@ When clients request the creation of a new trip, the backend also creates a trip
 If the duration of the trip subsequently increases, the backend creates additional trip days. If the duration of the trip subsequently decreases, the backend removes the extraneous trip days (counting back from the end of the list) and adds any entries to the last day on the list.
 
 To facilitate frequent back-and-forths between Trip Ideas and the Trip Plan, the backend will handle updating the state of an idea as users move it to the plan and back.
+
+Trips with `public` visibility are openly accessible. Trips with `private` visibility are only accessible to the creator.
 
 The below schemas make up a trip plan:
 
@@ -677,7 +679,7 @@ Trip Entry:
 
 ### Add a trip day [POST /trips/{tripId}/plan]
 
-Adds a new empty day to the trip. Only allowed on trips created by the currently authenticated user.
+Adds a new empty day to the trip.
 
 + Parameters
     + tripId (string) - Trip ID
@@ -697,8 +699,6 @@ Adds a new empty day to the trip. Only allowed on trips created by the currently
 
 
 ### Get the plan for a trip day [GET /trips/{tripId}/plan/{dayId}]
-
-Only allowed on trips created by the currently authenticated user.
 
 + Parameters
     + tripId (string) - Trip ID
@@ -741,7 +741,7 @@ Only allowed on trips created by the currently authenticated user.
 
 ### Update a trip day [PUT /trips/{tripId}/plan/{dayId}]
 
-Updates the contents of a trip day. Only allowed on trips created by the currently authenticated user. Can move the entire day to another day, reordering the affected trip days in the process. Can also update the lodging information for the day.
+Updates the contents of a trip day. Can move the entire day to another day, reordering the affected trip days in the process. Can also update the lodging information for the day.
 
 + Parameters
     + tripId (string) - Trip ID
@@ -790,7 +790,7 @@ Updates the contents of a trip day. Only allowed on trips created by the current
 
 ### Remove a trip day [DELETE /trips/{tripId}/plan/{dayId}]
 
-Removes a day from the trip plan. The other days readjust based on their position in the trip plan list. Only allowed on trips created by the currently authenticated user.
+Removes a day from the trip plan. The other days readjust based on their position in the trip plan list.
 
 + Parameters
     + tripId (string) - Trip ID
@@ -805,7 +805,7 @@ Removes a day from the trip plan. The other days readjust based on their positio
 
 ### Create a new Trip Entry [POST /trips/{tripId}/plan/{dayId}/entries]
 
-A Trip Entry can be created either through a trip idea, or directly into the trip plan. Only allowed on trips created by the currently authenticated user.
+A Trip Entry can be created either through a trip idea, or directly into the trip plan.
 
 If the request body includes an `idea` field, that indicates the entry is created from an idea. The backend will fetch that idea, create the trip entry using the idea's data, and delete the idea.
 
@@ -871,7 +871,7 @@ If the request body includes an `index` field, the backend will attempt to inser
 
 ### Update a Trip Entry [PUT /trips/{tripId}/plan/{dayId}/entries/{entryId}]
 
-Updates the state of a trip entry. Only allowed on trips created by the currently authenticated user. Can update the position of the entry in the list (`index`), the day that the entry belongs to, the status, and the comment. Example use cases include checking in at a place, reordering the entry, and moving the entry to another day.
+Updates the state of a trip entry. Can update the position of the entry in the list (`index`), the day that the entry belongs to, the status, and the comment. Example use cases include checking in at a place, reordering the entry, and moving the entry to another day.
 
 If the API call asks to move the entry to another day, but `index` is not provided, the backend adds the entry to the end of the entries for the new day.
 
@@ -920,7 +920,7 @@ If the API call asks to move the entry to another day, but `index` is not provid
 
 ### Delete a Trip Entry [DELETE /trips/{tripId}/plan/{dayId}/entries/{entryId}]
 
-Removes a trip entry from a day's schedule. Only allowed on trips created by the currently authenticated user.
+Removes a trip entry from a day's schedule.
 
 Upon removing the entry, the backend creates a new idea for that entry in the ideas list. If the request body includes a `ignoreIdeaCreate` field set to `true`, the backend will not create an idea for the deleted entry.
 
