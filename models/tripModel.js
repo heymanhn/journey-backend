@@ -58,6 +58,16 @@ var destinationSchema = new mongoose.Schema({
     type: { type: String, required: true },
     coordinates: { type: [Number], required: true }
   },
+  viewport: {
+    northeast: {
+      type: { type: String, required: true },
+      coordinates: { type: [Number], required: true }
+    },
+    southwest: {
+      type: { type: String, required: true },
+      coordinates: { type: [Number], required: true }
+    }
+  },
   types: [String]
 });
 
