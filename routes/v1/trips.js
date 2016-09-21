@@ -229,9 +229,10 @@ app.delete('/:tripId/ideas/:ideaId', function (req, res, next) {
     .then(checkIdeaExists.bind(null, req.params.ideaId))
     .then(deleteTripIdea.bind(null, req.params.ideaId))
     .then(saveTrip)
-    .then(function() {
+    .then(function(trip) {
       res.json({
-        message: "Trip idea deleted successfully."
+        message: "Trip idea deleted successfully.",
+        ideas: trip.ideas
       });
     })
     .catch(next);
