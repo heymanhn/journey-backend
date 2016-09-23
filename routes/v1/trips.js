@@ -85,7 +85,7 @@ app.delete('/:tripId', ensureAuth, function(req, res, next) {
 
 function findTripWithOwner(tripId, userId) {
   return findTrip(tripId)
-    .next(function(trip) {
+    .then(function(trip) {
       if (userId.toString() !== trip.creator.toString()) {
         return Promise.reject(new Error('Not Authorized'));
       } else {
