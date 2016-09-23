@@ -1,8 +1,6 @@
 /*jslint node: true */
 'use strict';
 
-var config = require('../config/config');
-
 module.exports = {
   validateFields: function(next) {
     if (!this.title) {
@@ -46,10 +44,8 @@ module.exports = {
     next();
   },
 
-  findTrips: function(params, page) {
-    var count = config.database.DEFAULT_TRIP_COUNT;
-
-    if (!params || !page) {
+  findTrips: function(params, count, page) {
+    if (!params || !count || !page) {
       return Promise.reject(new Error('Invalid arguments'));
     }
 

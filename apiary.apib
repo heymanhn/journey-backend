@@ -122,12 +122,13 @@ Updates the user. Only allowed on currently authenticated user.
         }
 
 
-### Get User's trips [GET /users/{userId}/trips?page={page}]
+### Get User's trips [GET /users/{userId}/trips?count={count}&page={page}]
 
 Get all the trips created by the currently authenticated user, in reverse chronological order. Only a subset of each trip object is returned in this route. To get full details about the trip, use GET /trips/{tripId}.
 
 + Parameters
     + userId (string) - User ID to get entries for.
+    + count (number) - Number of trips to return per page.
     + page (number) - Page # to return based on every page of 10 trips.
 
 + Response 200 (application/json)

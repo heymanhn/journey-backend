@@ -108,13 +108,14 @@ app.delete('/:userId', ensureAuth, isCurrentUser, function(req, res, next) {
 });
 
 app.get('/:userId/trips', ensureAuth, isCurrentUser, function(req, res, next) {
+  var count = Number(req.query.count) || config.database.DEFAULT_TRIP_COUNT;
   var page = Number(req.query.page) || 1;
   var params = {
     creator: req.params.userId
   };
 
   Trip
-    .findTrips(params, page)
+    .findTrips(params, count, page)
     .then(function(trips) {
       if (trips.length === 0) {
         var err = new Error('No trips found');
