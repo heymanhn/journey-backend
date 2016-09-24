@@ -273,7 +273,7 @@ function createTripIdea(params, trip) {
     }
   });
 
-  trip.ideas.push(newParams);
+  trip.ideas.unshift(newParams);
   return trip;
 }
 
@@ -579,7 +579,7 @@ function deleteTripEntry(dayId, entryId, ignoreIdeaCreate, trip) {
 
   if (!ignoreIdeaCreate) {
     var newParams = populateNewParams(entry);
-    trip.ideas.push(newParams);
+    trip.ideas.unshift(newParams);
   }
 
   return trip;
