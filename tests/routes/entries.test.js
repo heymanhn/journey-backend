@@ -42,8 +42,6 @@ describe('Entry Routes', () => {
     function stubRedirect(expectedResponse, done) {
       return {
         redirect(data) {
-          console.log("res stub hit");
-          debugger;
           data.should.equal(expectedResponse);
           done();
         }

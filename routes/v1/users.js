@@ -8,43 +8,33 @@ const jwt = require('jsonwebtoken');
 const config = require('../../config/config');
 const ensureAuth = require('../../utils/auth').ensureAuth;
 const Entry = require('../../models/entryModel');
-const isCurrentUser = require('../../utils/users').isCurrentUser;
+const { isCurrentUser, validateSignupFields } = require('../../utils/users');
 const Trip = require('../../models/tripModel');
 const User = require('../../models/userModel');
 
-app.post('/', (req, res, next) => {
+app.post('/', validateSignupFields, (req, res, next) => {
   const params = _.pick(req.body, ['email', 'password', 'name', 'username']);
 
-  // Input checking
-  let missingKeys = [];
-  _.each(params, (value, key) => {
-    if (key !== 'name' && key !== 'username' && !value) {
-      missingKeys.push(key);
-    }
-  });
-
-  if (missingKeys.length > 0) {
-    return next(new Error('Params missing: ' + missingKeys));
-  }
-
   new User(params)
-    .save().
-    then((user) => {
-      // Generate JWT once account is created successfully
-      const token = jwt.sign(
-        user._doc,
-        process.env.JWT || config.secrets.jwt,
-        { expiresIn: '90 days' }
-      );
-
-      res.json({
-        message: 'User created successfully.',
-        user: _.omit(user._doc, 'password'),
-        token: 'JWT ' + token
-      });
-    })
+    .save()
+    .then(generateJWT.bind(null, res))
     .catch(next);
 });
+
+function generateJWT(res, user) {
+  // Generate JWT once account is created successfully
+  const token = jwt.sign(
+    user._doc,
+    process.env.JWT || config.secrets.jwt,
+    { expiresIn: '90 days' }
+  );
+
+  res.json({
+    message: 'User created successfully.',
+    user: _.omit(user._doc, 'password'),
+    token: 'JWT ' + token
+  });
+}
 
 app.get('/:userId', ensureAuth, isCurrentUser, (req, res) => {
   res.json({ user: _.omit(req.user._doc, 'password') });

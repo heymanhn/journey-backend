@@ -39,8 +39,7 @@ app.post('/', ensureAuth, (req, res, next) => {
     params.loc = loc;
   }
 
-  const entry = new Entry(params);
-  entry
+  new Entry(params)
     .save()
     .then(() => res.redirect(`/v1/users/${params.creator}/entries`))
     .catch(next);

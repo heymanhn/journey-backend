@@ -10,7 +10,8 @@ function fieldExistsCheck(field, value, next) {
 
   let User = this.model('User');
   User
-    .count({ [field]: value }).exec()
+    .count({ [field]: value })
+    .exec()
     .then(function(count) {
       if (count === 0) {
         return next();
