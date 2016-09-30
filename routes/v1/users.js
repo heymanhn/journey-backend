@@ -49,11 +49,11 @@ app.post('/', (req, res, next) => {
 });
 
 app.get('/:userId', ensureAuth, isCurrentUser, (req, res) => {
-  res.json({ user: _.omit(req.userDoc._doc, 'password') });
+  res.json({ user: _.omit(req.user._doc, 'password') });
 });
 
 app.put('/:userId', ensureAuth, isCurrentUser, (req, res, next) => {
-  const user = req.userDoc;
+  const user = req.user;
   let newParams = _.pick(req.body, ['username', 'password', 'email', 'name']);
 
   // Only keep the params that need to be modified
@@ -81,7 +81,7 @@ app.put('/:userId', ensureAuth, isCurrentUser, (req, res, next) => {
 });
 
 app.delete('/:userId', ensureAuth, isCurrentUser, (req, res, next) => {
-  const user = req.userDoc;
+  const user = req.user;
   user.remove((err) => {
     if (err) {
       return next(err);
