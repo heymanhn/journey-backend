@@ -1,30 +1,23 @@
 /*jslint node: true */
 'use strict';
 
-var _ = require('underscore');
-var express = require('express');
-var jwt = require('jsonwebtoken');
+const _ = require('underscore');
+const app = require('express').Router();
+const jwt = require('jsonwebtoken');
 
-var config = require('../../config/config');
-var ensureAuth = require('../../utils/auth').ensureAuth;
-var Entry = require('../../models/entryModel');
-var isCurrentUser = require('../../utils/users').isCurrentUser;
-var Trip = require('../../models/tripModel');
-var User = require('../../models/userModel');
+const config = require('../../config/config');
+const ensureAuth = require('../../utils/auth').ensureAuth;
+const Entry = require('../../models/entryModel');
+const isCurrentUser = require('../../utils/users').isCurrentUser;
+const Trip = require('../../models/tripModel');
+const User = require('../../models/userModel');
 
-var app = express.Router();
-
-app.post('/', function(req, res, next) {
-  var params = {
-    email: req.body.email,
-    password: req.body.password,
-    name: req.body.name,
-    username: req.body.username
-  };
+app.post('/', (req, res, next) => {
+  const params = _.pick(req.body, ['email', 'password', 'name', 'username']);
 
   // Input checking
-  var missingKeys = [];
-  _.each(params, function(value, key) {
+  let missingKeys = [];
+  _.each(params, (value, key) => {
     if (key !== 'name' && key !== 'username' && !value) {
       missingKeys.push(key);
     }
@@ -34,14 +27,14 @@ app.post('/', function(req, res, next) {
     return next(new Error('Params missing: ' + missingKeys));
   }
 
-  var newUser = new User(params);
-  newUser.save(function(err, user) {
+  const newUser = new User(params);
+  newUser.save((err, user) => {
     if (err) {
       return next(err);
     }
 
     // Generate JWT once account is created successfully
-    var token = jwt.sign(
+    const token = jwt.sign(
       user._doc,
       process.env.JWT || config.secrets.jwt,
       { expiresIn: '90 days' }
@@ -55,26 +48,19 @@ app.post('/', function(req, res, next) {
   });
 });
 
-app.get('/:userId', ensureAuth, isCurrentUser, function(req, res) {
-  res.json({
-    user: _.omit(req.userDoc._doc, 'password')
-  });
+app.get('/:userId', ensureAuth, isCurrentUser, (req, res) => {
+  res.json({ user: _.omit(req.userDoc._doc, 'password') });
 });
 
-app.put('/:userId', ensureAuth, isCurrentUser, function(req, res, next) {
-  var user = req.userDoc;
-  var newParams = {
-    username: req.body.username,
-    password: req.body.password,
-    email: req.body.email,
-    name: req.body.name
-  };
+app.put('/:userId', ensureAuth, isCurrentUser, (req, res, next) => {
+  const user = req.userDoc;
+  let newParams = _.pick(req.body, ['username', 'password', 'email', 'name']);
 
   // Only keep the params that need to be modified
-  newParams = _.pick(newParams, function(value, key) {
+  newParams = _.pick(newParams, (value, key) => {
     return value !== undefined && value !== user[key];
   });
-  _.each(newParams, function(value, key) {
+  _.each(newParams, (value, key) => {
     if (key === 'password' && user.checkPassword(value)) {
       return;
     }
@@ -82,7 +68,7 @@ app.put('/:userId', ensureAuth, isCurrentUser, function(req, res, next) {
     user[key] = value;
   });
 
-  user.save(function(err, newUser) {
+  user.save((err, newUser) => {
     if (err) {
       return next(err);
     }
@@ -94,71 +80,62 @@ app.put('/:userId', ensureAuth, isCurrentUser, function(req, res, next) {
   });
 });
 
-app.delete('/:userId', ensureAuth, isCurrentUser, function(req, res, next) {
-  var user = req.userDoc;
-  user.remove(function(err) {
+app.delete('/:userId', ensureAuth, isCurrentUser, (req, res, next) => {
+  const user = req.userDoc;
+  user.remove((err) => {
     if (err) {
       return next(err);
     }
 
-    res.json({
-      message: 'User deleted.'
-    });
+    res.json({ message: 'User deleted.' });
   });
 });
 
-app.get('/:userId/trips', ensureAuth, isCurrentUser, function(req, res, next) {
-  var count = Number(req.query.count) || config.database.DEFAULT_TRIP_COUNT;
-  var page = Number(req.query.page) || 1;
-  var params = {
-    creator: req.params.userId
-  };
+app.get('/:userId/trips', ensureAuth, isCurrentUser, (req, res, next) => {
+  const count = Number(req.query.count) || config.database.DEFAULT_TRIP_COUNT;
+  const page = Number(req.query.page) || 1;
+  var params = { creator: req.params.userId };
 
   Trip
     .findTrips(params, count, page)
-    .then(function(trips) {
+    .then((trips) => {
       if (trips.length === 0) {
-        var err = new Error('No trips found');
+        let err = new Error('No trips found');
         err.status = 404;
         return Promise.reject(err);
       }
 
       res.json({
-        page: page,
+        page,
         results: trips.length,
-        trips: trips
+        trips
       });
     })
     .catch(next);
 });
 
-app.get('/:userId/entries', ensureAuth, isCurrentUser,
-  function(req, res, next) {
-  var count = Number(req.query.count) || config.database.DEFAULT_ENTRY_COUNT;
-  var page = Number(req.query.page) || 1;
-  var params = {
-    creator: req.params.userId
-  };
+app.get('/:userId/entries', ensureAuth, isCurrentUser, (req, res, next) => {
+  const count = Number(req.query.count) || config.database.DEFAULT_ENTRY_COUNT;
+  const page = Number(req.query.page) || 1;
+  let params = { creator: req.params.userId };
 
   if (req.query.maxDate) {
-    params.date = {
-      $lt: new Date(req.query.maxDate)
-    };
+    params.date = { $lt: new Date(req.query.maxDate) };
   }
 
   Entry
     .findEntries(params, count, page)
-    .then(function(entries) {
+    .then((entries) => {
       if (entries.length === 0) {
-        var err = new Error('No entries found');
+        let err = new Error('No entries found');
         err.status = 404;
         return Promise.reject(err);
       }
 
       res.json({
-        page: page,
+        page,
         results: entries.length,
-        entries: entries
+        entries
       });
     })
     .catch(next);

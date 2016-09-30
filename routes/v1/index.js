@@ -1,14 +1,12 @@
-/*jslint node: true */
 'use strict';
 
-var express = require('express');
+const app = require('express').Router();
 
-var auth = require('./auth');
-var entries = require('./entries');
-var trips = require('./trips');
-var uploads = require('./uploads');
-var users = require('./users');
-var app = express.Router();
+const auth = require('./auth');
+const entries = require('./entries');
+const trips = require('./trips');
+const uploads = require('./uploads');
+const users = require('./users');
 
 /*
  * Route configuration

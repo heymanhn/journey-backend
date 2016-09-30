@@ -1,8 +1,7 @@
-/*jslint node: true */
 'use strict';
 
 module.exports = {
-  validateFields: function(next) {
+  validateFields(next) {
     switch (this.type) {
 
       case 'text':
@@ -29,7 +28,7 @@ module.exports = {
     next();
   },
 
-  findEntries: function(params, count, page) {
+  findEntries(params, count, page) {
     if (!params || !count || !page) {
       return Promise.reject(new Error('Invalid arguments'));
     }

@@ -1,27 +1,23 @@
-/*jslint node: true */
 'use strict';
 
-var _ = require('underscore');
-var express = require('express');
+const _ = require('underscore');
+const app = require('express').Router();
 
-var ensureAuth = require('../../utils/auth').ensureAuth;
-var Trip = require('../../models/tripModel');
-
-var app = express.Router();
+const ensureAuth = require('../../utils/auth').ensureAuth;
+const Trip = require('../../models/tripModel');
 
 /*
  * Trips
  */
 
-app.post('/', ensureAuth, function(req, res, next) {
-  var params = {
+app.post('/', ensureAuth, (req, res, next) => {
+  let params = {
     creator: req.user._id,
     title: req.body.title
   };
 
-  var optionalFields = ['startDate', 'endDate', 'destination', 'visibility'];
-
-  optionalFields.forEach(function(field) {
+  const optionalFields = ['startDate', 'endDate', 'destination', 'visibility'];
+  optionalFields.forEach((field) => {
     if (req.body[field]) {
       if (field === 'startDate' || field === 'endDate') {
         params[field] = new Date(req.body[field]);
@@ -31,50 +27,37 @@ app.post('/', ensureAuth, function(req, res, next) {
     }
   });
 
-  var trip = new Trip(params);
-  trip
+  new Trip(params)
     .save()
-    .then(function(trip) {
-      res.json({
-        trip: trip
-      });
-    })
+    .then((trip) => res.json({ trip }))
     .catch(next);
 });
 
-app.get('/:tripId', function(req, res, next) {
+app.get('/:tripId', (req, res, next) => {
   findTrip(req.params.tripId)
     .then(checkOwnership.bind(null, req, res))
-    .then(function(trip) {
-      res.json({
-        trip: trip
-      });
-    })
+    .then((trip) => res.json({ trip }))
     .catch(next);
 });
 
-app.put('/:tripId', function(req, res, next) {
+app.put('/:tripId', (req, res, next) => {
   findTrip(req.params.tripId)
     .then(checkOwnership.bind(null, req, res))
     .then(updateTrip.bind(null, req.body))
     .then(saveTrip)
-    .then(function(trip) {
+    .then((trip) => {
       res.json({
         message: 'Trip updated successfully.',
-        trip: trip
+        trip
       });
     })
     .catch(next);
 });
 
-app.delete('/:tripId', ensureAuth, function(req, res, next) {
+app.delete('/:tripId', ensureAuth, (req, res, next) => {
   findTripWithOwner(req.params.tripId, req.user._id)
     .then(removeTrip)
-    .then(function() {
-      res.json({
-        message: 'Trip deleted.'
-      });
-    })
+    .then(() => res.json({ message: 'Trip deleted.' }))
     .catch(next);
 });
 
@@ -85,7 +68,7 @@ app.delete('/:tripId', ensureAuth, function(req, res, next) {
 
 function findTripWithOwner(tripId, userId) {
   return findTrip(tripId)
-    .then(function(trip) {
+    .then((trip) => {
       if (userId.toString() !== trip.creator.toString()) {
         return Promise.reject(new Error('Not Authorized'));
       } else {
@@ -95,14 +78,12 @@ function findTripWithOwner(tripId, userId) {
 }
 
 function findTrip(tripId) {
-  var params = { _id: tripId };
-
   return Trip
-    .findOne(params)
+    .findOne({ _id: tripId })
     .exec()
-    .then(function(trip) {
+    .then((trip) => {
       if (!trip) {
-        var err = new Error('Trip not found');
+        let err = new Error('Trip not found');
         err.status = 404;
         return Promise.reject(err);
       }
@@ -116,20 +97,20 @@ function findTrip(tripId) {
  * if the trip is created by the currently authenticated user
  */
 function checkOwnership(req, res, trip) {
-  var vis = trip.visibility;
+  const vis = trip.visibility;
   if (vis === 'public') {
     return trip;
   } else if (vis === 'private') {
 
     // Construct a promise for the async ensureAuth() call
-    var authPromise = new Promise(function(resolve, reject) {
-      var cb = function(err) {
+    const authPromise = new Promise((resolve, reject) => {
+      const cb = (err) => {
         if (err) {
           return reject(err);
         }
 
         if (req.user._id.toString() !== trip.creator.toString()) {
-          var newErr = new Error('Not Authorized');
+          let newErr = new Error('Not Authorized');
           newErr.status = 401;
           return reject(newErr);
         }
@@ -147,16 +128,17 @@ function checkOwnership(req, res, trip) {
 }
 
 function updateTrip(params, trip) {
-  var newParams = {
-    destination: params.destination,
-    title: params.title,
-    startDate: new Date(params.startDate),
-    endDate: new Date(params.endDate),
-    visibility: params.visibility
+  const { destination, title, startDate, endDate, visibility } = params;
+  const newParams = {
+    destination,
+    title,
+    startDate: new Date(startDate),
+    endDate: new Date(endDate),
+    visibility
   };
 
   // Only keep the params that need to be modified
-  _.each(newParams, function(value, key) {
+  _.each(newParams, (value, key) => {
     if (value !== undefined && value !== trip[key]) {
       trip[key] = value;
     }
@@ -178,43 +160,41 @@ function removeTrip(trip) {
  * Trip Ideas
  */
 
-app.post('/:tripId/ideas', function(req, res, next) {
-  var tripId = req.params.tripId;
+app.post('/:tripId/ideas', (req, res, next) => {
+  const tripId = req.params.tripId;
 
   findTrip(tripId)
     .then(checkOwnership.bind(null, req, res))
     .then(createTripIdea.bind(null, req.body))
     .then(saveTrip)
-    .then(function(trip) {
-      res.json({
-        tripId: tripId,
-        ideas: trip.ideas
-      });
+    .then((trip) => {
+      const { ideas } = trip;
+      res.json({ tripId, ideas });
     })
     .catch(next);
 });
 
-app.get('/:tripId/ideas', function(req, res, next) {
-  var tripId = req.params.tripId;
+app.get('/:tripId/ideas', (req, res, next) => {
+  const tripId = req.params.tripId;
 
   findTrip(tripId)
     .then(checkOwnership.bind(null, req, res))
-    .then(function(trip) {
-      res.json({
-        tripId: tripId,
-        ideas: trip.ideas
-      });
+    .then((trip) => {
+      const { ideas } = trip;
+      res.json({ tripId, ideas });
     })
     .catch(next);
 });
 
-app.put('/:tripId/ideas/:ideaId', function(req, res, next) {
-  findTrip(req.params.tripId)
+app.put('/:tripId/ideas/:ideaId', (req, res, next) => {
+  const { ideaId, tripId } = req.params;
+
+  findTrip(tripId)
     .then(checkOwnership.bind(null, req, res))
-    .then(checkIdeaExists.bind(null, req.params.ideaId))
-    .then(updateTripIdea.bind(null, req.body, req.params.ideaId))
+    .then(checkIdeaExists.bind(null, ideaId))
+    .then(updateTripIdea.bind(null, req.body, ideaId))
     .then(saveTrip)
-    .then(function(trip) {
+    .then((trip) => {
       res.json({
         message: 'Trip idea updated successfully.',
         ideas: trip.ideas
@@ -223,13 +203,15 @@ app.put('/:tripId/ideas/:ideaId', function(req, res, next) {
     .catch(next);
 });
 
-app.delete('/:tripId/ideas/:ideaId', function (req, res, next) {
-  findTrip(req.params.tripId)
+app.delete('/:tripId/ideas/:ideaId', (req, res, next) => {
+  const { ideaId, tripId } = req.params;
+
+  findTrip(tripId)
     .then(checkOwnership.bind(null, req, res))
-    .then(checkIdeaExists.bind(null, req.params.ideaId))
-    .then(deleteTripIdea.bind(null, req.params.ideaId))
+    .then(checkIdeaExists.bind(null, ideaId))
+    .then(deleteTripIdea.bind(null, ideaId))
     .then(saveTrip)
-    .then(function(trip) {
+    .then((trip) => {
       res.json({
         message: "Trip idea deleted successfully.",
         ideas: trip.ideas
@@ -238,16 +220,12 @@ app.delete('/:tripId/ideas/:ideaId', function (req, res, next) {
     .catch(next);
 });
 
-app.delete('/:tripId/ideas', function(req, res, next) {
+app.delete('/:tripId/ideas', (req, res, next) => {
   findTrip(req.params.tripId)
     .then(checkOwnership.bind(null, req, res))
     .then(deleteTripIdeas)
     .then(saveTrip)
-    .then(function() {
-      res.json({
-        message: 'Trip ideas deleted.'
-      });
-    })
+    .then(() => res.json({ message: 'Trip ideas deleted.' }))
     .catch(next);
 });
 
@@ -257,17 +235,13 @@ app.delete('/:tripId/ideas', function(req, res, next) {
  */
 
 function createTripIdea(params, trip) {
-  var newParams = {
-    googlePlaceId: params.googlePlaceId,
-    name: params.name,
-    loc: params.loc
-  };
+  let newParams = _.pick(params, ['googlePlaceId', 'loc', 'name']);
 
-  var optionalParams = [
+  const optionalParams = [
     'address', 'phone', 'types', 'photo', 'url', 'comment'
   ];
 
-  optionalParams.forEach(function(field) {
+  optionalParams.forEach((field) => {
     if (params[field]) {
       newParams[field] = params[field];
     }
@@ -286,15 +260,15 @@ function checkIdeaExists(ideaId, trip) {
 }
 
 function updateTripIdea(params, ideaId, trip) {
-  var idea = trip.ideas.id(ideaId);
+  let idea = trip.ideas.id(ideaId);
 
   if (params.comment !== undefined && params.comment !== idea.comment) {
     idea.comment = params.comment;
   }
 
   // Re-order the idea within the list
-  var result = reorderInArray(trip.ideas, idea, params.index);
-  return result ? result : trip;
+  const result = reorderInArray(trip.ideas, idea, params.index);
+  return result || trip;
 }
 
 function deleteTripIdeas(trip) {
@@ -302,10 +276,9 @@ function deleteTripIdeas(trip) {
   return trip;
 }
 
+// Use this function in conjunction with checkIdeaExists()
 function deleteTripIdea(ideaId, trip) {
-  var idea = trip.ideas.id(ideaId);
-  idea.remove();
-
+  trip.ideas.id(ideaId).remove();
   return trip;
 }
 
@@ -314,75 +287,69 @@ function deleteTripIdea(ideaId, trip) {
  * Trip Plan and Trip Days
  */
 
-app.get('/:tripId/plan', function(req, res, next) {
-  var tripId = req.params.tripId;
+app.get('/:tripId/plan', (req, res, next) => {
+  const { tripId } = req.params;
 
   findTrip(tripId)
     .then(checkOwnership.bind(null, req, res))
-    .then(function(trip) {
-      res.json({
-        tripId: tripId,
-        plan: trip.plan
-      });
+    .then((trip) => {
+      const { plan } = trip;
+      res.json({ tripId, plan });
     })
     .catch(next);
 });
 
-app.post('/:tripId/plan', function(req, res, next) {
-  var tripId = req.params.tripId;
+app.post('/:tripId/plan', (req, res, next) => {
+  const { tripId } = req.params;
 
   findTrip(tripId)
     .then(checkOwnership.bind(null, req, res))
     .then(createTripDay)
     .then(saveTrip)
-    .then(function(trip) {
-      res.json({
-        tripId: tripId,
-        plan: trip.plan
-      });
+    .then((trip) => {
+      const { plan } = trip;
+      res.json({ tripId, plan });
     })
     .catch(next);
 });
 
-app.get('/:tripId/plan/:dayId', function(req, res, next) {
-  findTrip(req.params.tripId)
+app.get('/:tripId/plan/:dayId', (req, res, next) => {
+  const { dayId, tripId } = req.params;
+
+  findTrip(tripId)
     .then(checkOwnership.bind(null, req, res))
-    .then(checkDayExists.bind(null, req.params.dayId))
-    .then(findTripDay.bind(null, req.params.dayId))
-    .then(function(tripDay) {
-      res.json({
-        tripDay: tripDay
-      });
-    })
+    .then(checkDayExists.bind(null, dayId))
+    .then(findTripDay.bind(null, dayId))
+    .then((tripDay) => res.json({ tripDay }))
     .catch(next);
 });
 
-app.put('/:tripId/plan/:dayId', function(req, res, next) {
-  findTrip(req.params.tripId)
+app.put('/:tripId/plan/:dayId', (req, res, next) => {
+  const { dayId, tripId } = req.params;
+
+  findTrip(tripId)
     .then(checkOwnership.bind(null, req, res))
-    .then(checkDayExists.bind(null, req.params.dayId))
-    .then(updateTripDay.bind(null, req.body, req.params.dayId))
+    .then(checkDayExists.bind(null, dayId))
+    .then(updateTripDay.bind(null, req.body, dayId))
     .then(saveTrip)
-    .then(function(trip) {
+    .then((trip) => {
       res.json({
         index: req.body.index,
-        tripDay: trip.plan.id(req.params.dayId)
+        tripDay: trip.plan.id(dayId)
       });
     })
     .catch(next);
 });
 
-app.delete('/:tripId/plan/:dayId', function(req, res, next) {
-  findTrip(req.params.tripId)
+app.delete('/:tripId/plan/:dayId', (req, res, next) => {
+  const { dayId, tripId } = req.params;
+
+  findTrip(tripId)
     .then(checkOwnership.bind(null, req, res))
-    .then(checkDayExists.bind(null, req.params.dayId))
-    .then(removeTripDay.bind(null, req.params.dayId))
+    .then(checkDayExists.bind(null, dayId))
+    .then(removeTripDay.bind(null, dayId))
     .then(saveTrip)
-    .then(function() {
-      res.json({
-        message: "Trip day deleted successfully."
-      });
-    })
+    .then(() => res.json({ message: "Trip day deleted successfully." }))
     .catch(next);
 });
 
@@ -392,12 +359,7 @@ app.delete('/:tripId/plan/:dayId', function(req, res, next) {
  */
 
 function createTripDay(trip) {
-  var params = {
-    entries: [],
-    lodging: {}
-  };
-
-  trip.plan.push(params);
+  trip.plan.push({ entries: [], lodging: {} });
   return trip;
 }
 
@@ -406,15 +368,15 @@ function findTripDay(dayId, trip) {
 }
 
 function updateTripDay(params, dayId, trip) {
-  var day = trip.plan.id(dayId);
+  let day = trip.plan.id(dayId);
 
   if (params.lodging !== undefined) {
     day.lodging = params.lodging;
   }
 
   // Re-order the day within the list if the index specified has changed
-  var result = reorderInArray(trip.plan, day, params.index);
-  return result ? result : trip;
+  const result = reorderInArray(trip.plan, day, params.index);
+  return result || trip;
 }
 
 function checkDayExists(dayId, trip) {
@@ -426,9 +388,7 @@ function checkDayExists(dayId, trip) {
 }
 
 function removeTripDay(dayId, trip) {
-  var day = trip.plan.id(dayId);
-  day.remove();
-
+  trip.plan.id(dayId).remove();
   return trip;
 }
 
@@ -437,58 +397,48 @@ function removeTripDay(dayId, trip) {
  * Trip Entries
  */
 
-app.post('/:tripId/plan/:dayId/entries', function(req, res, next) {
-  findTrip(req.params.tripId)
+app.post('/:tripId/plan/:dayId/entries', (req, res, next) => {
+  const { dayId, tripId } = req.params;
+
+  findTrip(tripId)
     .then(checkOwnership.bind(null, req, res))
-    .then(checkDayExists.bind(null, req.params.dayId))
-    .then(createTripEntry.bind(null, req.body, req.params.dayId))
+    .then(checkDayExists.bind(null, dayId))
+    .then(createTripEntry.bind(null, req.body, dayId))
     .then(saveTrip)
-    .then(function(trip) {
-      res.json({
-        dayId: req.params.dayId,
-        entries: trip.plan.id(req.params.dayId).entries
-      });
+    .then((trip) => {
+      const { entries } = trip.plan.id(dayId);
+      res.json({ dayId, entries });
     })
     .catch(next);
 });
 
-app.put('/:tripId/plan/:dayId/entries/:entryId', function(req, res, next) {
-  findTrip(req.params.tripId)
+app.put('/:tripId/plan/:dayId/entries/:entryId', (req, res, next) => {
+  const { dayId, entryId, tripId } = req.params;
+
+  findTrip(tripId)
     .then(checkOwnership.bind(null, req, res))
-    .then(checkDayExists.bind(null, req.params.dayId))
-    .then(checkEntryExists.bind(null, req.params.dayId, req.params.entryId))
-    .then(updateTripEntry.bind(
-      null,
-      req.body,
-      req.params.dayId,
-      req.params.entryId
-    ))
+    .then(checkDayExists.bind(null, dayId))
+    .then(checkEntryExists.bind(null, dayId, entryId))
+    .then(updateTripEntry.bind(null, req.body, dayId, entryId))
     .then(saveTrip)
-    .then(function(trip) {
-      res.json({
-        dayId: req.params.dayId,
-        entries: trip.plan.id(req.params.dayId).entries
-      });
+    .then((trip) => {
+      const { entries } = trip.plan.id(dayId);
+      res.json({ dayId, entries });
     })
     .catch(next);
 });
 
-app.delete('/:tripId/plan/:dayId/entries/:entryId', function(req, res, next) {
-  findTrip(req.params.tripId)
+app.delete('/:tripId/plan/:dayId/entries/:entryId', (req, res, next) => {
+  const { dayId, entryId, tripId } = req.params;
+  const { ignoreIdeaCreate } = req.query;
+
+  findTrip(tripId)
     .then(checkOwnership.bind(null, req, res))
-    .then(checkDayExists.bind(null, req.params.dayId))
-    .then(checkEntryExists.bind(null, req.params.dayId, req.params.entryId))
-    .then(deleteTripEntry.bind(null,
-      req.params.dayId,
-      req.params.entryId,
-      req.query.ignoreIdeaCreate
-    ))
+    .then(checkDayExists.bind(null, dayId))
+    .then(checkEntryExists.bind(null, dayId, entryId))
+    .then(deleteTripEntry.bind(null, dayId, entryId, ignoreIdeaCreate))
     .then(saveTrip)
-    .then(function() {
-      res.json({
-        message: "Trip entry deleted successfully."
-      });
-    })
+    .then(() => res.json({ message: "Trip entry deleted successfully." }))
     .catch(next);
 });
 
@@ -498,11 +448,11 @@ app.delete('/:tripId/plan/:dayId/entries/:entryId', function(req, res, next) {
  */
 
 function createTripEntry(params, dayId, trip) {
-  var newParams = {};
+  let newParams = {};
 
   // Create the entry from the provided idea's data if available
   if (params.idea !== undefined) {
-    var idea = trip.ideas.id(params.idea);
+    const idea = trip.ideas.id(params.idea);
     if (!idea) {
       return Promise.reject(new Error('Trip idea not found'));
     }
@@ -513,18 +463,18 @@ function createTripEntry(params, dayId, trip) {
     newParams = populateNewParams(params);
   }
 
-  var entries = trip.plan.id(dayId).entries;
-  var result = insertIntoArray(entries, newParams, params.index);
+  const { entries } = trip.plan.id(dayId);
+  const result = insertIntoArray(entries, newParams, params.index);
 
-  return result ? result : trip;
+  return result || trip;
 }
 
 function populateNewParams(params) {
-  var newParams = {};
-  var targetParams = ['googlePlaceId', 'name', 'loc', 'address', 'phone',
+  let newParams = {};
+  const targetParams = ['googlePlaceId', 'name', 'loc', 'address', 'phone',
     'types', 'photo', 'url', 'comment'];
 
-  targetParams.forEach(function(field) {
+  targetParams.forEach((field) => {
     if (params[field]) {
       newParams[field] = params[field];
     }
@@ -534,7 +484,7 @@ function populateNewParams(params) {
 }
 
 function checkEntryExists(dayId, entryId, trip) {
-  var entry = trip.plan.id(dayId).entries.id(entryId);
+  const entry = trip.plan.id(dayId).entries.id(entryId);
   if (!entry) {
     return Promise.reject(new Error('Trip entry not found'));
   }
@@ -543,10 +493,10 @@ function checkEntryExists(dayId, entryId, trip) {
 }
 
 function updateTripEntry(params, dayId, entryId, trip) {
-  var day = trip.plan.id(dayId);
-  var entry = day.entries.id(entryId);
-  var index = params.index;
-  var result;
+  const day = trip.plan.id(dayId);
+  const entry = day.entries.id(entryId);
+  const { index } = params;
+  let result;
 
   if (params.comment !== undefined && params.comment !== entry.comment) {
     entry.comment = params.comment;
@@ -557,7 +507,7 @@ function updateTripEntry(params, dayId, entryId, trip) {
   }
 
   if (params.dayId !== undefined && params.dayId !== dayId) {
-    var newDay = trip.plan.id(params.dayId);
+    const newDay = trip.plan.id(params.dayId);
     if (!newDay) {
       return Promise.reject(new Error('Target trip day not found'));
     }
@@ -570,15 +520,15 @@ function updateTripEntry(params, dayId, entryId, trip) {
     result = reorderInArray(day.entries, entry, index);
   }
 
-  return result ? result : trip;
+  return result || trip;
 }
 
 function deleteTripEntry(dayId, entryId, ignoreIdeaCreate, trip) {
-  var entry = trip.plan.id(dayId).entries.id(entryId);
+  const entry = trip.plan.id(dayId).entries.id(entryId);
   entry.remove();
 
   if (!ignoreIdeaCreate) {
-    var newParams = populateNewParams(entry);
+    const newParams = populateNewParams(entry);
     trip.ideas.unshift(newParams);
   }
 

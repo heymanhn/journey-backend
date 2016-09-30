@@ -1,21 +1,17 @@
-/*jslint node: true */
 'use strict';
 
-var _ = require('underscore');
-var express = require('express');
-var jwt = require('jsonwebtoken');
+const _ = require('underscore');
+const app = require('express').Router();
+const jwt = require('jsonwebtoken');
 
-var config = require('../../config/config');
-var User = require('../../models/userModel');
-var checkLoginParams = require('../../utils/auth').checkLoginParams;
+const config = require('../../config/config');
+const User = require('../../models/userModel');
+const checkLoginParams = require('../../utils/auth').checkLoginParams;
 
-var app = express.Router();
+app.post('/login', checkLoginParams, (req, res, next) => {
+  const opts = { [req.loginType]: req.body[req.loginType] };
 
-app.post('/login', checkLoginParams, function(req, res, next) {
-  var opts = {};
-  opts[req.loginType] = req.body[req.loginType];
-
-  User.findOne(opts, function(err, user) {
+  User.findOne(opts, (err, user) => {
     if (err) {
       return next(err);
     }
@@ -27,7 +23,7 @@ app.post('/login', checkLoginParams, function(req, res, next) {
     if (!user.checkPassword(req.body.password)) {
       return next(new Error('Invalid password'));
     } else {
-      var token = jwt.sign(
+      const token = jwt.sign(
         user._doc,
         process.env.JWT || config.secrets.jwt,
         { expiresIn: '90 days' }

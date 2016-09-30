@@ -1,10 +1,9 @@
-/*jslint node: true */
 'use strict';
 
-var mongoose = require('mongoose');
-var utils = require('./tripUtils');
+const mongoose = require('mongoose');
+const utils = require('./tripUtils');
 
-var planEntrySchema = new mongoose.Schema({
+const planEntrySchema = new mongoose.Schema({
   googlePlaceId: { type: String, required: true },
   date: { type: Date, default: Date.now },
   name: { type: String, required: true },
@@ -21,7 +20,7 @@ var planEntrySchema = new mongoose.Schema({
   comment: String
 });
 
-var daySchema = new mongoose.Schema({
+const daySchema = new mongoose.Schema({
   entries: [planEntrySchema],
   lodging: {
     address: String,
@@ -34,7 +33,7 @@ var daySchema = new mongoose.Schema({
   }
 });
 
-var ideaSchema = new mongoose.Schema({
+const ideaSchema = new mongoose.Schema({
   googlePlaceId: { type: String, required: true },
   date: { type: Date, default: Date.now },
   name: { type: String, required: true },
@@ -50,7 +49,7 @@ var ideaSchema = new mongoose.Schema({
   comment: String
 });
 
-var destinationSchema = new mongoose.Schema({
+const destinationSchema = new mongoose.Schema({
   googlePlaceId: { type: String, required: true },
   name: { type: String, required: true },
   formattedAddress: { type: String, required: true },
@@ -71,7 +70,7 @@ var destinationSchema = new mongoose.Schema({
   types: [String]
 });
 
-var tripSchema = new mongoose.Schema({
+const tripSchema = new mongoose.Schema({
   date: { type: Date, default: Date.now },
   creator: {
     type: mongoose.Schema.Types.ObjectId,

@@ -22,7 +22,7 @@ const config = require('./config/config');
 const indexRoute = require('./routes/index');
 const apiV1Routes = require('./routes/v1/index');
 
-let app = express();
+const app = express();
 const env = app.get('env');
 app.use(cors());
 app.options('*', cors());
@@ -98,9 +98,9 @@ if (env === 'production') {
 //   key: fs.readFileSync('key.pem'),
 //   cert: fs.readFileSync('cert.pem')
 // };
-// let server = http.createServer(options, app);
+// const server = http.createServer(options, app);
 
-let server = http.createServer(app);
+const server = http.createServer(app);
 server.listen(port);
 server.on('error', onError);
 server.on('listening', onListening);

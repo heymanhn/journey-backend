@@ -1,7 +1,6 @@
-/*jslint node: true */
 'use strict';
 
-var bcrypt = require('bcrypt');
+const bcrypt = require('bcrypt');
 const saltRounds = 8;
 
 function fieldExistsCheck(field, value, next) {
@@ -9,35 +8,32 @@ function fieldExistsCheck(field, value, next) {
     return next();
   }
 
-  var User = this.model('User');
-  var opts = {};
-  opts[field] = value;
-
+  let User = this.model('User');
   User
-    .count(opts).exec()
+    .count({ [field]: value }).exec()
     .then(function(count) {
       if (count === 0) {
         return next();
       } else {
-        return Promise.reject(new Error(field + ' already exists'));
+        return Promise.reject(new Error(`${field} already exists`));
       }
     })
     .catch(next);
 }
 
 module.exports = {
-  fieldExistsCheck: fieldExistsCheck,
+  fieldExistsCheck,
 
-  checkUsernameExists: function(next) {
+  checkUsernameExists(next) {
     fieldExistsCheck.bind(this)('username', this.username, next);
   },
 
-  checkEmailExists: function(next) {
+  checkEmailExists(next) {
     fieldExistsCheck.bind(this)('email', this.email, next);
   },
 
-  checkEmailValid: function(next) {
-    var emailRegex = /^([\w-\.]+@([\w-]+\.)+[\w-]{2,4})?$/;
+  checkEmailValid(next) {
+    const emailRegex = /^([\w-\.]+@([\w-]+\.)+[\w-]{2,4})?$/;
 
     if (!this.email.match(emailRegex)) {
        return next(new Error('Invalid email address entered'));
@@ -46,7 +42,7 @@ module.exports = {
     }
   },
 
-  checkPasswordLength: function(next) {
+  checkPasswordLength(next) {
     if (this.password.length < 6) {
       return next(new Error('Password needs to be at least 6 characters'));
     } else {
@@ -54,7 +50,7 @@ module.exports = {
     }
   },
 
-  hashPassword: function(next) {
+  hashPassword(next) {
     if (!this.isModified('password')) {
       return next();
     }

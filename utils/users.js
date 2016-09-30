@@ -1,7 +1,7 @@
 /*jslint node: true */
 'use strict';
 
-var User = require('../models/userModel');
+const User = require('../models/userModel');
 
 module.exports = {
   /*
@@ -10,15 +10,15 @@ module.exports = {
    *
    * Assumes that the URI includes req.params.userId
    */
-  isCurrentUser: function(req, res, next) {
+  isCurrentUser(req, res, next) {
     if (!req.params.userId) {
-      var err = new Error('No user ID provided');
+      let err = new Error('No user ID provided');
       err.status = 400;
       return next(err);
     }
 
     if (req.params.userId !== req.user.id) {
-      var err = new Error('Cannot perform this action on another user');
+      let err = new Error('Cannot perform this action on another user');
       err.status = 403;
       return next(err);
     }
@@ -32,14 +32,14 @@ module.exports = {
    *
    * Assumes that the URI includes req.params.userId
    */
-  userIDExists: function(req, res, next) {
+  userIDExists(req, res, next) {
     if (!req.params.userId) {
-      var err = new Error('No user ID provided');
+      let err = new Error('No user ID provided');
       err.status = 400;
       return next(err);
     }
 
-    User.findOne({ '_id': req.params.userId }, function(err, user) {
+    User.findOne({ '_id': req.params.userId }, (err, user) => {
       if (err) {
         return next(err);
       }
