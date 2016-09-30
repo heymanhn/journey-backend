@@ -1,5 +1,6 @@
 'use strict';
 
+const _ = require('underscore');
 const User = require('../models/userModel');
 
 module.exports = {
@@ -20,6 +21,25 @@ module.exports = {
       let err = new Error('Cannot perform this action on another user');
       err.status = 403;
       return next(err);
+    }
+
+    next();
+  },
+
+  validateSignupFields(req, res, next) {
+    const { email, password } = req.body;
+    const params = { email, password };
+
+    // Input checking
+    let missingKeys = [];
+    _.each(params, (value, key) => {
+      if (!value) {
+        missingKeys.push(key);
+      }
+    });
+
+    if (missingKeys.length > 0) {
+      return next(new Error('Params missing: ' + missingKeys));
     }
 
     next();

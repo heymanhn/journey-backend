@@ -1,38 +1,35 @@
-/*jslint node: true, mocha: true */
 'use strict';
 
-var passport = require('passport');
-var should = require('chai').should();
-var sinon = require('sinon');
+const passport = require('passport');
+const should = require('chai').should();
+const sinon = require('sinon');
 
-var checkLoginParams = require('../utils/auth').checkLoginParams;
-var ensureAuth = require('../utils/auth').ensureAuth;
-var isCurrentUser = require('../utils/users').isCurrentUser;
-var userIDExists = require('../utils/users').userIDExists;
-var User = require('../models/userModel');
+const { checkLoginParams, ensureAuth } = require('../utils/auth');
+const { isCurrentUser, validateSignupFields } = require('../utils/users');
+const User = require('../models/userModel');
 
-describe('Routes Middleware', function() {
-  var sandbox;
+describe('Routes Middleware', () => {
+  let sandbox;
 
-  beforeEach(function() {
+  beforeEach(() => {
     sandbox = sinon.sandbox.create();
   });
 
-  afterEach(function() {
+  afterEach(() => {
     sandbox.restore();
   });
 
-  describe('#auth middleware', function() {
-    context('#ensureAuth:', function() {
-      var req = {};
+  describe('#auth middleware', () => {
+    context('#ensureAuth:', () => {
+      let req = {};
 
       it('sets req.user if the current session is authenticated',
-        function(done) {
-        var stubUser = {
+        (done) => {
+        const stubUser = {
           name: 'Stub User'
         };
 
-        var next = function() {
+        const next = () => {
           req.user.should.eql(stubUser);
           done();
         };
@@ -47,9 +44,9 @@ describe('Routes Middleware', function() {
         ensureAuth(req, null, next);
       });
 
-      it('returns an error if passport auth fails', function(done) {
-        var stubError = 'Passport authentication error';
-        var next = function(err) {
+      it('returns an error if passport auth fails', (done) => {
+        const stubError = 'Passport authentication error';
+        const next = function(err) {
           err.should.equal(stubError);
           done();
         };
@@ -63,11 +60,11 @@ describe('Routes Middleware', function() {
         ensureAuth(req, null, next);
       });
 
-      it('returns an error if the user is not authorized', function(done) {
-        var stubError = new Error('Not Authorized');
+      it('returns an error if the user is not authorized', (done) => {
+        const stubError = new Error('Not Authorized');
         stubError.status = 401;
 
-        var next = function(err) {
+        const next = function(err) {
           err.should.eql(stubError);
           done();
         };
@@ -82,10 +79,10 @@ describe('Routes Middleware', function() {
       });
     });
 
-    context('#checkLoginParams:', function() {
-      var req;
+    context('#checkLoginParams:', () => {
+      let req;
 
-      beforeEach(function() {
+      beforeEach(() => {
         req = {
           body: {
             username: 'amy',
@@ -95,10 +92,10 @@ describe('Routes Middleware', function() {
         };
       });
 
-      it('proceeds if request has a username and password', function(done) {
+      it('proceeds if request has a username and password', (done) => {
         delete req.body.email;
 
-        var next = function() {
+        const next = () => {
           should.exist(req.body.username);
           should.exist(req.body.password);
           done();
@@ -107,10 +104,10 @@ describe('Routes Middleware', function() {
         checkLoginParams(req, null, next);
       });
 
-      it('proceeds if the request has an email and password', function(done) {
+      it('proceeds if the request has an email and password', (done) => {
         delete req.body.username;
 
-        var next = function() {
+        const next = () => {
           should.exist(req.body.email);
           should.exist(req.body.password);
           done();
@@ -119,10 +116,10 @@ describe('Routes Middleware', function() {
         checkLoginParams(req, null, next);
       });
 
-      it('sets login type in the request before proceeding', function(done) {
+      it('sets login type in the request before proceeding', (done) => {
         delete req.body.email;
 
-        var next = function() {
+        const next = () => {
           req.loginType.should.equal('username');
           done();
         };
@@ -130,12 +127,12 @@ describe('Routes Middleware', function() {
         checkLoginParams(req, null, next);
       });
 
-      it('returns an error if the password is not provided', function(done) {
+      it('returns an error if the password is not provided', (done) => {
         delete req.body.email;
         delete req.body.password;
 
-        var stubError = new Error('Password not provided');
-        var next = function(err) {
+        const stubError = new Error('Password not provided');
+        const next = function(err) {
           err.should.eql(stubError);
           done();
         };
@@ -143,12 +140,12 @@ describe('Routes Middleware', function() {
         checkLoginParams(req, null, next);
       });
 
-      it('returns an error if username/email is not provided', function(done) {
+      it('returns an error if username/email is not provided', (done) => {
         delete req.body.username;
         delete req.body.email;
 
-        var stubError = new Error('Username or email not provided');
-        var next = function(err) {
+        const stubError = new Error('Username or email not provided');
+        const next = function(err) {
           err.should.eql(stubError);
           done();
         };
@@ -158,9 +155,9 @@ describe('Routes Middleware', function() {
     });
   });
 
-  describe('users middleware', function() {
-    context('#isCurrentUser:', function() {
-      var req = {
+  describe('users middleware', () => {
+    context('#isCurrentUser:', () => {
+      const req = {
         params: {
           userId: 'a1b2c3d4'
         },
@@ -169,29 +166,55 @@ describe('Routes Middleware', function() {
         }
       };
 
-      it('moves on if the desired user matches the current user', function() {
-        var next = sandbox.spy();
+      it('moves on if the desired user matches the current user', () => {
+        const next = sandbox.spy();
         isCurrentUser(req, null, next);
         next.calledOnce.should.equal(true);
       });
 
-      it('returns an error if the desired user doesn\'t match', function() {
+      it('returns an error if the desired user doesn\'t match', () => {
         req.params.userId = 'a1b2c3d4e5';
-        var next = sandbox.spy();
-        var stubError = new Error('Cannot perform this action on another user');
+        const next = sandbox.spy();
+        const stubError = new Error('Cannot perform this action on another user');
         stubError.status = 403;
 
         isCurrentUser(req, null, next);
         next.calledWith(stubError).should.equal(true);
       });
 
-      it('returns an error if the userId param doesn\'t exist', function() {
+      it('returns an error if the userId param doesn\'t exist', () => {
         req.params = {};
-        var next = sandbox.spy();
-        var stubError = new Error('No user ID provided');
+        const next = sandbox.spy();
+        const stubError = new Error('No user ID provided');
         stubError.status = 400;
 
         isCurrentUser(req, null, next);
+        next.calledWith(stubError).should.equal(true);
+      });
+    });
+
+    context('#validateSignupFields:', () => {
+      const req = {
+        body: {
+          email: 'amy@abc.com',
+          password: 'abc123'
+        }
+      };
+
+      it('moves on if all the required fields are present', () => {
+        const next = sandbox.spy();
+
+        validateSignupFields(req, null, next);
+        next.calledOnce.should.equal(true);
+      })
+
+      it('returns an error if any required fields are missing', () => {
+        delete req.body.email;
+
+        const next = sandbox.spy();
+        const stubError = new Error('Params missing: email');
+
+        validateSignupFields(req, null, next);
         next.calledWith(stubError).should.equal(true);
       });
     });
