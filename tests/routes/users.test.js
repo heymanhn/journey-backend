@@ -130,7 +130,7 @@ describe('User Routes', function() {
 
     beforeEach(function() {
       req = {
-        userDoc: {
+        user: {
           _doc: {
             username: 'herman',
             email: 'herman@journey.com'
@@ -145,7 +145,7 @@ describe('User Routes', function() {
     });
 
     it('returns the current authenticated user object', function(done) {
-      var expectedResponse = { user: req.userDoc._doc };
+      var expectedResponse = { user: req.user._doc };
       var res = {
         json: function(obj) {
           obj.should.eql(expectedResponse);
@@ -169,7 +169,7 @@ describe('User Routes', function() {
           email: 'amy.doe@journey.com',
           name: 'Amy Doe'
         },
-        userDoc: {
+        user: {
           username: 'amy',
           password: 'hashedabc123',
           email: 'amy@journey.com',
@@ -187,11 +187,11 @@ describe('User Routes', function() {
       function(done) {
       req.body.password = 'abc123';
 
-      req.userDoc.checkPassword = function(pw) {
+      req.user.checkPassword = function(pw) {
         pw.should.equal(req.body.password);
         return true;
       };
-      req.userDoc.save = function() {
+      req.user.save = function() {
         this.password.should.not.equal(req.body.password);
         done();
       };
@@ -200,8 +200,8 @@ describe('User Routes', function() {
     });
 
     it('only updates fields that have changed', function(done) {
-      var oldEmail = req.userDoc.email;
-      req.userDoc.save = function() {
+      var oldEmail = req.user.email;
+      req.user.save = function() {
         this.email.should.not.equal(oldEmail);
         done();
       };
@@ -228,7 +228,7 @@ describe('User Routes', function() {
         }
       };
 
-      req.userDoc.save = function(cb) {
+      req.user.save = function(cb) {
         cb(null, stubUser);
       };
 
@@ -241,7 +241,7 @@ describe('User Routes', function() {
         err.should.equal(stubError);
         done();
       };
-      req.userDoc.save = function(cb) {
+      req.user.save = function(cb) {
         cb(stubError);
       };
 
@@ -268,7 +268,7 @@ describe('User Routes', function() {
           done();
         }
       };
-      req.userDoc = {
+      req.user = {
         remove: function(cb) { cb(); }
       };
 
@@ -282,7 +282,7 @@ describe('User Routes', function() {
         done();
       };
 
-      req.userDoc = {
+      req.user = {
         remove: function(cb) { cb(stubError); }
       };
 
