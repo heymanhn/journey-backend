@@ -1,10 +1,10 @@
 'use strict';
 
-const router = require('express').Router();
+const app = require('express').Router();
 
 /* GET home page. */
-router.get('/', (req, res) => {
+app.get('/', (req, res) => {
   res.json({ message: 'This is the Journey API.' });
 });
 
-module.exports = router;
+module.exports = app;

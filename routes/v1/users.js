@@ -27,25 +27,23 @@ app.post('/', (req, res, next) => {
     return next(new Error('Params missing: ' + missingKeys));
   }
 
-  const newUser = new User(params);
-  newUser.save((err, user) => {
-    if (err) {
-      return next(err);
-    }
+  new User(params)
+    .save().
+    then((user) => {
+      // Generate JWT once account is created successfully
+      const token = jwt.sign(
+        user._doc,
+        process.env.JWT || config.secrets.jwt,
+        { expiresIn: '90 days' }
+      );
 
-    // Generate JWT once account is created successfully
-    const token = jwt.sign(
-      user._doc,
-      process.env.JWT || config.secrets.jwt,
-      { expiresIn: '90 days' }
-    );
-
-    res.json({
-      message: 'User created successfully.',
-      user: _.omit(user._doc, 'password'),
-      token: 'JWT ' + token
-    });
-  });
+      res.json({
+        message: 'User created successfully.',
+        user: _.omit(user._doc, 'password'),
+        token: 'JWT ' + token
+      });
+    })
+    .catch(next);
 });
 
 app.get('/:userId', ensureAuth, isCurrentUser, (req, res) => {
@@ -68,27 +66,23 @@ app.put('/:userId', ensureAuth, isCurrentUser, (req, res, next) => {
     user[key] = value;
   });
 
-  user.save((err, newUser) => {
-    if (err) {
-      return next(err);
-    }
-
-    res.json({
-      message: 'User updated successfully.',
-      user: _.omit(newUser._doc, 'password')
-    });
-  });
+  user
+    .save()
+    .then((newUser) => {
+      res.json({
+        message: 'User updated successfully.',
+        user: _.omit(newUser._doc, 'password')
+      });
+    })
+    .catch(next);
 });
 
 app.delete('/:userId', ensureAuth, isCurrentUser, (req, res, next) => {
   const user = req.user;
-  user.remove((err) => {
-    if (err) {
-      return next(err);
-    }
-
-    res.json({ message: 'User deleted.' });
-  });
+  user
+    .remove()
+    .then(() => res.json({ message: 'User deleted.' }))
+    .catch(next);
 });
 
 app.get('/:userId/trips', ensureAuth, isCurrentUser, (req, res, next) => {
