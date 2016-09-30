@@ -40,13 +40,10 @@ app.post('/', ensureAuth, (req, res, next) => {
   }
 
   const entry = new Entry(params);
-  entry.save((err) => {
-    if (err) {
-      return next(err);
-    }
-
-    res.redirect(`/v1/users/${params.creator}/entries`);
-  });
+  entry
+    .save()
+    .then(() => res.redirect(`/v1/users/${params.creator}/entries`))
+    .catch(next);
 });
 
 /*
