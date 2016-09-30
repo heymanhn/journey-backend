@@ -13,24 +13,7 @@ app.post('/login', checkLoginParams, (req, res, next) => {
     .findOne({ [req.loginType]: req.body[req.loginType] })
     .exec()
     .then(checkValidCredentials.bind(null, req.body.password))
-    .then((user) => {
-      const token = jwt.sign(
-        user._doc,
-        process.env.JWT || config.secrets.jwt,
-        { expiresIn: '90 days' }
-      );
-
-      if (!token) {
-        return Promise.reject(
-          new Error('Error generating authentication token')
-        );
-      }
-
-      res.json({
-        user: _.omit(user._doc, 'password'),
-        token: 'JWT ' + token
-      });
-    })
+    .then(generateJWT.bind(null, res))
     .catch(next);
 });
 
@@ -44,6 +27,23 @@ function checkValidCredentials(password, user) {
   }
 
   return user;
+}
+
+function generateJWT(res, user) {
+  const token = jwt.sign(
+    user._doc,
+    process.env.JWT || config.secrets.jwt,
+    { expiresIn: '90 days' }
+  );
+
+  if (!token) {
+    return Promise.reject(new Error('Error generating authentication token'));
+  }
+
+  return res.json({
+    user: _.omit(user._doc, 'password'),
+    token: 'JWT ' + token
+  });
 }
 
 module.exports = app;
