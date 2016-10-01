@@ -1,23 +1,22 @@
-/*jslint node: true */
 'use strict';
 
 /*
  * JSON Web Token strategy for passport
  */
-var JwtStrategy = require('passport-jwt').Strategy;
-var ExtractJwt = require('passport-jwt').ExtractJwt;
+const JwtStrategy = require('passport-jwt').Strategy;
+const ExtractJwt = require('passport-jwt').ExtractJwt;
 
-var config = require('../config/config');
-var User = require('../models/userModel');
+const config = require('../config/config');
+const User = require('../models/userModel');
 
 module.exports = function(passport) {
-  var options = {
+  const options = {
     jwtFromRequest: ExtractJwt.fromAuthHeader(),
     secretOrKey: process.env.JWT || config.secrets.jwt
   };
 
-  passport.use(new JwtStrategy(options, function(jwt_payload, cb) {
-    User.findOne({'_id': jwt_payload._id}, function(err, user) {
+  passport.use(new JwtStrategy(options, (jwt_payload, cb) => {
+    User.findOne({'_id': jwt_payload._id}, (err, user) => {
       if (err) {
         return cb(err, false);
       }

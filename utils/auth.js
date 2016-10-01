@@ -1,15 +1,14 @@
-/*jslint node: true */
 'use strict';
 
-var passport = require('passport');
+const passport = require('passport');
 
 module.exports = {
-  ensureAuth: function(req, res, next) {
+  ensureAuth(req, res, next) {
     /*
      * This custom implementation of authenticate() sets req.user to the
      * user object every time, overriding the default session-based behavior.
      */
-    passport.authenticate('jwt', function(err, user) {
+    passport.authenticate('jwt', (err, user) => {
       if (err) {
         return next(err);
       }
@@ -28,10 +27,8 @@ module.exports = {
   /*
    * Ensures the request includes a username/email and a password
    */
-  checkLoginParams: function(req, res, next) {
-    var username = req.body.username;
-    var email = req.body.email;
-    var password = req.body.password;
+  checkLoginParams(req, res, next) {
+    const { email, password, username }  = req.body;
 
     if (!username && !email) {
       return next(new Error('Username or email not provided'));

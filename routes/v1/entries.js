@@ -1,16 +1,14 @@
-/*jslint node: true */
 'use strict';
 
-var AWS = require('aws-sdk');
-var express = require('express');
+const AWS = require('aws-sdk');
+const app = require('express').Router();
 
-var ensureAuth = require('../../utils/auth').ensureAuth;
-var Entry = require('../../models/entryModel');
-var s3config = require('../../config/s3');
+const ensureAuth = require('../../utils/auth').ensureAuth;
+const Entry = require('../../models/entryModel');
+const s3config = require('../../config/s3');
 
-var app = express.Router();
 AWS.config.update({region: s3config.region });
-var s3 = new AWS.S3();
+const s3 = new AWS.S3();
 
 /*
  * POST /entries/
@@ -23,30 +21,28 @@ var s3 = new AWS.S3();
  * - Message is required if the user is creating a `text` entry.
  *
  */
-app.post('/', ensureAuth, function(req, res, next) {
-  var params = {
+app.post('/', ensureAuth, (req, res, next) => {
+  const { contents, loc, message } = req.body;
+
+  let params = {
     creator: req.user._id,
-    type: req.body.type,
+    type: req.body.type
   };
 
-  if (req.body.message) {
-    params.message = req.body.message;
+  if (message) {
+    params.message = message;
   }
-  if (req.body.contents) {
-    params.contents = req.body.contents;
+  if (contents) {
+    params.contents = contents;
   }
-  if (req.body.loc) {
-    params.loc = req.body.loc;
+  if (loc) {
+    params.loc = loc;
   }
 
-  var entry = new Entry(params);
-  entry.save(function(err) {
-    if (err) {
-      return next(err);
-    }
-
-    res.redirect('/v1/users/' + params.creator + '/entries');
-  });
+  new Entry(params)
+    .save()
+    .then(() => res.redirect(`/v1/users/${params.creator}/entries`))
+    .catch(next);
 });
 
 /*
@@ -56,13 +52,9 @@ app.post('/', ensureAuth, function(req, res, next) {
  * user.
  *
  */
-app.get('/:entryId', ensureAuth, function(req, res, next) {
+app.get('/:entryId', ensureAuth, (req, res, next) => {
   findEntry(req.params.entryId, req.user._id)
-    .then(function(entry) {
-      res.json({
-        entry: entry
-      });
-    })
+    .then((entry) => res.json({ entry }))
     .catch(next);
 });
 
@@ -73,29 +65,25 @@ app.get('/:entryId', ensureAuth, function(req, res, next) {
  * current user. The contents are also deleted from S3 if they exist.
  *
  */
-app.delete('/:entryId', ensureAuth, function(req, res, next) {
+app.delete('/:entryId', ensureAuth, (req, res, next) => {
   findEntry(req.params.entryId, req.user._id)
     .then(deleteS3Contents)
     .then(removeEntry)
-    .then(function() {
-      res.json({
-        message: 'Entry deleted.'
-      });
-    })
+    .then(() => res.json({ message: 'Entry deleted.' }))
     .catch(next);
 });
 
 function findEntry(entryId, userId) {
-  var params = {
+  const params = {
     _id: entryId,
     creator: userId
   };
 
   return Entry
     .findOne(params).exec()
-    .then(function(entry) {
+    .then((entry) => {
       if (!entry) {
-        var err = new Error('Entry not found');
+        let err = new Error('Entry not found');
         err.status = 404;
         return Promise.reject(err);
       }
@@ -105,29 +93,30 @@ function findEntry(entryId, userId) {
 }
 
 function deleteS3Contents(entry) {
-  if (!entry.contents) {
+  const { contents } = entry;
+  if (!contents) {
     return entry;
   } else {
-    var urls;
-    switch (typeof entry.contents) {
+    let urls;
+    switch (typeof contents) {
       case 'object':
-        urls = entry.contents;
+        urls = contents;
         break;
       case 'string':
-        urls = [entry.contents];
+        urls = [contents];
         break;
       default:
         return Promise.reject(new Error('Entry has invalid contents'));
     }
 
-    urls = urls.map(function(value) {
+    urls = urls.map((value) => {
       return s3.deleteObject({
         Bucket: s3config.mediaBucket,
         Key: value.match(/\w{8}-\w{4}-\w{4}-\w{4}-\w{12}/)[0]
       }).promise();
     });
 
-    return Promise.all(urls).then(function() { return entry; });
+    return Promise.all(urls).then(() => entry);
   }
 }
 

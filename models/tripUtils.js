@@ -1,8 +1,7 @@
-/*jslint node: true */
 'use strict';
 
 module.exports = {
-  validateFields: function(next) {
+  validateFields(next) {
     if (!this.title) {
       return next(new Error('Trip is missing a title'));
     }
@@ -21,7 +20,7 @@ module.exports = {
       }
     }
 
-    var vis = this.visibility;
+    const vis = this.visibility;
     if (vis && vis !== 'public' && vis !== 'private') {
       return next(new Error('Trip has invalid visibility set'));
     }
@@ -30,21 +29,16 @@ module.exports = {
   },
 
   // Create a trip day by default for each new trip
-  createDefaultTripDay: function(next) {
+  createDefaultTripDay(next) {
     if (!this.isNew) {
       return next();
     }
 
-    var params = {
-      entries: [],
-      lodging: {}
-    };
-
-    this.plan.push(params);
+    this.plan.push({ entries: [], lodging: {} });
     next();
   },
 
-  findTrips: function(params, count, page) {
+  findTrips(params, count, page) {
     if (!params || !count || !page) {
       return Promise.reject(new Error('Invalid arguments'));
     }

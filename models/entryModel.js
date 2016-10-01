@@ -1,10 +1,9 @@
-/*jslint node: true */
 'use strict';
 
-var mongoose = require('mongoose');
-var utils = require('./entryUtils');
+const mongoose = require('mongoose');
+const utils = require('./entryUtils');
 
-var entrySchema = new mongoose.Schema({
+const entrySchema = new mongoose.Schema({
   date: { type: Date, default: Date.now },
   creator: {
     type: mongoose.Schema.Types.ObjectId,

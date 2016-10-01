@@ -1,35 +1,34 @@
-/*jslint node: true, mocha: true */
 'use strict';
 
-var express = require('express');
-var jwt = require('jsonwebtoken');
-var should = require('chai').should();
-var sinon = require('sinon');
+const chai = require('chai');
+const chaiAsPromised = require('chai-as-promised');
+const express = require('express');
+const jwt = require('jsonwebtoken');
+const rewire = require('rewire');
+const should = chai.should(); // jshint ignore:line
+const sinon = require('sinon');
 
-var User = require('../../models/userModel');
+require('sinon-as-promised');
+chai.use(chaiAsPromised);
 
-describe('Authentication Routes', function() {
-  var sandbox;
-  var router;
+const User = require('../../models/userModel');
 
-  beforeEach(function() {
+describe('Authentication Routes', () => {
+  let sandbox;
+  let router;
+
+  beforeEach(() => {
     sandbox = sinon.sandbox.create();
-
-    sandbox.stub(express, 'Router').returns({
-      post: sandbox.spy()
-    });
-
-    router = require('../../routes/v1/auth');
+    sandbox.stub(express, 'Router').returns({ post: sandbox.spy() });
+    router = rewire('../../routes/v1/auth');
   });
 
-  afterEach(function() {
-    sandbox.restore();
-  });
+  afterEach(() => sandbox.restore());
 
-  describe('#post /login', function() {
-    var req;
+  describe('#post /login', () => {
+    let req, checkValidCredentials, generateJWT;
 
-    beforeEach(function() {
+    beforeEach(() => {
       req = {
         body: {
           username: 'amy',
@@ -37,117 +36,115 @@ describe('Authentication Routes', function() {
         },
         loginType: 'username'
       };
+
+      checkValidCredentials = router.__get__('checkValidCredentials');
+      generateJWT = router.__get__('generateJWT');
     });
 
-    var stubNext = function(stubError, done) {
-      return function(err) {
-        err.should.eql(stubError);
-        done();
-      };
-    };
-
-    var callPost = function(res, next) {
+    const callPost = (res, next) => {
       router.post.firstCall.args[2](req, res, next);
     };
 
-    it('registers a URI for POST: /login', function() {
+    it('registers a URI for POST: /login', () => {
       router.post.calledWith('/login', sandbox.match.any).should.equal(true);
     });
 
-    it('checks if a user exists given a username', function(done) {
-      sandbox.stub(User, 'findOne', function(opts) {
-        Object.keys(opts).length.should.equal(1);
+    it('looks for a user based on username', (done) => {
+      sandbox.stub(User, 'findOne', (opts) => {
         opts.username.should.equal(req.body.username);
         done();
+        return { exec: () => Promise.resolve() };
       });
+
+      router.__set__('checkValidCredentials', () => Promise.resolve());
+      router.__set__('generateJWT', () => Promise.resolve());
 
       callPost();
     });
 
-    it('checks if a user exists given an email', function(done) {
+    it('looks for a user based on email', (done) => {
       delete req.body.username;
       req.body.email = 'amy@journey.com';
       req.loginType = 'email';
 
-      sandbox.stub(User, 'findOne', function(opts) {
-        Object.keys(opts).length.should.equal(1);
+      sandbox.stub(User, 'findOne', (opts) => {
         opts.email.should.equal(req.body.email);
         done();
+        return { exec: () => Promise.resolve() };
       });
+
+      router.__set__('checkValidCredentials', () => Promise.resolve());
+      router.__set__('generateJWT', () => Promise.resolve());
 
       callPost();
     });
 
-    it('creates a JWT if password matches, and sends it in the response',
-      function(done) {
-      var stubUser = {
-        _doc: {
-          username: 'Stub User'
-        },
-        checkPassword: function(pw) {
-          pw.should.equal(req.body.password);
-          return true;
-        }
-      };
-      var stubToken = 'stubtoken';
-      var expectedResponse = {
-        user: stubUser._doc,
-        token: 'JWT ' + stubToken
-      };
-
-      var res = {
-        json: function(obj) {
-          obj.should.eql(expectedResponse);
-          done();
-        }
-      };
-
-      sandbox.stub(jwt, 'sign', function(obj) {
-        obj.should.equal(stubUser._doc);
-        return stubToken;
+    it('returns an error if something in the promise chain fails', (done) => {
+      const stubError = new Error('some error');
+      sandbox.stub(User, 'findOne', () => {
+        return { exec: () => Promise.reject(stubError) };
       });
 
-      sandbox.stub(User, 'findOne').yields(null, stubUser);
-      callPost(res);
-    });
-
-    it('returns an error if User lookup fails', function(done) {
-      var stubError = 'Stub error';
-      var next = stubNext(stubError, done);
-
-      sandbox.stub(User, 'findOne').yields(stubError);
-      callPost(null, next);
-    });
-
-    it('returns an error if no user is found', function(done) {
-      var stubError = new Error('Invalid username or email');
-      var next = stubNext(stubError, done);
-
-      sandbox.stub(User, 'findOne').yields();
-      callPost(null, next);
-    });
-
-    it('returns an error if the password is incorrect', function(done) {
-      var stubUser = {
-        checkPassword: function() { return false; }
+      const next = (err) => {
+        err.should.eql(stubError);
+        done();
       };
-      var stubError = new Error('Invalid password');
-      var next = stubNext(stubError, done);
 
-      sandbox.stub(User, 'findOne').yields(null, stubUser);
-      callPost(null, next);
+      return callPost(null, next);
     });
 
-    it('returns an error if JWT creation fails', function(done) {
-      var stubUser = {
-        checkPassword: function() { return true; }
-      };
-      var stubError = new Error('Error generating authentication token');
-      var next = stubNext(stubError, done);
+    context('#checkValidCredentials:', () => {
+      it('succeeds if a user exists and password is correct', () => {
+        const stubUser = { checkPassword() { return true; } };
+        return checkValidCredentials(null, stubUser).should.eql(stubUser);
+      });
 
-      sandbox.stub(jwt, 'sign').returns(null);
-      sandbox.stub(User, 'findOne').yields(null, stubUser);
-      callPost(null, next);
+      it('returns an error if the user doesn\'t exist', () => {
+        const stubError = new Error('Invalid username or email');
+        return checkValidCredentials().should.be.rejected
+          .and.eventually.eql(stubError);
+      });
+
+      it('returns an error if the password is incorrect', () => {
+        const stubUser = { checkPassword() { return false; }};
+        const stubError = new Error('Invalid password');
+        return checkValidCredentials(null, stubUser)
+          .should.be.rejected.and.eventually.eql(stubError);
+      });
+    });
+
+    context('#generateJWT:', () => {
+      const stubUser = { _doc: { username: 'StubUser' }};
+
+      it('creates a JWT and sends it back in response', (done) => {
+        const stubToken = 'stubtoken';
+        var expectedResponse = {
+          user: stubUser._doc,
+          token: 'JWT ' + stubToken
+        };
+
+        sandbox.stub(jwt, 'sign', (obj) => {
+          obj.should.equal(stubUser._doc);
+          return stubToken;
+        });
+
+        const stubRes = {
+          json: (obj) => {
+            obj.should.eql(expectedResponse);
+            done();
+          }
+        };
+
+        generateJWT(stubRes, stubUser);
+      });
+
+      it('returns an error if JWT creation fails', () => {
+        const stubError = new Error('Error generating authentication token');
+        sandbox.stub(jwt, 'sign').returns(null);
+
+        generateJWT(null, stubUser).should.be.rejected
+          .and.eventually.eql(stubError);
+      });
     });
   });
 });

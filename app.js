@@ -1,29 +1,29 @@
 /*jslint node: true */
 'use strict';
 
-var bodyParser = require('body-parser');
-var cookieParser = require('cookie-parser');
-var cors = require('cors');
-var debug = require('debug')('journey-backend');
-var express = require('express');
-var fs = require('fs');
-var https = require('https');
-var http = require('http');
-var logger = require('morgan');
-var mongoose = require('mongoose');
-var passport = require('passport');
-var path = require('path');
+const bodyParser = require('body-parser');
+const cookieParser = require('cookie-parser');
+const cors = require('cors');
+const debug = require('debug')('journey-backend');
+const express = require('express');
+const fs = require('fs');
+const https = require('https');
+const http = require('http');
+const logger = require('morgan');
+const mongoose = require('mongoose');
+const passport = require('passport');
+const path = require('path');
 
-var config = require('./config/config');
+const config = require('./config/config');
 
 /*
  * API Versioning
  */
-var indexRoute = require('./routes/index');
-var apiV1Routes = require('./routes/v1/index');
+const indexRoute = require('./routes/index');
+const apiV1Routes = require('./routes/v1/index');
 
-var app = express();
-var env = app.get('env');
+const app = express();
+const env = app.get('env');
 app.use(cors());
 app.options('*', cors());
 app.use(bodyParser.json());
@@ -47,7 +47,7 @@ if (env !== 'production') {
 require('./utils/passport-jwt')(passport);
 app.use(passport.initialize());
 
-var port = normalizePort(process.env.PORT || '3000');
+const port = normalizePort(process.env.PORT || '3000');
 app.set('port', port);
 
 /*
@@ -59,8 +59,8 @@ app.use('/', indexRoute);
 /*
  * catch 404 and forward to error handler
  */
-app.use(function(req, res, next) {
-  var err = new Error('Not Found');
+app.use((req, res, next) => {
+  let err = new Error('Not Found');
   err.status = 404;
   next(err);
 });
@@ -71,19 +71,20 @@ app.use(function(req, res, next) {
 
 // production error handler: no stacktraces leaked to user
 if (env === 'production') {
-  app.use(function(err, req, res, next) {
-    res.status(err.status || 500);
-    res.json({
-      message: err.message
-    });
+  app.use((err, req, res, next) => {
+    const { message, status } = err;
+    res.status(status || 500);
+    res.json({ message });
   });
 } else {
+
   // default error handler: will print stacktrace
-  app.use(function(err, req, res, next) {
-    res.status(err.status || 500);
+  app.use((err, req, res, next) => {
+    const { message, stack, status } = err;
+    res.status(status || 500);
     res.json({
-      message: err.message,
-      error: err.stack
+      message,
+      error: stack
     });
   });
 }
@@ -93,13 +94,13 @@ if (env === 'production') {
  */
 
 // NOTE: HTTPS disabled until we go into a more serious production mode
-// var options = {
+// const options = {
 //   key: fs.readFileSync('key.pem'),
 //   cert: fs.readFileSync('cert.pem')
 // };
-// var server = http.createServer(options, app);
+// const server = http.createServer(options, app);
 
-var server = http.createServer(app);
+const server = http.createServer(app);
 server.listen(port);
 server.on('error', onError);
 server.on('listening', onListening);
@@ -112,16 +113,16 @@ function onError(error) {
     throw error;
   }
 
-  var bind = typeof port === 'string' ? 'Pipe ' + port : 'Port ' + port;
+  const bind = typeof port === 'string' ? `Pipe ${port}` : `Port ${port}`;
 
   // handle specific listen errors with friendly messages
   switch (error.code) {
     case 'EACCES':
-      console.error(bind + ' requires elevated privileges');
+      console.error(`${bind} requires elevated privileges`);
       process.exit(1);
       break;
     case 'EADDRINUSE':
-      console.error(bind + ' is already in use');
+      console.error(`${bind} is already in use`);
       process.exit(1);
       break;
     default:
@@ -133,16 +134,16 @@ function onError(error) {
  * Event listener for HTTP server "listening" event.
  */
 function onListening() {
-  var addr = server.address();
-  var bind = typeof addr === 'string' ? 'pipe ' + addr : 'port ' + addr.port;
-  debug('Listening on ' + bind);
+  const addr = server.address();
+  const bind = typeof addr === 'string' ? `pipe ${addr}` : `port ${port}`;
+  debug(`Listening on ${bind}`);
 }
 
 /*
  * Normalize a port into a number, string, or false.
  */
 function normalizePort(val) {
-  var port = parseInt(val, 10);
+  const port = parseInt(val, 10);
 
   if (isNaN(port)) {
     // named pipe

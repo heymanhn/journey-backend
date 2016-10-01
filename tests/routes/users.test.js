@@ -1,20 +1,25 @@
-/*jslint node: true, mocha: true */
 'use strict';
 
-var express = require('express');
-var jwt = require('jsonwebtoken');
-var should = require('chai').should(); // jshint ignore:line
-var sinon = require('sinon');
+const chai = require('chai');
+const chaiAsPromised = require('chai-as-promised');
+const express = require('express');
+const jwt = require('jsonwebtoken');
+const rewire = require('rewire');
+const should = chai.should(); // jshint ignore:line
+const sinon = require('sinon');
 
-var database = require('../../config/database');
-var Entry = require('../../models/entryModel');
-var User = require('../../models/userModel');
+require('sinon-as-promised');
+require('mongoose').Promise = Promise;
+chai.use(chaiAsPromised);
 
-describe('User Routes', function() {
-  var sandbox;
-  var router;
+const database = require('../../config/database');
+const Entry = require('../../models/entryModel');
+const User = require('../../models/userModel');
 
-  beforeEach(function() {
+describe('User Routes', () => {
+  let generateJWT, router, sandbox;
+
+  beforeEach(() => {
     sandbox = sinon.sandbox.create();
 
     sandbox.stub(express, 'Router').returns({
@@ -24,22 +29,23 @@ describe('User Routes', function() {
       delete: sandbox.spy()
     });
 
-    router = require('../../routes/v1/users');
+    router = rewire('../../routes/v1/users');
+    generateJWT = router.__get__('generateJWT');
   });
 
-  afterEach(function() {
+  afterEach(() => {
     sandbox.restore();
   });
 
-  describe('#post /', function() {
-    var req;
-    var stubUser;
+  describe('#post /', () => {
+    let req;
+    let stubUser;
 
-    var callPost = function(res, next) {
-      router.post.firstCall.args[1](req, res, next);
-    };
+    function callPost(res, next) {
+      router.post.firstCall.args[2](req, res, next);
+    }
 
-    beforeEach(function() {
+    beforeEach(() => {
       req = {
         body: {
           username: 'amy',
@@ -49,88 +55,75 @@ describe('User Routes', function() {
         }
       };
 
-      stubUser = { _doc: { username: 'foo' } };
+      stubUser = { _doc: { username: 'amy' } };
     });
 
-    it('registers a URI for POST: /', function() {
+    it('registers a URI for POST: /', () => {
       router.post.calledWith('/', sandbox.match.any).should.equal(true);
     });
 
-    it('creates the user if all required fields are provided', function(done) {
+    it('creates the user if all required fields are provided', (done) => {
       sandbox.stub(User.prototype, 'save', function() {
+        this._doc.username.should.equal(req.body.username);
+        this._doc.email.should.equal(req.body.email);
+        this._doc.name.should.equal(req.body.name);
         done();
       });
 
+      router.__set__('generateJWT', () => Promise.resolve());
       callPost();
     });
 
-    it('generates a JSON web token once user is created', function(done) {
-      var res = { json: function() { done(); } };
+    it('returns an error if something in the chain fails', (done) => {
+      const stubError = new Error('some error');
+      function next(err) {
+        err.should.eql(stubError);
+        done();
+      }
 
-      sandbox.stub(jwt, 'sign', function(payload, secret, expiry) {
-        payload.should.eql(stubUser._doc);
+      router.__set__('generateJWT', () => Promise.reject(stubError));
+      callPost(null, next);
+    });
+
+    context('#generateJWT:', () => {
+      it('generates a JSON web token and sends in response', (done) => {
+        const stubToken = 'abcdefg';
+        const expectedResponse = {
+          message: 'User created successfully.',
+          user: stubUser._doc,
+          token: 'JWT ' + stubToken
+        };
+        const res = {
+          json: (obj) => {
+            obj.should.eql(expectedResponse);
+            done();
+          }
+        };
+
+        sandbox.stub(jwt, 'sign').returns(stubToken);
+        generateJWT(res, stubUser);
       });
-      sandbox.stub(User.prototype, 'save').yields(null, stubUser);
 
-      callPost(res);
+      it('returns an error if JWT creation fails', () => {
+        const stubError = new Error('Error generating authentication token');
+        sandbox.stub(jwt, 'sign').returns(null);
+
+        generateJWT(null, stubUser).should.be.rejected
+          .and.eventually.eql(stubError);
+      });
     });
-
-    it('returns the user object and JWT upon success', function(done) {
-      var stubToken = 'abcdefg';
-      var expectedResponse = {
-        message: 'User created successfully.',
-        user: stubUser._doc,
-        token: 'JWT ' + stubToken
-      };
-      var res = {
-        json: function(obj) {
-          obj.should.eql(expectedResponse);
-          done();
-        }
-      };
-
-      sandbox.stub(jwt, 'sign').returns(stubToken);
-      sandbox.stub(User.prototype, 'save').yields(null, stubUser);
-
-      callPost(res);
-    });
-
-    it('returns an error if any required fields are missing', function(done) {
-      req.body.email = undefined;
-      req.body.password = undefined;
-
-      var stubError = new Error('Params missing: password,email');
-      var next = function(err) {
-        err.should.eql(stubError);
-        done();
-      };
-
-      callPost(null, next);
-    });
-
-    it('returns an error if User.save() fails', function(done) {
-      var stubError = 'Save error';
-      var next = function(err) {
-        err.should.eql(stubError);
-        done();
-      };
-
-      sandbox.stub(User.prototype, 'save').yields(stubError);
-      callPost(null, next);
-    });
-
   });
 
-  describe('#get /:userId', function() {
-    var req;
+  describe('#get /:userId', () => {
+    let req;
 
-    var callGet = function(res, next) {
+    const callGet = function(res, next) {
       router.get.firstCall.args[3](req, res, next);
     };
 
-    beforeEach(function() {
+    beforeEach(() => {
       req = {
-        userDoc: {
+        user: {
           _doc: {
             username: 'herman',
             email: 'herman@journey.com'
@@ -139,15 +132,15 @@ describe('User Routes', function() {
       };
     });
 
-    it('registers a URI for GET: /:userId', function() {
+    it('registers a URI for GET: /:userId', () => {
       router.get.firstCall.calledWith('/:userId', sandbox.match.any)
             .should.equal(true);
     });
 
-    it('returns the current authenticated user object', function(done) {
-      var expectedResponse = { user: req.userDoc._doc };
-      var res = {
-        json: function(obj) {
+    it('returns the current authenticated user object', (done) => {
+      const expectedResponse = { user: req.user._doc };
+      const res = {
+        json(obj) {
           obj.should.eql(expectedResponse);
           done();
         }
@@ -156,20 +149,20 @@ describe('User Routes', function() {
     });
   });
 
-  describe('#put /:userId', function() {
-    var req;
+  describe('#put /:userId', () => {
+    let req;
 
-    var callPut = function(res, next) {
+    const callPut = function(res, next) {
       router.put.firstCall.args[3](req, res, next);
     };
 
-    beforeEach(function() {
+    beforeEach(() => {
       req = {
         body: {
           email: 'amy.doe@journey.com',
           name: 'Amy Doe'
         },
-        userDoc: {
+        user: {
           username: 'amy',
           password: 'hashedabc123',
           email: 'amy@journey.com',
@@ -178,152 +171,150 @@ describe('User Routes', function() {
       };
     });
 
-    it('registers a URI for PUT: /:userId', function() {
+    it('registers a URI for PUT: /:userId', () => {
       router.put.firstCall.calledWith('/:userId', sandbox.match.any)
             .should.equal(true);
     });
 
     it('does not change the password if it matches existing hashed password',
-      function(done) {
+      (done) => {
+      const stubError = new Error('fake error');
       req.body.password = 'abc123';
 
-      req.userDoc.checkPassword = function(pw) {
+      req.user.checkPassword = (pw) => {
         pw.should.equal(req.body.password);
         return true;
       };
-      req.userDoc.save = function() {
+      req.user.save = function() {
         this.password.should.not.equal(req.body.password);
-        done();
+        return Promise.reject(stubError);
       };
 
-      callPut();
+      const next = (err) => done();
+      callPut(null, next);
     });
 
-    it('only updates fields that have changed', function(done) {
-      var oldEmail = req.userDoc.email;
-      req.userDoc.save = function() {
+    it('only updates fields that have changed', (done) => {
+      const stubError = new Error('fake error');
+      const oldEmail = req.user.email;
+      req.user.save = function() {
         this.email.should.not.equal(oldEmail);
-        done();
+        return Promise.reject(stubError);
       };
 
-      callPut();
+      const next = (err) => done();
+      callPut(null, next);
     });
 
-    it('updates the user and sends object in response', function(done) {
-      var stubUser = {
+    it('updates the user and sends object in response', (done) => {
+      const stubUser = {
         _doc: {
           username: 'amy',
           email: 'amy@journey.com',
           name: 'Amy Doe'
         }
       };
-      var expectedResponse = {
+      const expectedResponse = {
         message: 'User updated successfully.',
         user: stubUser._doc
       };
-      var res = {
+      const res = {
         json: function(obj) {
           obj.should.eql(expectedResponse);
           done();
         }
       };
 
-      req.userDoc.save = function(cb) {
-        cb(null, stubUser);
+      req.user.save = () => {
+        return Promise.resolve(stubUser);
       };
 
       callPut(res);
     });
 
-    it('returns an error if the update operation fails', function(done) {
-      var stubError = 'Update error';
-      var next = function(err) {
+    it('returns an error if the update operation fails', (done) => {
+      const stubError = 'Update error';
+      const next = function(err) {
         err.should.equal(stubError);
         done();
       };
-      req.userDoc.save = function(cb) {
-        cb(stubError);
+      req.user.save = () => {
+        return Promise.reject(stubError);
       };
 
       callPut(null, next);
     });
   });
 
-  describe('#delete /', function() {
-    var req = {};
-    var callDelete = function(res, next) {
+  describe('#delete /', () => {
+    let req = {};
+    const callDelete = function(res, next) {
       router.delete.firstCall.args[3](req, res, next);
     };
 
-    it('registers a URI for DELETE: /:userId', function() {
+    it('registers a URI for DELETE: /:userId', () => {
       router.delete.firstCall.calledWith('/:userId', sandbox.match.any)
             .should.equal(true);
     });
 
-    it('calls user.remove() and sends response to user', function(done) {
-      var expectedResponse = { message: 'User deleted.' };
-      var res = {
-        json: function(obj) {
+    it('calls user.remove() and sends response to user', (done) => {
+      const expectedResponse = { message: 'User deleted.' };
+      const res = {
+        json(obj) {
           obj.should.eql(expectedResponse);
           done();
         }
       };
-      req.userDoc = {
-        remove: function(cb) { cb(); }
-      };
-
+      req.user = { remove() { return Promise.resolve(); } };
       callDelete(res);
     });
 
-    it('returns an error if the model\'s remove method fails', function(done) {
-      var stubError = 'Remove error';
-      var next = function(err) {
+    it('returns an error if the model\'s remove method fails', (done) => {
+      const stubError = 'Remove error';
+      const next = (err) => {
         err.should.equal(stubError);
         done();
       };
 
-      req.userDoc = {
-        remove: function(cb) { cb(stubError); }
-      };
-
+      req.user = { remove(cb) { return Promise.reject(stubError); } };
       callDelete(null, next);
     });
   });
 
-  describe('#get /:userId/entries', function() {
-    var req = {
+  describe('#get /:userId/entries', () => {
+    const req = {
       params: {
         userId: 'a1b2c3d4'
       },
 
       query: {}
     };
-    var callGet = function(res, next) {
+    const callGet = function(res, next) {
       router.get.thirdCall.args[3](req, res, next);
     };
 
-    it('registers a URI for GET: /:userId/entries', function() {
+    it('registers a URI for GET: /:userId/entries', () => {
       router.get
             .thirdCall
             .calledWith('/:userId/entries', sandbox.match.any)
             .should.equal(true);
     });
 
-    it('looks for entries by the current user', function(done) {
+    it('looks for entries by the current user', (done) => {
       sandbox.stub(Entry, 'findEntries', function(params, count, page) {
         params.creator.should.equal(req.params.userId);
         count.should.equal(database.DEFAULT_ENTRY_COUNT);
         page.should.equal(1);
 
         return {
-          then: function() { return { catch: function() { done(); } }; }
+          then: () => { return { catch: () => { done(); } }; }
         };
       });
 
       callGet();
     });
 
-    it('uses additional query parameters if provided', function(done) {
+    it('uses additional query parameters if provided', (done) => {
       req.query = {
         page: '1',
         count: '5',
@@ -336,21 +327,21 @@ describe('User Routes', function() {
         page.should.equal(Number(req.query.page));
 
         return {
-          then: function() { return { catch: function() { done(); } }; }
+          then: () => { return { catch: () => { done(); } }; }
         };
       });
 
       callGet();
     });
 
-    it('returns a list of entries in the response', function(done) {
-      var stubEntries = ['Entry 1', 'Entry 2', 'Entry 3'];
-      var expectedResponse = {
+    it('returns a list of entries in the response', (done) => {
+      const stubEntries = ['Entry 1', 'Entry 2', 'Entry 3'];
+      const expectedResponse = {
         page: 1,
         results: 3,
         entries: stubEntries,
       };
-      var res = {
+      const res = {
         json: function(obj) {
           obj.should.eql(expectedResponse);
           done();
@@ -361,11 +352,11 @@ describe('User Routes', function() {
       callGet(res);
     });
 
-    it('returns an error if no entries are found', function(done) {
-      var stubError = new Error('No entries found');
+    it('returns an error if no entries are found', (done) => {
+      const stubError = new Error('No entries found');
       stubError.status = 404;
 
-      var next = function(err) {
+      const next = function(err) {
         err.should.eql(stubError);
         done();
       };
@@ -374,9 +365,9 @@ describe('User Routes', function() {
       callGet(null, next);
     });
 
-    it('returns an error if Entry.findEntries() fails', function(done) {
-      var stubError = 'Find error';
-      var next = function(err) {
+    it('returns an error if Entry.findEntries() fails', (done) => {
+      const stubError = 'Find error';
+      const next = function(err) {
         err.should.equal(stubError);
         done();
       };

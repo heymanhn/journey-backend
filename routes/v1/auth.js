@@ -1,48 +1,49 @@
-/*jslint node: true */
 'use strict';
 
-var _ = require('underscore');
-var express = require('express');
-var jwt = require('jsonwebtoken');
+const _ = require('underscore');
+const app = require('express').Router();
+const jwt = require('jsonwebtoken');
 
-var config = require('../../config/config');
-var User = require('../../models/userModel');
-var checkLoginParams = require('../../utils/auth').checkLoginParams;
+const config = require('../../config/config');
+const User = require('../../models/userModel');
+const checkLoginParams = require('../../utils/auth').checkLoginParams;
 
-var app = express.Router();
-
-app.post('/login', checkLoginParams, function(req, res, next) {
-  var opts = {};
-  opts[req.loginType] = req.body[req.loginType];
-
-  User.findOne(opts, function(err, user) {
-    if (err) {
-      return next(err);
-    }
-
-    if (!user) {
-      return next(new Error('Invalid username or email'));
-    }
-
-    if (!user.checkPassword(req.body.password)) {
-      return next(new Error('Invalid password'));
-    } else {
-      var token = jwt.sign(
-        user._doc,
-        process.env.JWT || config.secrets.jwt,
-        { expiresIn: '90 days' }
-      );
-
-      if (!token) {
-        return next(new Error('Error generating authentication token'));
-      }
-
-      res.json({
-        user: _.omit(user._doc, 'password'),
-        token: 'JWT ' + token
-      });
-    }
-  });
+app.post('/login', checkLoginParams, (req, res, next) => {
+  User
+    .findOne({ [req.loginType]: req.body[req.loginType] })
+    .exec()
+    .then(checkValidCredentials.bind(null, req.body.password))
+    .then(generateJWT.bind(null, res))
+    .catch(next);
 });
+
+function checkValidCredentials(password, user) {
+  if (!user) {
+    return Promise.reject(new Error('Invalid username or email'));
+  }
+
+  if (!user.checkPassword(password)) {
+    return Promise.reject(new Error('Invalid password'));
+  }
+
+  return user;
+}
+
+function generateJWT(res, user) {
+  const token = jwt.sign(
+    user._doc,
+    process.env.JWT || config.secrets.jwt,
+    { expiresIn: '90 days' }
+  );
+
+  if (!token) {
+    return Promise.reject(new Error('Error generating authentication token'));
+  }
+
+  return res.json({
+    user: _.omit(user._doc, 'password'),
+    token: 'JWT ' + token
+  });
+}
 
 module.exports = app;

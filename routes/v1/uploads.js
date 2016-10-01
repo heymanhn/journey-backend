@@ -1,15 +1,14 @@
 /*jslint node: true */
 'use strict';
 
-var AWS = require('aws-sdk');
-var express = require('express');
+const AWS = require('aws-sdk');
+const app = require('express').Router();
 
-var ensureAuth = require('../../utils/auth').ensureAuth;
-var s3config = require('../../config/s3');
+const ensureAuth = require('../../utils/auth').ensureAuth;
+const s3config = require('../../config/s3');
 
-var app = express.Router();
 AWS.config.update({ region: s3config.region });
-var s3 = new AWS.S3();
+const s3 = new AWS.S3();
 
 /*
  * GET /uploads/signedurls
@@ -26,29 +25,23 @@ var s3 = new AWS.S3();
  * defaults to generating 1 URL.
  *
  */
-app.get('/signedurls', ensureAuth, function(req, res, next) {
-  var urlCount = Number(req.query.urls) || 1;
-  var requests = generateRequests(urlCount);
+app.get('/signedurls', ensureAuth, (req, res, next) => {
+  const urlCount = Number(req.query.urls) || 1;
+  const requests = generateRequests(urlCount);
 
   return Promise.all(requests)
-    .then(function(urls) {
-      res.json({
-        urls: urls
-      });
-    })
+    .then((urls) => res.json({ urls }))
     .catch(next);
 });
 
 function generateRequests(count) {
   return Array(count)
     .fill(0)
-    .map(function(value) {
-      return findValidParams().then(getSignedUrl);
-    });
+    .map(() => findValidParams().then(getSignedUrl));
 }
 
 function findValidParams() {
-  var params = {
+  const params = {
     Bucket: s3config.mediaBucket,
     Key: guid()
   };
@@ -59,7 +52,7 @@ function findValidParams() {
    */
   return s3.getObject(params).promise()
     .then(findValidParams)
-    .catch(function(err) {
+    .catch((err) => {
       if (err.name === 'NoSuchKey') {
         return Promise.resolve(params);
       } else {
@@ -70,14 +63,13 @@ function findValidParams() {
 
 function getSignedUrl(params) {
   params.ACL = 'public-read';
-
   return Promise.resolve(s3.getSignedUrl('putObject', params));
 }
 
 // Borrowed from Stack Overflow
 function guid() {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-    var r = Math.random()*16|0, v = c == 'x' ? r : (r&0x3|0x8);
+    let r = Math.random()*16|0, v = c == 'x' ? r : (r&0x3|0x8);
     return v.toString(16);
   });
 }

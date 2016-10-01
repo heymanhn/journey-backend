@@ -1,57 +1,53 @@
-/*jslint node: true, mocha: true */
 'use strict';
 
-var mongoose = require('mongoose');
-var should = require('chai').should();
+const chai = require('chai');
+const chaiAsPromised = require('chai-as-promised');
+const mongoose = require('mongoose');
+const should = chai.should(); // jshint ignore:line
 
-var Entry = require('../../models/entryModel');
-var testUtils = require('./utils');
-var utils = require('../../models/entryUtils');
+const Entry = require('../../models/entryModel');
+const testUtils = require('./utils');
+const utils = require('../../models/entryUtils');
+
 mongoose.Promise = Promise;
+chai.use(chaiAsPromised);
 
-describe('Entry Model', function() {
+describe('Entry Model', () => {
   before(testUtils.connect);
 
-  beforeEach(function(done) {
-    var entry1 = new Entry({
+  beforeEach((done) => {
+    const entry1 = new Entry({
       creator: mongoose.Types.ObjectId('577371f00000000000000000'),
       type: 'text',
       message: 'Entry 1'
     });
 
-    var entry2 = new Entry({
+    const entry2 = new Entry({
       creator: mongoose.Types.ObjectId('577371f00000000000000000'),
       type: 'text',
       message: 'Entry 2'
     });
 
-    var entry3 = new Entry({
+    const entry3 = new Entry({
       creator: mongoose.Types.ObjectId('577371f00000000000000000'),
       type: 'text',
       message: 'Entry 3'
     });
 
-    var saveOps = [entry1.save(), entry2.save(), entry3.save()];
+    const saveOps = [entry1.save(), entry2.save(), entry3.save()];
     Promise
       .all(saveOps)
-      .then(function() { done(); });
+      .then(() => { done(); });
   });
 
-  afterEach(function(done) {
+  afterEach((done) => {
     Entry.remove({}, done);
   });
 
-  describe('#create entry:', function() {
-    var entryParams;
-    var validationChecker = function(done) {
-      return function(err) {
-        should.exist(err);
-        err.name.should.equal('ValidationError');
-        done();
-      };
-    };
+  describe('#create entry:', () => {
+    let entryParams;
 
-    beforeEach(function() {
+    beforeEach(() => {
       entryParams = {
         creator: mongoose.Types.ObjectId('577371f00000000000000000'),
         type: 'text',
@@ -59,8 +55,8 @@ describe('Entry Model', function() {
       };
     });
 
-    it('creates a new Entry with the right fields', function(done) {
-      var testEntry = new Entry(entryParams);
+    it('creates a new Entry with the right fields', (done) => {
+      const testEntry = new Entry(entryParams);
       testEntry.save(function(err, entry) {
         should.not.exist(err);
         (typeof entry).should.equal('object');
@@ -72,26 +68,26 @@ describe('Entry Model', function() {
       });
     });
 
-    it('saves the location coordinates if provided', function(done) {
+    it('saves the location coordinates if provided', (done) => {
       entryParams.loc = {
         type: 'Point',
         coordinates: [-122.416534, 37.612311]
       };
-      var testEntry = new Entry(entryParams);
+      const testEntry = new Entry(entryParams);
 
-      testEntry.save(function(err, entry) {
+      testEntry.save((err, entry) => {
         should.not.exist(err);
         entry.loc.should.equal(testEntry.loc);
         done();
       });
     });
 
-    it('saves the contents for a video entry', function(done) {
+    it('saves the contents for a video entry', (done) => {
       entryParams.type = 'video';
       entryParams.contents = 'http://stubvideolink.com';
 
-      var testEntry = new Entry(entryParams);
-      testEntry.save(function(err, entry) {
+      const testEntry = new Entry(entryParams);
+      testEntry.save((err, entry) => {
         should.not.exist(err);
         entry.type.should.equal(testEntry.type);
         entry.contents.should.equal(testEntry.contents);
@@ -99,12 +95,12 @@ describe('Entry Model', function() {
       });
     });
 
-    it('saves the contents for a photo entry', function(done) {
+    it('saves the contents for a photo entry', (done) => {
       entryParams.type = 'photo';
       entryParams.contents = 'http://stubvideolink.com';
 
-      var testEntry = new Entry(entryParams);
-      testEntry.save(function(err, entry) {
+      const testEntry = new Entry(entryParams);
+      testEntry.save((err, entry) => {
         should.not.exist(err);
         entry.type.should.equal(testEntry.type);
         entry.contents.should.equal(testEntry.contents);
@@ -112,8 +108,7 @@ describe('Entry Model', function() {
       });
     });
 
-    it('saves the contents for a photo entry with multiple photos',
-      function(done) {
+    it('saves the contents for a photo entry with multiple photos', (done) => {
       entryParams.type = 'photo';
       entryParams.contents = [
         'http://stubvideolink1.com',
@@ -121,8 +116,8 @@ describe('Entry Model', function() {
         'http://stubvideolink3.com'
       ];
 
-      var testEntry = new Entry(entryParams);
-      testEntry.save(function(err, entry) {
+      const testEntry = new Entry(entryParams);
+      testEntry.save((err, entry) => {
         should.not.exist(err);
         entry.type.should.equal(entryParams.type);
         entry.contents.should.eql(entryParams.contents);
@@ -130,12 +125,12 @@ describe('Entry Model', function() {
       });
     });
 
-    it('saves the contents for an audio entry', function(done) {
+    it('saves the contents for an audio entry', (done) => {
       entryParams.type = 'video';
       entryParams.contents = 'http://stubvideolink.com';
 
-      var testEntry = new Entry(entryParams);
-      testEntry.save(function(err, entry) {
+      const testEntry = new Entry(entryParams);
+      testEntry.save((err, entry) => {
         should.not.exist(err);
         entry.type.should.equal(testEntry.type);
         entry.contents.should.equal(testEntry.contents);
@@ -143,47 +138,46 @@ describe('Entry Model', function() {
       });
     });
 
-    context('#validation:', function() {
-      it('fails if type is not provided', function(done) {
+    context('#validation:', () => {
+      it('fails if type is not provided', () => {
         delete entryParams.type;
-        var testEntry = new Entry(entryParams);
-        testEntry.validate(validationChecker(done));
+        const testEntry = new Entry(entryParams);
+        testEntry.validate().should.eventually.be.rejected;
       });
 
-      it('fails if creator is not provided', function(done) {
+      it('fails if creator is not provided', () => {
         delete entryParams.creator;
-        var testEntry = new Entry(entryParams);
-        testEntry.validate(validationChecker(done));
+        const testEntry = new Entry(entryParams);
+        testEntry.validate().should.eventually.be.rejected;
       });
 
-      it('fails if creator is provided as a number', function(done) {
+      it('fails if creator is provided as a number', () => {
         entryParams.creator = 5773710000000000000000;
-        var testEntry = new Entry(entryParams);
-        testEntry.validate(validationChecker(done));
+        const testEntry = new Entry(entryParams);
+        testEntry.validate().should.eventually.be.rejected;
       });
 
-      it('fails if location coordinates have wrong format', function(done) {
+      it('fails if location coordinates have wrong format', () => {
         entryParams.loc = {
           type: 'Point',
           coordinates: ['lng', 'lat']
         };
-        var testEntry = new Entry(entryParams);
-
-        testEntry.validate(validationChecker(done));
+        const testEntry = new Entry(entryParams);
+        testEntry.validate().should.eventually.be.rejected;
       });
     });
   });
 
-  describe('#pre-save checks:', function() {
-    var stubModel;
-    var stubNext = function(expectedError, done) {
-      return function(err) {
+  describe('#pre-save checks:', () => {
+    let stubModel;
+    const stubNext = (expectedError, done) => {
+      return (err) => {
         err.should.eql(expectedError);
         done();
       };
     };
 
-    beforeEach(function() {
+    beforeEach(() => {
       stubModel = {
         creator: 'a1b2c3d4',
         type: 'text',
@@ -191,88 +185,83 @@ describe('Entry Model', function() {
       };
     });
 
-    it('fails if a text entry does not have a message', function(done) {
+    it('fails if a text entry does not have a message', (done) => {
       delete stubModel.message;
 
-      var stubError = new Error('Text entry is missing a message');
-      var next = stubNext(stubError, done);
+      const stubError = new Error('Text entry is missing a message');
+      const next = stubNext(stubError, done);
 
       utils.validateFields.bind(stubModel)(next);
     });
 
-    it('fails if a text entry contains contents', function(done) {
+    it('fails if a text entry contains contents', (done) => {
       stubModel.contents = 'http://www.fakecontents.com';
 
-      var stubError = new Error('Text entry has invalid contents');
-      var next = stubNext(stubError, done);
+      const stubError = new Error('Text entry has invalid contents');
+      const next = stubNext(stubError, done);
 
       utils.validateFields.bind(stubModel)(next);
     });
 
-    it('fails if a photo entry does not have contents', function(done) {
+    it('fails if a photo entry does not have contents', (done) => {
       stubModel.type = 'photo';
 
-      var stubError = new Error('Entry is missing contents');
-      var next = stubNext(stubError, done);
+      const stubError = new Error('Entry is missing contents');
+      const next = stubNext(stubError, done);
 
       utils.validateFields.bind(stubModel)(next);
     });
 
-    it('fails if a video entry does not have contents', function(done) {
+    it('fails if a video entry does not have contents', (done) => {
       stubModel.type = 'video';
 
-      var stubError = new Error('Entry is missing contents');
-      var next = stubNext(stubError, done);
+      const stubError = new Error('Entry is missing contents');
+      const next = stubNext(stubError, done);
 
       utils.validateFields.bind(stubModel)(next);
     });
 
-    it('fails if an audio entry does not have contents', function(done) {
+    it('fails if an audio entry does not have contents', (done) => {
       stubModel.type = 'audio';
 
-      var stubError = new Error('Entry is missing contents');
-      var next = stubNext(stubError, done);
+      const stubError = new Error('Entry is missing contents');
+      const next = stubNext(stubError, done);
 
       utils.validateFields.bind(stubModel)(next);
     });
 
-    it('fails if the type provided is not supported', function(done) {
+    it('fails if the type provided is not supported', (done) => {
       stubModel.type = 'foo';
 
-      var stubError = new Error('Invalid entry type');
-      var next = stubNext(stubError, done);
+      const stubError = new Error('Invalid entry type');
+      const next = stubNext(stubError, done);
 
       utils.validateFields.bind(stubModel)(next);
     });
   });
 
-  describe('#findEntries:', function() {
-    it('returns the right number of entries', function(done) {
-      var page = 1;
-      var count = 2;
-      var params = {
+  describe('#findEntries:', () => {
+    it('returns the right number of entries', (done) => {
+      const page = 1;
+      const count = 2;
+      const params = {
         creator: '577371f00000000000000000'
       };
 
-      Entry.findEntries(params, count, page).then(function(entries) {
+      Entry.findEntries(params, count, page).then((entries) => {
         entries.length.should.equal(count);
         entries[0].creator.toString().should.equal(params.creator);
         done();
       });
     });
 
-    it('returns an error if any of the arguments are missing', function() {
-      var page = 1;
-      var count = 2;
-      var stubError = new Error('Invalid arguments');
+    it('returns an error if any of the arguments are missing', () => {
+      const page = 1;
+      const count = 2;
+      const stubError = new Error('Invalid arguments');
 
-      Entry.findEntries(null, count, page).should.be.rejectedWith(stubError);
-    });
-
-    it('returns an error if something in the chain fails', function() {
-      var params = '577371f00000000000000000';
-
-      Entry.findEntries(params, 1, 2).should.be.rejected; // jshint ignore:line
+      Entry.findEntries(null, count, page).should.be.rejected
+        .and.eventually.eql(stubError);
     });
   });
 });

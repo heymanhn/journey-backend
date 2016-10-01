@@ -1,7 +1,7 @@
-/*jslint node: true */
 'use strict';
 
-var User = require('../models/userModel');
+const _ = require('underscore');
+const User = require('../models/userModel');
 
 module.exports = {
   /*
@@ -10,15 +10,15 @@ module.exports = {
    *
    * Assumes that the URI includes req.params.userId
    */
-  isCurrentUser: function(req, res, next) {
+  isCurrentUser(req, res, next) {
     if (!req.params.userId) {
-      var err = new Error('No user ID provided');
+      let err = new Error('No user ID provided');
       err.status = 400;
       return next(err);
     }
 
     if (req.params.userId !== req.user.id) {
-      var err = new Error('Cannot perform this action on another user');
+      let err = new Error('Cannot perform this action on another user');
       err.status = 403;
       return next(err);
     }
@@ -26,32 +26,22 @@ module.exports = {
     next();
   },
 
-  /*
-   * Checks if the user exists in the DB. If so, stores the user's Mongo
-   * document in the request object.
-   *
-   * Assumes that the URI includes req.params.userId
-   */
-  userIDExists: function(req, res, next) {
-    if (!req.params.userId) {
-      var err = new Error('No user ID provided');
-      err.status = 400;
-      return next(err);
-    }
+  validateSignupFields(req, res, next) {
+    const { email, password } = req.body;
+    const params = { email, password };
 
-    User.findOne({ '_id': req.params.userId }, function(err, user) {
-      if (err) {
-        return next(err);
-      }
-
-      if (!user) {
-        err = new Error('User not found');
-        err.status = 404;
-        return next(err);
-      } else {
-        req.userDoc = user;
-        next();
+    // Input checking
+    let missingKeys = [];
+    _.each(params, (value, key) => {
+      if (!value) {
+        missingKeys.push(key);
       }
     });
+
+    if (missingKeys.length > 0) {
+      return next(new Error('Params missing: ' + missingKeys));
+    }
+
+    next();
   }
 };

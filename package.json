@@ -1,4 +1,7 @@
 {
+  "engines" : {
+    "node" : ">=6.0 <6.7.1"
+  },
   "name": "journey-backend",
   "version": "0.0.1",
   "description": "Backend APIs for the Journey app",
@@ -24,6 +27,7 @@
   },
   "homepage": "https://github.com/heymanhn/journey-backend#readme",
   "dependencies": {
+    "analytics-node": "^2.1.0",
     "aws-sdk": "^2.4.7",
     "bcrypt": "^0.8.7",
     "bcrypt-nodejs": "0.0.3",
