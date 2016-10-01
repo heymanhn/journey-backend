@@ -29,6 +29,10 @@ function generateJWT(res, user) {
     { expiresIn: '90 days' }
   );
 
+  if (!token) {
+    return Promise.reject(new Error('Error generating authentication token'));
+  }
+
   res.json({
     message: 'User created successfully.',
     user: _.omit(user._doc, 'password'),
@@ -68,8 +72,7 @@ app.put('/:userId', ensureAuth, isCurrentUser, (req, res, next) => {
 });
 
 app.delete('/:userId', ensureAuth, isCurrentUser, (req, res, next) => {
-  const user = req.user;
-  user
+  req.user
     .remove()
     .then(() => res.json({ message: 'User deleted.' }))
     .catch(next);
