@@ -5,6 +5,7 @@ const AWS = require('aws-sdk');
 const app = require('express').Router();
 
 const ensureAuth = require('../../utils/auth').ensureAuth;
+const usersUtils = require('../../utils/users');
 const s3config = require('../../config/s3');
 
 AWS.config.update({ region: s3config.region });
@@ -66,12 +67,8 @@ function getSignedUrl(params) {
   return Promise.resolve(s3.getSignedUrl('putObject', params));
 }
 
-// Borrowed from Stack Overflow
 function guid() {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-    let r = Math.random()*16|0, v = c == 'x' ? r : (r&0x3|0x8);
-    return v.toString(16);
-  });
+  return usersUtils.guid();
 }
 
 module.exports = app;

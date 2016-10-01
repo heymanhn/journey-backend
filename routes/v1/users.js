@@ -5,6 +5,7 @@ const _ = require('underscore');
 const app = require('express').Router();
 const jwt = require('jsonwebtoken');
 
+const analytics = require('../../utils/analytics');
 const config = require('../../config/config');
 const ensureAuth = require('../../utils/auth').ensureAuth;
 const Entry = require('../../models/entryModel');
@@ -32,6 +33,9 @@ function generateJWT(res, user) {
   if (!token) {
     return Promise.reject(new Error('Error generating authentication token'));
   }
+
+  // Log to Segment
+  analytics.identify(user._doc);
 
   res.json({
     message: 'User created successfully.',

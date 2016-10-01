@@ -4,6 +4,14 @@ const _ = require('underscore');
 const User = require('../models/userModel');
 
 module.exports = {
+  // Borrowed from Stack Overflow - GUID generator
+  guid() {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+      let r = Math.random()*16|0, v = c == 'x' ? r : (r&0x3|0x8);
+      return v.toString(16);
+    });
+  },
+
   /*
    * Only allows requests where the user in the JSON Web Token matches the user
    * that the operation is intended for.
