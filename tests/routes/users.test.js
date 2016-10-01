@@ -221,6 +221,8 @@ describe('User Routes', () => {
         message: 'User updated successfully.',
         user: stubUser._doc
       };
+      sandbox.stub(analytics, 'identify').returns();
+
       const res = {
         json: function(obj) {
           obj.should.eql(expectedResponse);

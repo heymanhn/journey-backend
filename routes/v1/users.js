@@ -67,6 +67,9 @@ app.put('/:userId', ensureAuth, isCurrentUser, (req, res, next) => {
   user
     .save()
     .then((newUser) => {
+      // Log updated user to Segment
+      analytics.identify(newUser._doc);
+
       res.json({
         message: 'User updated successfully.',
         user: _.omit(newUser._doc, 'password')
