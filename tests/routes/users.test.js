@@ -12,6 +12,7 @@ require('sinon-as-promised');
 require('mongoose').Promise = Promise;
 chai.use(chaiAsPromised);
 
+const analytics = require('../../utils/analytics');
 const database = require('../../config/database');
 const Entry = require('../../models/entryModel');
 const User = require('../../models/userModel');
@@ -93,6 +94,8 @@ describe('User Routes', () => {
           user: stubUser._doc,
           token: 'JWT ' + stubToken
         };
+        sandbox.stub(analytics, 'identify').returns();
+
         const res = {
           json: (obj) => {
             obj.should.eql(expectedResponse);
