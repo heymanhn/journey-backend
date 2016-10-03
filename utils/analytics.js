@@ -23,9 +23,9 @@ module.exports = {
     if (!user) {
       opts.anonymousId = guid();
     } else {
-      const { _id, email, name, username } = user;
+      const { id: userId, email, name, username } = user;
       opts = {
-        userId: _id.toString(),
+        userId,
         traits: { name, email, username }
       };
     }
@@ -34,5 +34,13 @@ module.exports = {
     opts.context = { environment: env };
 
     analytics.identify(opts);
+  },
+
+  // https://segment.com/docs/sources/server/node/#track
+  track(user, event, properties) {
+    const { id: userId } = user;
+    let opts = { userId, event, properties };
+
+    analytics.track(opts);
   }
 };
