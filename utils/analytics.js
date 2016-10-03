@@ -1,5 +1,6 @@
 'use strict';
 
+const _ = require('underscore');
 const app = require('express')();
 const Analytics = require('analytics-node');
 const { secrets }  = require('app/config/config');
@@ -16,10 +17,17 @@ if (env !== 'production') {
   analytics = new Analytics(segmentKey);
 }
 
+function generateOpts() {
+  return {
+    // Log the environment to differentiate events from production vs dev
+    context: { environment: env }
+  };
+}
+
 module.exports = {
   // https://segment.com/docs/sources/server/node/#identify
   identify(user) {
-    let opts = {};
+    let opts = generateOpts();
     if (!user) {
       opts.anonymousId = guid();
     } else {
@@ -30,16 +38,13 @@ module.exports = {
       };
     }
 
-    // Log the environment to differentiate events from production vs dev
-    opts.context = { environment: env };
-
     analytics.identify(opts);
   },
 
   // https://segment.com/docs/sources/server/node/#track
   track(user, event, properties) {
     const { id: userId } = user;
-    let opts = { userId, event, properties };
+    let opts = _.extend(generateOpts(), { userId, event, properties });
 
     analytics.track(opts);
   }
