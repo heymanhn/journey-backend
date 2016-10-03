@@ -31,7 +31,7 @@ app.post('/', ensureAuth, (req, res, next) => {
 
   new Trip(params)
     .save()
-    .then(trackTripEvent.bind(null, req.user, events.CREATE_TRIP))
+    .then(trackTripEvent.bind(null, req, events.CREATE_TRIP))
     .then((trip) => res.json({ trip }))
     .catch(next);
 });
@@ -48,6 +48,7 @@ app.put('/:tripId', (req, res, next) => {
     .then(checkOwnership.bind(null, req, res))
     .then(updateTrip.bind(null, req.body))
     .then(saveTrip)
+    .then(trackTripEvent.bind(null, req, events.UPDATE_TRIP))
     .then((trip) => {
       res.json({
         message: 'Trip updated successfully.',
@@ -60,7 +61,7 @@ app.put('/:tripId', (req, res, next) => {
 app.delete('/:tripId', ensureAuth, (req, res, next) => {
   findTripWithOwner(req.params.tripId, req.user._id)
     .then(removeTrip)
-    .then(trackTripEvent.bind(null, req.user, events.DELETE_TRIP))
+    .then(trackTripEvent.bind(null, req, events.DELETE_TRIP))
     .then(() => res.json({ message: 'Trip deleted.' }))
     .catch(next);
 });
@@ -70,8 +71,8 @@ app.delete('/:tripId', ensureAuth, (req, res, next) => {
  * Trips - helper functions
  */
 
-function trackTripEvent(user, event, trip) {
-  analytics.track(user, event, { tripId: trip.id });
+function trackTripEvent(req, event, trip) {
+  analytics.track(req.user, event, { tripId: trip.id });
   return trip;
 }
 
@@ -181,7 +182,7 @@ app.post('/:tripId/ideas', (req, res, next) => {
     .then(checkOwnership.bind(null, req, res))
     .then(createTripIdea.bind(null, req.body))
     .then(saveTrip)
-    .then(trackTripIdeaEvent.bind(null, req, events.ADD_TRIP_IDEA))
+    .then(trackAddTripIdeaEvent.bind(null, req))
     .then((trip) => {
       const { ideas } = trip;
       res.json({ tripId, ideas });
@@ -209,6 +210,7 @@ app.put('/:tripId/ideas/:ideaId', (req, res, next) => {
     .then(checkIdeaExists.bind(null, ideaId))
     .then(updateTripIdea.bind(null, req.body, ideaId))
     .then(saveTrip)
+    .then(trackUpdateTripIdeaEvent.bind(null, req))
     .then((trip) => {
       res.json({
         message: 'Trip idea updated successfully.',
@@ -226,6 +228,7 @@ app.delete('/:tripId/ideas/:ideaId', (req, res, next) => {
     .then(checkIdeaExists.bind(null, ideaId))
     .then(deleteTripIdea.bind(null, ideaId))
     .then(saveTrip)
+    .then(trackDeleteTripIdeaEvent.bind(null, req))
     .then((trip) => {
       res.json({
         message: "Trip idea deleted successfully.",
@@ -240,6 +243,7 @@ app.delete('/:tripId/ideas', (req, res, next) => {
     .then(checkOwnership.bind(null, req, res))
     .then(deleteTripIdeas)
     .then(saveTrip)
+    .then(trackTripEvent.bind(null, req, events.DELETE_TRIP_IDEAS))
     .then(() => res.json({ message: 'Trip ideas deleted.' }))
     .catch(next);
 });
@@ -248,11 +252,6 @@ app.delete('/:tripId/ideas', (req, res, next) => {
 /*
  * Trip Ideas - helper functions
  */
-
-function trackTripIdeaEvent(req, event, trip) {
-  analytics.track(req.user, event, { tripId: trip.id, ideaId: trip.ideas[0].id });
-  return trip;
-}
 
 function createTripIdea(params, trip) {
   let newParams = _.pick(params, ['googlePlaceId', 'loc', 'name']);
@@ -299,6 +298,31 @@ function deleteTripIdeas(trip) {
 // Use this function in conjunction with checkIdeaExists()
 function deleteTripIdea(ideaId, trip) {
   trip.ideas.id(ideaId).remove();
+  return trip;
+}
+
+function trackAddTripIdeaEvent(req, trip) {
+  analytics.track(
+    req.user,
+    events.ADD_TRIP_IDEA,
+    { tripId: trip.id, ideaId: trip.ideas[0].id }
+  );
+  return trip;
+}
+
+function trackUpdateTripIdeaEvent(req, trip) {
+  const { ideaId, tripId } = req.params;
+  const { index } = req.body;
+  const event = index ? events.REORDER_TRIP_IDEA : events.UPDATE_TRIP_IDEA;
+
+  analytics.track(req.user, event, { tripId, ideaId });
+  return trip;
+}
+
+function trackDeleteTripIdeaEvent(req, trip) {
+  const { ideaId, tripId } = req.params;
+
+  analytics.track(req.user, events.DELETE_TRIP_IDEA, { tripId, ideaId });
   return trip;
 }
 
