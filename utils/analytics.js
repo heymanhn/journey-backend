@@ -2,7 +2,7 @@
 
 const app = require('express')();
 const Analytics = require('analytics-node');
-const { secrets }  = require('../config/config');
+const { secrets }  = require('app/config/config');
 const { guid } = require('./users');
 
 const segmentKey = process.env.SEGMENT_WRITE_KEY || secrets.segmentKey;

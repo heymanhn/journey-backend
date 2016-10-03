@@ -4,11 +4,11 @@ const _ = require('underscore');
 const app = require('express').Router();
 const jwt = require('jsonwebtoken');
 
-const analytics = require('../../utils/analytics');
-const { analytics: events } = require('../../utils/constants');
-const config = require('../../config/config');
-const User = require('../../models/userModel');
-const checkLoginParams = require('../../utils/auth').checkLoginParams;
+const analytics = require('app/utils/analytics');
+const { analytics: events } = require('app/utils/constants');
+const config = require('app/config/config');
+const User = require('app/models/userModel');
+const checkLoginParams = require('app/utils/auth').checkLoginParams;
 
 app.post('/login', checkLoginParams, (req, res, next) => {
   User

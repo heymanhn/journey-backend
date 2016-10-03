@@ -3,9 +3,9 @@
 const AWS = require('aws-sdk');
 const app = require('express').Router();
 
-const ensureAuth = require('../../utils/auth').ensureAuth;
-const Entry = require('../../models/entryModel');
-const s3config = require('../../config/s3');
+const ensureAuth = require('app/utils/auth').ensureAuth;
+const Entry = require('app/models/entryModel');
+const s3config = require('app/config/s3');
 
 AWS.config.update({region: s3config.region });
 const s3 = new AWS.S3();

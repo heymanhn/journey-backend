@@ -11,7 +11,7 @@ const sinon = require('sinon');
 require('sinon-as-promised');
 chai.use(chaiAsPromised);
 
-const User = require('../../models/userModel');
+const User = require('app/models/userModel');
 
 describe('Authentication Routes', () => {
   let sandbox;
@@ -20,7 +20,7 @@ describe('Authentication Routes', () => {
   beforeEach(() => {
     sandbox = sinon.sandbox.create();
     sandbox.stub(express, 'Router').returns({ post: sandbox.spy() });
-    router = rewire('../../routes/v1/auth');
+    router = rewire('app/routes/v1/auth');
   });
 
   afterEach(() => sandbox.restore());

@@ -5,13 +5,14 @@ const _ = require('underscore');
 const app = require('express').Router();
 const jwt = require('jsonwebtoken');
 
-const analytics = require('../../utils/analytics');
-const config = require('../../config/config');
-const ensureAuth = require('../../utils/auth').ensureAuth;
-const Entry = require('../../models/entryModel');
-const { isCurrentUser, validateSignupFields } = require('../../utils/users');
-const Trip = require('../../models/tripModel');
-const User = require('../../models/userModel');
+const analytics = require('app/utils/analytics');
+const { analytics: events } = require('app/utils/constants');
+const config = require('app/config/config');
+const ensureAuth = require('app/utils/auth').ensureAuth;
+const Entry = require('app/models/entryModel');
+const { isCurrentUser, validateSignupFields } = require('app/utils/users');
+const Trip = require('app/models/tripModel');
+const User = require('app/models/userModel');
 
 app.post('/', validateSignupFields, (req, res, next) => {
   const params = _.pick(req.body, ['email', 'password', 'name', 'username']);

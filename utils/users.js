@@ -1,7 +1,7 @@
 'use strict';
 
 const _ = require('underscore');
-const User = require('../models/userModel');
+const User = require('app/models/userModel');
 
 module.exports = {
   // Borrowed from Stack Overflow - GUID generator

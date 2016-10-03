@@ -18,3 +18,7 @@ Run the following commands to install the modules and launch the server:
 * Run `npm run devsstart` to launch in the development environment
 * Run `npm run test-local` to kick-off local Mocha test suites.
 
+
+## NOTE
+We set up a symlink that maps all modules to the 'app/' relative path for cleaner module loading syntax. However, this symlinking only works on Linux/OSX. Please follow the instructions on this article to set up the symlinking on Windows:
+http://griever989.github.io/programming/2015/07/26/require-hell/

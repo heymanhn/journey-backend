@@ -12,10 +12,10 @@ require('sinon-as-promised');
 require('mongoose').Promise = Promise;
 chai.use(chaiAsPromised);
 
-const analytics = require('../../utils/analytics');
-const database = require('../../config/database');
-const Entry = require('../../models/entryModel');
-const User = require('../../models/userModel');
+const analytics = require('app/utils/analytics');
+const database = require('app/config/database');
+const Entry = require('app/models/entryModel');
+const User = require('app/models/userModel');
 
 describe('User Routes', () => {
   let generateJWT, router, sandbox;
@@ -30,7 +30,7 @@ describe('User Routes', () => {
       delete: sandbox.spy()
     });
 
-    router = rewire('../../routes/v1/users');
+    router = rewire('app/routes/v1/users');
     generateJWT = router.__get__('generateJWT');
   });
 
