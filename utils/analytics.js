@@ -47,5 +47,13 @@ module.exports = {
     let opts = _.extend(generateOpts(), { userId, event, properties });
 
     analytics.track(opts);
+  },
+
+  // https://segment.com/docs/sources/server/node/#page
+  page(user, category, name, properties) {
+    const { id: userId } = user;
+    let opts = _.extend(generateOpts(), { userId, category, name, properties });
+
+    analytics.page(opts);
   }
 };
