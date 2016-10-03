@@ -53,7 +53,8 @@ describe('User Routes', () => {
           password: 'abc123',
           email: 'amy@journey.com',
           name: 'Amy Doe'
-        }
+        },
+        token: 'abcdefg'
       };
 
       stubUser = { _doc: { username: 'amy' } };
@@ -75,6 +76,28 @@ describe('User Routes', () => {
       callPost();
     });
 
+    it('sends the user and token in response', (done) => {
+      const expectedResponse = {
+        message: 'User created successfully.',
+        user: stubUser._doc,
+        token: 'JWT ' + req.token
+      };
+
+      const res = {
+        json: (obj) => {
+          obj.should.eql(expectedResponse);
+          done();
+        }
+      };
+
+      sandbox.stub(User.prototype, 'save').yields();
+      router.__set__('generateJWT', () => Promise.resolve());
+      router.__set__('identifySignup', () => Promise.resolve());
+      router.__set__('trackSignup', () => Promise.resolve(stubUser));
+
+      callPost(res);
+    });
+
     it('returns an error if something in the chain fails', (done) => {
       const stubError = new Error('some error');
       function next(err) {
@@ -87,24 +110,14 @@ describe('User Routes', () => {
     });
 
     context('#generateJWT:', () => {
-      it('generates a JSON web token and sends in response', (done) => {
+      it('generates a JSON web token and sends in response', () => {
+        const stubReq = {};
         const stubToken = 'abcdefg';
-        const expectedResponse = {
-          message: 'User created successfully.',
-          user: stubUser._doc,
-          token: 'JWT ' + stubToken
-        };
-        sandbox.stub(analytics, 'identify').returns();
-
-        const res = {
-          json: (obj) => {
-            obj.should.eql(expectedResponse);
-            done();
-          }
-        };
+        const expectedReq = { token: stubToken };
 
         sandbox.stub(jwt, 'sign').returns(stubToken);
-        generateJWT(res, stubUser);
+        generateJWT(stubReq, stubUser);
+        stubReq.should.eql(expectedReq);
       });
 
       it('returns an error if JWT creation fails', () => {
@@ -148,6 +161,7 @@ describe('User Routes', () => {
           done();
         }
       };
+      sandbox.stub(analytics, 'track').returns();
       callGet(res);
     });
   });
@@ -221,18 +235,16 @@ describe('User Routes', () => {
         message: 'User updated successfully.',
         user: stubUser._doc
       };
-      sandbox.stub(analytics, 'identify').returns();
-
       const res = {
-        json: function(obj) {
+        json(obj) {
           obj.should.eql(expectedResponse);
           done();
         }
       };
 
-      req.user.save = () => {
-        return Promise.resolve(stubUser);
-      };
+      req.user.save = () => Promise.resolve();
+      router.__set__('identifySignup', () => Promise.resolve());
+      router.__set__('trackUpdateUser', () => Promise.resolve(stubUser));
 
       callPut(res);
     });
@@ -271,6 +283,8 @@ describe('User Routes', () => {
         }
       };
       req.user = { remove() { return Promise.resolve(); } };
+      router.__set__('trackDeleteUser', () => Promise.resolve());
+
       callDelete(res);
     });
 

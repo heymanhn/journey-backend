@@ -6,7 +6,7 @@ const app = require('express').Router();
 const jwt = require('jsonwebtoken');
 
 const analytics = require('app/utils/analytics');
-const { analytics: events } = require('app/utils/constants');
+const { user: events } = require('app/utils/constants').analytics;
 const config = require('app/config/config');
 const ensureAuth = require('app/utils/auth').ensureAuth;
 const Entry = require('app/models/entryModel');
@@ -19,11 +19,20 @@ app.post('/', validateSignupFields, (req, res, next) => {
 
   new User(params)
     .save()
-    .then(generateJWT.bind(null, res))
+    .then(generateJWT.bind(null, req))
+    .then(identifySignup)
+    .then(trackSignup)
+    .then((user) => {
+      res.json({
+        message: 'User created successfully.',
+        user: _.omit(user._doc, 'password'),
+        token: 'JWT ' + req.token
+      });
+    })
     .catch(next);
 });
 
-function generateJWT(res, user) {
+function generateJWT(req, user) {
   // Generate JWT once account is created successfully
   const token = jwt.sign(
     user._doc,
@@ -35,17 +44,23 @@ function generateJWT(res, user) {
     return Promise.reject(new Error('Error generating authentication token'));
   }
 
-  // Log to Segment
-  analytics.identify(user._doc);
+  req.token = token;
+  return user;
+}
 
-  res.json({
-    message: 'User created successfully.',
-    user: _.omit(user._doc, 'password'),
-    token: 'JWT ' + token
-  });
+// Identify the user on analytics
+function identifySignup(user) {
+  analytics.identify(user);
+  return user;
+}
+
+function trackSignup(user) {
+  analytics.track(user, events.SIGN_UP);
+  return user;
 }
 
 app.get('/:userId', ensureAuth, isCurrentUser, (req, res) => {
+  analytics.track(req.user, events.GET_USER);
   res.json({ user: _.omit(req.user._doc, 'password') });
 });
 
@@ -67,10 +82,9 @@ app.put('/:userId', ensureAuth, isCurrentUser, (req, res, next) => {
 
   user
     .save()
+    .then(identifySignup)
+    .then(trackUpdateUser.bind(null, Object.keys(newParams)))
     .then((newUser) => {
-      // Log updated user to Segment
-      analytics.identify(newUser._doc);
-
       res.json({
         message: 'User updated successfully.',
         user: _.omit(newUser._doc, 'password')
@@ -79,12 +93,23 @@ app.put('/:userId', ensureAuth, isCurrentUser, (req, res, next) => {
     .catch(next);
 });
 
+function trackUpdateUser(params, user) {
+  analytics.track(user, events.UPDATE_USER, { fields: params.toString() });
+  return user;
+}
+
 app.delete('/:userId', ensureAuth, isCurrentUser, (req, res, next) => {
   req.user
     .remove()
+    .then(trackDeleteUser)
     .then(() => res.json({ message: 'User deleted.' }))
     .catch(next);
 });
+
+function trackDeleteUser(user) {
+  analytics.track(user, events.DELETE_USER);
+  return user;
+}
 
 app.get('/:userId/trips', ensureAuth, isCurrentUser, (req, res, next) => {
   const count = Number(req.query.count) || config.database.DEFAULT_TRIP_COUNT;

@@ -5,7 +5,7 @@ const app = require('express').Router();
 const jwt = require('jsonwebtoken');
 
 const analytics = require('app/utils/analytics');
-const { analytics: events } = require('app/utils/constants');
+const { auth: events } = require('app/utils/constants').analytics;
 const config = require('app/config/config');
 const User = require('app/models/userModel');
 const checkLoginParams = require('app/utils/auth').checkLoginParams;
