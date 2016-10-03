@@ -20,7 +20,7 @@ if (env !== 'production') {
 function generateOpts() {
   return {
     // Log the environment to differentiate events from production vs dev
-    context: { environment: env }
+    context: { environment: env, platform: 'Web' }
   };
 }
 
