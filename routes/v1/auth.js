@@ -5,7 +5,7 @@ const app = require('express').Router();
 const jwt = require('jsonwebtoken');
 
 const analytics = require('../../utils/analytics');
-const analyticsEvents = require('../../utils/constants').analytics;
+const { analytics: events } = require('../../utils/constants');
 const config = require('../../config/config');
 const User = require('../../models/userModel');
 const checkLoginParams = require('../../utils/auth').checkLoginParams;
@@ -49,7 +49,7 @@ function generateJWT(req, user) {
 }
 
 function trackLogin(req, user) {
-  analytics.track(user, analyticsEvents.LOG_IN, { loginType: req.loginType });
+  analytics.track(user, events.LOG_IN, { loginType: req.loginType });
 
   return user;
 }
