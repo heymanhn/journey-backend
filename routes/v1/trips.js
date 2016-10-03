@@ -5,6 +5,7 @@ const app = require('express').Router();
 
 const analytics = require('app/utils/analytics');
 const ensureAuth = require('app/utils/auth').ensureAuth;
+const { trips: events } = require('app/utils/constants').analytics;
 const Trip = require('app/models/tripModel');
 
 /*
@@ -30,6 +31,7 @@ app.post('/', ensureAuth, (req, res, next) => {
 
   new Trip(params)
     .save()
+    .then(trackTripEvent.bind(null, req.user, events.CREATE_TRIP))
     .then((trip) => res.json({ trip }))
     .catch(next);
 });
@@ -58,6 +60,7 @@ app.put('/:tripId', (req, res, next) => {
 app.delete('/:tripId', ensureAuth, (req, res, next) => {
   findTripWithOwner(req.params.tripId, req.user._id)
     .then(removeTrip)
+    .then(trackTripEvent.bind(null, req.user, events.DELETE_TRIP))
     .then(() => res.json({ message: 'Trip deleted.' }))
     .catch(next);
 });
@@ -66,6 +69,11 @@ app.delete('/:tripId', ensureAuth, (req, res, next) => {
 /*
  * Trips - helper functions
  */
+
+function trackTripEvent(user, event, trip) {
+  analytics.track(user, event, { tripId: trip.id });
+  return trip;
+}
 
 function findTripWithOwner(tripId, userId) {
   return findTrip(tripId)
@@ -99,37 +107,38 @@ function findTrip(tripId) {
  */
 function checkOwnership(req, res, trip) {
   const vis = trip.visibility;
-  if (vis === 'public') {
-    // debugger;
-    // TODO: for api calls that don't require authentication, if an authenticated
-    // user is requesting, backend needs to capture who it is.
+  const { authorization: token } = req.headers;
 
-    return trip;
-  } else if (vis === 'private') {
-
-    // Construct a promise for the async ensureAuth() call
-    const authPromise = new Promise((resolve, reject) => {
-      const cb = (err) => {
-        if (err) {
-          return reject(err);
-        }
-
-        if (req.user._id.toString() !== trip.creator.toString()) {
-          let newErr = new Error('Not Authorized');
-          newErr.status = 401;
-          return reject(newErr);
-        }
-
-        return resolve(trip);
-      };
-
-      ensureAuth(req, res, cb);
-    });
-
-    return authPromise;
-  } else {
-    return Promise.reject(new Error('Trip has invalid visibility setting'));
+  if (!token) {
+    if (vis === 'public') {
+      return trip;
+    } else {
+      let newErr = new Error('Not Authorized');
+      newErr.status = 401;
+      return Promise.reject(newErr);
+    }
   }
+
+  // Construct a promise for the async ensureAuth() call
+  const authPromise = new Promise((resolve, reject) => {
+    const cb = (err) => {
+      if (err) {
+        return reject(err);
+      }
+
+      if (vis === 'private' && req.user.id !== trip.creator.toString()) {
+        let newErr = new Error('Not Authorized');
+        newErr.status = 401;
+        return reject(newErr);
+      }
+
+      return resolve(trip);
+    };
+
+    ensureAuth(req, res, cb);
+  });
+
+  return authPromise;
 }
 
 function updateTrip(params, trip) {
@@ -172,6 +181,7 @@ app.post('/:tripId/ideas', (req, res, next) => {
     .then(checkOwnership.bind(null, req, res))
     .then(createTripIdea.bind(null, req.body))
     .then(saveTrip)
+    .then(trackTripIdeaEvent.bind(null, req, events.ADD_TRIP_IDEA))
     .then((trip) => {
       const { ideas } = trip;
       res.json({ tripId, ideas });
@@ -238,6 +248,11 @@ app.delete('/:tripId/ideas', (req, res, next) => {
 /*
  * Trip Ideas - helper functions
  */
+
+function trackTripIdeaEvent(req, event, trip) {
+  analytics.track(req.user, event, { tripId: trip.id, ideaId: trip.ideas[0].id });
+  return trip;
+}
 
 function createTripIdea(params, trip) {
   let newParams = _.pick(params, ['googlePlaceId', 'loc', 'name']);
