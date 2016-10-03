@@ -4,9 +4,9 @@ const passport = require('passport');
 const should = require('chai').should();
 const sinon = require('sinon');
 
-const { checkLoginParams, ensureAuth } = require('../utils/auth');
-const { isCurrentUser, validateSignupFields } = require('../utils/users');
-const User = require('../models/userModel');
+const { checkLoginParams, ensureAuth } = require('app/utils/auth');
+const { isCurrentUser, validateSignupFields } = require('app/utils/users');
+const User = require('app/models/userModel');
 
 describe('Routes Middleware', () => {
   let sandbox;

@@ -4,16 +4,20 @@ const _ = require('underscore');
 const app = require('express').Router();
 const jwt = require('jsonwebtoken');
 
-const config = require('../../config/config');
-const User = require('../../models/userModel');
-const checkLoginParams = require('../../utils/auth').checkLoginParams;
+const analytics = require('app/utils/analytics');
+const { analytics: events } = require('app/utils/constants');
+const config = require('app/config/config');
+const User = require('app/models/userModel');
+const checkLoginParams = require('app/utils/auth').checkLoginParams;
 
 app.post('/login', checkLoginParams, (req, res, next) => {
   User
     .findOne({ [req.loginType]: req.body[req.loginType] })
     .exec()
     .then(checkValidCredentials.bind(null, req.body.password))
-    .then(generateJWT.bind(null, res))
+    .then(generateJWT.bind(null, req))
+    .then(trackLogin.bind(null, req))
+    .then(sendResponse.bind(null, req, res))
     .catch(next);
 });
 
@@ -29,7 +33,7 @@ function checkValidCredentials(password, user) {
   return user;
 }
 
-function generateJWT(res, user) {
+function generateJWT(req, user) {
   const token = jwt.sign(
     user._doc,
     process.env.JWT || config.secrets.jwt,
@@ -40,9 +44,20 @@ function generateJWT(res, user) {
     return Promise.reject(new Error('Error generating authentication token'));
   }
 
-  return res.json({
+  req.token = token;
+  return user;
+}
+
+function trackLogin(req, user) {
+  analytics.track(user, events.LOG_IN, { loginType: req.loginType });
+
+  return user;
+}
+
+function sendResponse(req, res, user) {
+  res.json({
     user: _.omit(user._doc, 'password'),
-    token: 'JWT ' + token
+    token: 'JWT ' + req.token
   });
 }
 

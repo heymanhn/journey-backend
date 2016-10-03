@@ -12,9 +12,10 @@ require('sinon-as-promised');
 require('mongoose').Promise = Promise;
 chai.use(chaiAsPromised);
 
-const database = require('../../config/database');
-const Entry = require('../../models/entryModel');
-const User = require('../../models/userModel');
+const analytics = require('app/utils/analytics');
+const database = require('app/config/database');
+const Entry = require('app/models/entryModel');
+const User = require('app/models/userModel');
 
 describe('User Routes', () => {
   let generateJWT, router, sandbox;
@@ -29,7 +30,7 @@ describe('User Routes', () => {
       delete: sandbox.spy()
     });
 
-    router = rewire('../../routes/v1/users');
+    router = rewire('app/routes/v1/users');
     generateJWT = router.__get__('generateJWT');
   });
 
@@ -93,6 +94,8 @@ describe('User Routes', () => {
           user: stubUser._doc,
           token: 'JWT ' + stubToken
         };
+        sandbox.stub(analytics, 'identify').returns();
+
         const res = {
           json: (obj) => {
             obj.should.eql(expectedResponse);
@@ -218,6 +221,8 @@ describe('User Routes', () => {
         message: 'User updated successfully.',
         user: stubUser._doc
       };
+      sandbox.stub(analytics, 'identify').returns();
+
       const res = {
         json: function(obj) {
           obj.should.eql(expectedResponse);

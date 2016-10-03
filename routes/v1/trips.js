@@ -3,8 +3,9 @@
 const _ = require('underscore');
 const app = require('express').Router();
 
-const ensureAuth = require('../../utils/auth').ensureAuth;
-const Trip = require('../../models/tripModel');
+const analytics = require('app/utils/analytics');
+const ensureAuth = require('app/utils/auth').ensureAuth;
+const Trip = require('app/models/tripModel');
 
 /*
  * Trips
@@ -99,6 +100,10 @@ function findTrip(tripId) {
 function checkOwnership(req, res, trip) {
   const vis = trip.visibility;
   if (vis === 'public') {
+    // debugger;
+    // TODO: for api calls that don't require authentication, if an authenticated
+    // user is requesting, backend needs to capture who it is.
+
     return trip;
   } else if (vis === 'private') {
 

@@ -5,12 +5,14 @@ const _ = require('underscore');
 const app = require('express').Router();
 const jwt = require('jsonwebtoken');
 
-const config = require('../../config/config');
-const ensureAuth = require('../../utils/auth').ensureAuth;
-const Entry = require('../../models/entryModel');
-const { isCurrentUser, validateSignupFields } = require('../../utils/users');
-const Trip = require('../../models/tripModel');
-const User = require('../../models/userModel');
+const analytics = require('app/utils/analytics');
+const { analytics: events } = require('app/utils/constants');
+const config = require('app/config/config');
+const ensureAuth = require('app/utils/auth').ensureAuth;
+const Entry = require('app/models/entryModel');
+const { isCurrentUser, validateSignupFields } = require('app/utils/users');
+const Trip = require('app/models/tripModel');
+const User = require('app/models/userModel');
 
 app.post('/', validateSignupFields, (req, res, next) => {
   const params = _.pick(req.body, ['email', 'password', 'name', 'username']);
@@ -32,6 +34,9 @@ function generateJWT(res, user) {
   if (!token) {
     return Promise.reject(new Error('Error generating authentication token'));
   }
+
+  // Log to Segment
+  analytics.identify(user._doc);
 
   res.json({
     message: 'User created successfully.',
@@ -63,6 +68,9 @@ app.put('/:userId', ensureAuth, isCurrentUser, (req, res, next) => {
   user
     .save()
     .then((newUser) => {
+      // Log updated user to Segment
+      analytics.identify(newUser._doc);
+
       res.json({
         message: 'User updated successfully.',
         user: _.omit(newUser._doc, 'password')
