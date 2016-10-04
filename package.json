@@ -7,7 +7,7 @@
   "description": "Backend APIs for the Journey app",
   "main": "app.js",
   "scripts": {
-    "start": "NODE_ENV=production node app.js",
+    "start": "node app.js",
     "start-local": "DEBUG=journey-backend node app.js",
     "test-local": "node node_modules/istanbul/lib/cli.js cover _mocha -- --recursive tests/",
     "test": "npm run test-local && cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js"
