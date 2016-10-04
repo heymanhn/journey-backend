@@ -3,9 +3,9 @@
 const AWS = require('aws-sdk');
 const app = require('express').Router();
 
-const ensureAuth = require('app/utils/auth').ensureAuth;
 const Entry = require('app/models/entryModel');
 const s3config = require('app/config/s3');
+const { isValidUser } = require('app/utils/users');
 
 AWS.config.update({region: s3config.region });
 const s3 = new AWS.S3();
@@ -21,7 +21,7 @@ const s3 = new AWS.S3();
  * - Message is required if the user is creating a `text` entry.
  *
  */
-app.post('/', ensureAuth, (req, res, next) => {
+app.post('/', isValidUser, (req, res, next) => {
   const { contents, loc, message } = req.body;
 
   let params = {
@@ -52,7 +52,7 @@ app.post('/', ensureAuth, (req, res, next) => {
  * user.
  *
  */
-app.get('/:entryId', ensureAuth, (req, res, next) => {
+app.get('/:entryId', isValidUser, (req, res, next) => {
   findEntry(req.params.entryId, req.user._id)
     .then((entry) => res.json({ entry }))
     .catch(next);
@@ -65,7 +65,7 @@ app.get('/:entryId', ensureAuth, (req, res, next) => {
  * current user. The contents are also deleted from S3 if they exist.
  *
  */
-app.delete('/:entryId', ensureAuth, (req, res, next) => {
+app.delete('/:entryId', isValidUser, (req, res, next) => {
   findEntry(req.params.entryId, req.user._id)
     .then(deleteS3Contents)
     .then(removeEntry)

@@ -4,8 +4,16 @@ const passport = require('passport');
 const should = require('chai').should();
 const sinon = require('sinon');
 
-const { checkLoginParams, ensureAuth } = require('app/utils/auth');
-const { isCurrentUser, validateSignupFields } = require('app/utils/users');
+const {
+  checkAuthStatus,
+  checkGuestStatus,
+  checkLoginParams
+} = require('app/utils/auth');
+const {
+  isCurrentUser,
+  isValidUser,
+  validateSignupFields
+} = require('app/utils/users');
 const User = require('app/models/userModel');
 
 describe('Routes Middleware', () => {
@@ -20,11 +28,14 @@ describe('Routes Middleware', () => {
   });
 
   describe('#auth middleware', () => {
-    context('#ensureAuth:', () => {
-      let req = {};
+    context('#checkAuthStatus:', () => {
+      let req;
 
-      it('sets req.user if the current session is authenticated',
-        (done) => {
+      beforeEach(() => {
+        req = { get() { return true; } };
+      });
+
+      it('sets req.user if the current session is authenticated', (done) => {
         const stubUser = {
           name: 'Stub User'
         };
@@ -34,19 +45,29 @@ describe('Routes Middleware', () => {
           done();
         };
 
-        sandbox.stub(passport, 'authenticate', function(strategy, cb) {
+        sandbox.stub(passport, 'authenticate', (strategy, cb) => {
           strategy.should.equal('jwt');
-          return function(req, res, next) {
+          return (req, res, next) => {
             cb(null, stubUser);
           };
         });
 
-        ensureAuth(req, null, next);
+        checkAuthStatus(req, null, next);
+      });
+
+      it('continues if no Authorization header is present', (done) => {
+        req.get = () => false;
+        const next = () => {
+          should.not.exist(req.user);
+          done();
+        }
+
+        checkAuthStatus(req, null, next);
       });
 
       it('returns an error if passport auth fails', (done) => {
         const stubError = 'Passport authentication error';
-        const next = function(err) {
+        const next = (err) => {
           err.should.equal(stubError);
           done();
         };
@@ -57,25 +78,86 @@ describe('Routes Middleware', () => {
           };
         });
 
-        ensureAuth(req, null, next);
+        checkAuthStatus(req, null, next);
       });
 
       it('returns an error if the user is not authorized', (done) => {
         const stubError = new Error('Not Authorized');
         stubError.status = 401;
 
-        const next = function(err) {
+        const next = (err) => {
           err.should.eql(stubError);
           done();
         };
 
-        sandbox.stub(passport, 'authenticate', function(strategy, cb) {
-          return function(req, res, next) {
-            cb();
-          };
+        sandbox.stub(passport, 'authenticate', (strategy, cb) => {
+          return (req, res, next) => { cb(); };
         });
 
-        ensureAuth(req, null, next);
+        checkAuthStatus(req, null, next);
+      });
+    });
+
+    context('#checkGuestStatus:', () => {
+      let req;
+      const validGuid = '1aceb939-3622-4281-8a87-8f369fdda654';
+
+      beforeEach(() => {
+        req = { get: () => validGuid };
+      });
+
+      it('continues if req.user is already set', (done) => {
+        const stubUser = "Hello";
+        req.user = stubUser;
+        const next = () => {
+          req.user.should.eql(stubUser);
+          done();
+        };
+
+        checkGuestStatus(req, null, next);
+      });
+
+      it('continues and sets anonymousID if valid', (done) => {
+        const next = () => {
+          req.anonymousId.should.equal(validGuid);
+          done();
+        }
+        checkGuestStatus(req, null, next);
+      });
+
+      it('allows capitalized letters in GUID', (done) => {
+        const capsGUID = '1ACEB939-3622-4281-8A87-8f369fdda654';
+        req.get = () => capsGUID;
+        const next = () => {
+          req.anonymousId.should.equal(capsGUID);
+          done();
+        }
+        checkGuestStatus(req, null, next);
+      });
+
+      it('returns error if neither req.user nor anonymousId is set', (done) => {
+        const stubError = new Error('Missing AnonymousId in headers');
+        req.get = () => false;
+
+        const next = (err) => {
+          err.should.eql(stubError);
+          done();
+        };
+
+        checkGuestStatus(req, null, next);
+      });
+
+      it('returns error if anonymousId has wrong format', (done) => {
+        const invalidGuid = '1aeb939-3622-4281-8a87-8f369fdda64';
+        const stubError = new Error('AnonymousId has invalid format');
+        req.get = () => invalidGuid;
+
+        const next = (err) => {
+          err.should.eql(stubError);
+          done();
+        };
+
+        checkGuestStatus(req, null, next);
       });
     });
 
@@ -157,25 +239,28 @@ describe('Routes Middleware', () => {
 
   describe('users middleware', () => {
     context('#isCurrentUser:', () => {
-      const req = {
-        params: {
-          userId: 'a1b2c3d4'
-        },
-        user: {
-          id: 'a1b2c3d4'
-        }
-      };
+      let next, req;
+
+      beforeEach(() => {
+        next = sandbox.spy();
+        req = {
+          params: {
+            userId: 'a1b2c3d4'
+          },
+          user: {
+            id: 'a1b2c3d4'
+          }
+        };
+      });
 
       it('moves on if the desired user matches the current user', () => {
-        const next = sandbox.spy();
         isCurrentUser(req, null, next);
         next.calledOnce.should.equal(true);
       });
 
       it('returns an error if the desired user doesn\'t match', () => {
         req.params.userId = 'a1b2c3d4e5';
-        const next = sandbox.spy();
-        const stubError = new Error('Cannot perform this action on another user');
+        const stubError = new Error('Can\'t perform action on another user');
         stubError.status = 403;
 
         isCurrentUser(req, null, next);
@@ -184,11 +269,47 @@ describe('Routes Middleware', () => {
 
       it('returns an error if the userId param doesn\'t exist', () => {
         req.params = {};
-        const next = sandbox.spy();
         const stubError = new Error('No user ID provided');
         stubError.status = 400;
 
         isCurrentUser(req, null, next);
+        next.calledWith(stubError).should.equal(true);
+      });
+
+      it('returns an error if no user object is provided', () => {
+        delete req.user;
+
+        const stubError = new Error('Not Authorized');
+        stubError.status = 401;
+
+        isCurrentUser(req, null, next);
+        next.calledWith(stubError).should.equal(true);
+      });
+    });
+
+    context('#isValidUser:', () => {
+      let next, req;
+
+      beforeEach(() => {
+        next = sandbox.spy();
+        req = {
+          user: {
+            id: 'a1b2c3d4'
+          }
+        };
+      });
+
+      it('continues if user object exists', () => {
+        isValidUser(req, null, next);
+        next.calledOnce.should.equal(true);
+      });
+
+      it('returns an error if no user object exists', () => {
+        delete req.user;
+        const stubError = new Error('Not Authorized');
+        stubError.status = 401;
+
+        isValidUser(req, null, next);
         next.calledWith(stubError).should.equal(true);
       });
     });

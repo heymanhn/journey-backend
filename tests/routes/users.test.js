@@ -134,7 +134,7 @@ describe('User Routes', () => {
     let req;
 
     const callGet = function(res, next) {
-      router.get.firstCall.args[3](req, res, next);
+      router.get.firstCall.args[2](req, res, next);
     };
 
     beforeEach(() => {
@@ -170,7 +170,7 @@ describe('User Routes', () => {
     let req;
 
     const callPut = function(res, next) {
-      router.put.firstCall.args[3](req, res, next);
+      router.put.firstCall.args[2](req, res, next);
     };
 
     beforeEach(() => {
@@ -266,7 +266,7 @@ describe('User Routes', () => {
   describe('#delete /', () => {
     let req = {};
     const callDelete = function(res, next) {
-      router.delete.firstCall.args[3](req, res, next);
+      router.delete.firstCall.args[2](req, res, next);
     };
 
     it('registers a URI for DELETE: /:userId', () => {
@@ -309,7 +309,7 @@ describe('User Routes', () => {
       query: {}
     };
     const callGet = function(res, next) {
-      router.get.thirdCall.args[3](req, res, next);
+      router.get.thirdCall.args[2](req, res, next);
     };
 
     it('registers a URI for GET: /:userId/entries', () => {

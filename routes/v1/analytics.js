@@ -2,12 +2,8 @@
 
 const app = require('express').Router();
 const analytics = require('app/utils/analytics');
-const ensureAuth = require('app/utils/auth').ensureAuth;
 
-/*
- * track() analytics calls
- */
-app.post('/track', ensureAuth, (req, res, next) => {
+app.post('/track', (req, res, next) => {
   const { user } = req;
   const { event, properties } = req.body;
 
@@ -19,7 +15,7 @@ app.post('/track', ensureAuth, (req, res, next) => {
   res.json({ message: 'track() event logged successfully.'});
 });
 
-app.post('/page', ensureAuth, (req, res, next) => {
+app.post('/page', (req, res, next) => {
   const { user } = req;
   const { category, name, properties } = req.body;
 

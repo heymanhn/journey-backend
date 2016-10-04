@@ -4,7 +4,8 @@ const _ = require('underscore');
 const app = require('express').Router();
 
 const analytics = require('app/utils/analytics');
-const ensureAuth = require('app/utils/auth').ensureAuth;
+const { checkAuthStatus } = require('app/utils/auth');
+const { isValidUser } = require('app/utils/users');
 const { trips: events } = require('app/utils/constants').analytics;
 const Trip = require('app/models/tripModel');
 
@@ -12,7 +13,7 @@ const Trip = require('app/models/tripModel');
  * Trips
  */
 
-app.post('/', ensureAuth, (req, res, next) => {
+app.post('/', isValidUser, (req, res, next) => {
   let params = {
     creator: req.user._id,
     title: req.body.title
@@ -58,7 +59,7 @@ app.put('/:tripId', (req, res, next) => {
     .catch(next);
 });
 
-app.delete('/:tripId', ensureAuth, (req, res, next) => {
+app.delete('/:tripId', isValidUser, (req, res, next) => {
   findTripWithOwner(req.params.tripId, req.user._id)
     .then(removeTrip)
     .then(trackTripEvent.bind(null, req, events.DELETE_TRIP))
@@ -108,38 +109,19 @@ function findTrip(tripId) {
  */
 function checkOwnership(req, res, trip) {
   const vis = trip.visibility;
-  const { authorization: token } = req.headers;
+  const { user } = req;
 
-  if (!token) {
-    if (vis === 'public') {
-      return trip;
-    } else {
-      let newErr = new Error('Not Authorized');
-      newErr.status = 401;
-      return Promise.reject(newErr);
-    }
+  if (vis === 'public') {
+    return trip;
   }
 
-  // Construct a promise for the async ensureAuth() call
-  const authPromise = new Promise((resolve, reject) => {
-    const cb = (err) => {
-      if (err) {
-        return reject(err);
-      }
+  if (!user || user.id !== trip.creator.toString()) {
+    let newErr = new Error('Not Authorized');
+    newErr.status = 401;
+    return Promise.reject(newErr);
+  }
 
-      if (vis === 'private' && req.user.id !== trip.creator.toString()) {
-        let newErr = new Error('Not Authorized');
-        newErr.status = 401;
-        return reject(newErr);
-      }
-
-      return resolve(trip);
-    };
-
-    ensureAuth(req, res, cb);
-  });
-
-  return authPromise;
+  return trip;
 }
 
 function updateTrip(params, trip) {

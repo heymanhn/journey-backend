@@ -25,9 +25,28 @@ module.exports = {
       return next(err);
     }
 
+    if (!req.user) {
+      let err = new Error('Not Authorized');
+      err.status = 401;
+      return next(err);
+    }
+
     if (req.params.userId !== req.user.id) {
       let err = new Error('Cannot perform this action on another user');
       err.status = 403;
+      return next(err);
+    }
+
+    next();
+  },
+
+  /*
+   * Only allows requests with a valid user object already inserted
+   */
+  isValidUser(req, res, next) {
+    if (!req.user) {
+      let err = new Error('Not Authorized');
+      err.status = 401;
       return next(err);
     }
 

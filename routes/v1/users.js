@@ -8,7 +8,6 @@ const jwt = require('jsonwebtoken');
 const analytics = require('app/utils/analytics');
 const { user: events } = require('app/utils/constants').analytics;
 const config = require('app/config/config');
-const ensureAuth = require('app/utils/auth').ensureAuth;
 const Entry = require('app/models/entryModel');
 const { isCurrentUser, validateSignupFields } = require('app/utils/users');
 const Trip = require('app/models/tripModel');
@@ -59,12 +58,12 @@ function trackSignup(user) {
   return user;
 }
 
-app.get('/:userId', ensureAuth, isCurrentUser, (req, res) => {
+app.get('/:userId', isCurrentUser, (req, res) => {
   analytics.track(req.user, events.GET_USER);
   res.json({ user: _.omit(req.user._doc, 'password') });
 });
 
-app.put('/:userId', ensureAuth, isCurrentUser, (req, res, next) => {
+app.put('/:userId', isCurrentUser, (req, res, next) => {
   const user = req.user;
   let newParams = _.pick(req.body, ['username', 'password', 'email', 'name']);
 
@@ -98,7 +97,7 @@ function trackUpdateUser(params, user) {
   return user;
 }
 
-app.delete('/:userId', ensureAuth, isCurrentUser, (req, res, next) => {
+app.delete('/:userId', isCurrentUser, (req, res, next) => {
   req.user
     .remove()
     .then(trackDeleteUser)
@@ -111,7 +110,7 @@ function trackDeleteUser(user) {
   return user;
 }
 
-app.get('/:userId/trips', ensureAuth, isCurrentUser, (req, res, next) => {
+app.get('/:userId/trips', isCurrentUser, (req, res, next) => {
   const count = Number(req.query.count) || config.database.DEFAULT_TRIP_COUNT;
   const page = Number(req.query.page) || 1;
   var params = { creator: req.params.userId };
@@ -134,7 +133,7 @@ app.get('/:userId/trips', ensureAuth, isCurrentUser, (req, res, next) => {
     .catch(next);
 });
 
-app.get('/:userId/entries', ensureAuth, isCurrentUser, (req, res, next) => {
+app.get('/:userId/entries', isCurrentUser, (req, res, next) => {
   const count = Number(req.query.count) || config.database.DEFAULT_ENTRY_COUNT;
   const page = Number(req.query.page) || 1;
   let params = { creator: req.params.userId };

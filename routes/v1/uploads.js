@@ -4,8 +4,7 @@
 const AWS = require('aws-sdk');
 const app = require('express').Router();
 
-const ensureAuth = require('app/utils/auth').ensureAuth;
-const usersUtils = require('app/utils/users');
+const { guid, isValidUser } = require('app/utils/users');
 const s3config = require('app/config/s3');
 
 AWS.config.update({ region: s3config.region });
@@ -26,7 +25,7 @@ const s3 = new AWS.S3();
  * defaults to generating 1 URL.
  *
  */
-app.get('/signedurls', ensureAuth, (req, res, next) => {
+app.get('/signedurls', isValidUser, (req, res, next) => {
   const urlCount = Number(req.query.urls) || 1;
   const requests = generateRequests(urlCount);
 
@@ -44,7 +43,7 @@ function generateRequests(count) {
 function findValidParams() {
   const params = {
     Bucket: s3config.mediaBucket,
-    Key: guid()
+    Key: generateGUID()
   };
 
   /* s3.getObject() returns an error if an object with the generated key
@@ -67,8 +66,8 @@ function getSignedUrl(params) {
   return Promise.resolve(s3.getSignedUrl('putObject', params));
 }
 
-function guid() {
-  return usersUtils.guid();
+function generateGUID() {
+  return guid();
 }
 
 module.exports = app;

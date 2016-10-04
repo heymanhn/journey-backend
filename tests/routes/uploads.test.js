@@ -90,7 +90,7 @@ describe('Uploads Routes', () => {
       });
 
       it('generates a random key', () => {
-        router.__set__('guid', () => { return params.Key; });
+        router.__set__('generateGUID', () => { return params.Key; });
         sandbox.stub(s3, 'getObject').returns({
           promise: () => generateNoSuchKeyError()
         });

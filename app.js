@@ -15,6 +15,7 @@ const passport = require('passport');
 const path = require('path');
 
 const config = require('./config/config');
+const { checkAuthStatus, checkGuestStatus } = require('./utils/auth');
 
 /*
  * API Versioning
@@ -53,8 +54,8 @@ app.set('port', port);
 /*
  * Route configuration
  */
-app.use('/v1', apiV1Routes);
-app.use('/', indexRoute);
+app.use('/v1', checkAuthStatus, checkGuestStatus, apiV1Routes);
+app.use('/', indexRoute);  // Hello World purposes only
 
 /*
  * catch 404 and forward to error handler
