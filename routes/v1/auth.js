@@ -50,6 +50,7 @@ function generateJWT(req, user) {
 }
 
 function trackLogin(req, user) {
+  analytics.alias(req);
   analytics.track(req, events.LOG_IN, { loginType: req.loginType });
 
   return user;

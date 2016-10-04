@@ -50,6 +50,7 @@ function generateJWT(req, user) {
 
 // Identify the user on analytics
 function identifySignup(req, user) {
+  analytics.alias(req);
   analytics.identify(req);
   return user;
 }

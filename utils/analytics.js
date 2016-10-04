@@ -51,5 +51,13 @@ module.exports = {
   page(req, category, name, properties) {
     let opts = _.extend(generateOpts(req), { category, name, properties });
     analytics.page(opts);
+  },
+
+  // https://segment.com/docs/sources/server/node/#alias
+  alias(req) {
+    const { id: userId } = req.user;
+    const { anonymousId: previousId } = req.anonymousUser;
+
+    analytics.alias({ previousId, userId });
   }
 };
