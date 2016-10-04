@@ -3,6 +3,11 @@
 const app = require('express').Router();
 const analytics = require('app/utils/analytics');
 
+app.post('/identify', (req, res, next) => {
+  analytics.identify(req);
+  res.json({ message: 'identify() event logged successfully.'});
+});
+
 app.post('/track', (req, res, next) => {
   const { event, properties } = req.body;
 
