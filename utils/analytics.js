@@ -7,7 +7,7 @@ const { secrets }  = require('app/config/config');
 const { guid } = require('./users');
 
 const segmentKey = process.env.SEGMENT_WRITE_KEY || secrets.segmentKey;
-const env = app.get('env');
+const env = process.env.ANALYTICS_ENV || app.get('env');
 let analytics;
 
 // Flush events immediately if on dev environment
