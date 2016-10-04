@@ -48,7 +48,7 @@ module.exports = {
       return next(new Error('AnonymousId has invalid format'));
     }
 
-    req.anonymousId = anonymousId;
+    req.anonymousUser = { anonymousId };
     next();
   },
 

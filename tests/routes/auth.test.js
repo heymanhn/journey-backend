@@ -122,7 +122,7 @@ describe('Authentication Routes', () => {
 
       it('creates a JWT and adds it to the request', () => {
         const stubToken = 'stubtoken';
-        const expectedReq = { token: stubToken };
+        const expectedReq = { token: stubToken, user: stubUser };
         let req = {};
 
         sandbox.stub(jwt, 'sign', (obj) => {

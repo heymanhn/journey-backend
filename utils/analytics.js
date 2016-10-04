@@ -17,43 +17,39 @@ if (env !== 'production') {
   analytics = new Analytics(segmentKey);
 }
 
-function generateOpts() {
-  return {
-    // Log the environment to differentiate events from production vs dev
-    context: { environment: env, platform: 'Web' }
-  };
+function generateOpts(req) {
+  const user = req.user || req.anonymousUser;
+  const { id: userId, anonymousId } = user;
+  let opts = userId ? { userId } : { anonymousId };
+
+  // Log the environment to differentiate events from production vs dev
+  opts.context = { environment: env, platform: 'Web' };
+
+  return opts;
 }
 
 module.exports = {
   // https://segment.com/docs/sources/server/node/#identify
-  identify(user) {
-    let opts = generateOpts();
-    if (!user) {
-      opts.anonymousId = guid();
-    } else {
-      const { id: userId, email, name, username } = user;
-      opts = {
-        userId,
-        traits: { name, email, username }
-      };
+  identify(req) {
+    let opts = generateOpts(req);
+
+    if (req.user) {
+      const { email, name, username } = req.user;
+      opts.traits = { email, name, username };
     }
 
     analytics.identify(opts);
   },
 
   // https://segment.com/docs/sources/server/node/#track
-  track(user, event, properties) {
-    const { id: userId } = user;
-    let opts = _.extend(generateOpts(), { userId, event, properties });
-
+  track(req, event, properties) {
+    let opts = _.extend(generateOpts(req), { event, properties });
     analytics.track(opts);
   },
 
   // https://segment.com/docs/sources/server/node/#page
-  page(user, category, name, properties) {
-    const { id: userId } = user;
-    let opts = _.extend(generateOpts(), { userId, category, name, properties });
-
+  page(req, category, name, properties) {
+    let opts = _.extend(generateOpts(req), { category, name, properties });
     analytics.page(opts);
   }
 };

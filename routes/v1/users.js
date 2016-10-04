@@ -19,8 +19,8 @@ app.post('/', validateSignupFields, (req, res, next) => {
   new User(params)
     .save()
     .then(generateJWT.bind(null, req))
-    .then(identifySignup)
-    .then(trackSignup)
+    .then(identifySignup.bind(null, req))
+    .then(trackSignup.bind(null, req))
     .then((user) => {
       res.json({
         message: 'User created successfully.',
@@ -44,22 +44,23 @@ function generateJWT(req, user) {
   }
 
   req.token = token;
+  req.user = user;
   return user;
 }
 
 // Identify the user on analytics
-function identifySignup(user) {
-  analytics.identify(user);
+function identifySignup(req, user) {
+  analytics.identify(req);
   return user;
 }
 
-function trackSignup(user) {
-  analytics.track(user, events.SIGN_UP);
+function trackSignup(req, user) {
+  analytics.track(req, events.SIGN_UP);
   return user;
 }
 
 app.get('/:userId', isCurrentUser, (req, res) => {
-  analytics.track(req.user, events.GET_USER);
+  analytics.track(req, events.GET_USER);
   res.json({ user: _.omit(req.user._doc, 'password') });
 });
 
@@ -82,7 +83,7 @@ app.put('/:userId', isCurrentUser, (req, res, next) => {
   user
     .save()
     .then(identifySignup)
-    .then(trackUpdateUser.bind(null, Object.keys(newParams)))
+    .then(trackUpdateUser.bind(null, req, Object.keys(newParams)))
     .then((newUser) => {
       res.json({
         message: 'User updated successfully.',
@@ -92,21 +93,21 @@ app.put('/:userId', isCurrentUser, (req, res, next) => {
     .catch(next);
 });
 
-function trackUpdateUser(params, user) {
-  analytics.track(user, events.UPDATE_USER, { fields: params.toString() });
+function trackUpdateUser(req, params, user) {
+  analytics.track(req, events.UPDATE_USER, { fields: params.toString() });
   return user;
 }
 
 app.delete('/:userId', isCurrentUser, (req, res, next) => {
   req.user
     .remove()
-    .then(trackDeleteUser)
+    .then(trackDeleteUser.bind(null, req))
     .then(() => res.json({ message: 'User deleted.' }))
     .catch(next);
 });
 
-function trackDeleteUser(user) {
-  analytics.track(user, events.DELETE_USER);
+function trackDeleteUser(req, user) {
+  analytics.track(req, events.DELETE_USER);
   return user;
 }
 

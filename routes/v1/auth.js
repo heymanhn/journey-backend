@@ -45,11 +45,12 @@ function generateJWT(req, user) {
   }
 
   req.token = token;
+  req.user = user;
   return user;
 }
 
 function trackLogin(req, user) {
-  analytics.track(user, events.LOG_IN, { loginType: req.loginType });
+  analytics.track(req, events.LOG_IN, { loginType: req.loginType });
 
   return user;
 }

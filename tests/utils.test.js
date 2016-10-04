@@ -119,7 +119,7 @@ describe('Routes Middleware', () => {
 
       it('continues and sets anonymousID if valid', (done) => {
         const next = () => {
-          req.anonymousId.should.equal(validGuid);
+          req.anonymousUser.anonymousId.should.equal(validGuid);
           done();
         }
         checkGuestStatus(req, null, next);
@@ -129,7 +129,7 @@ describe('Routes Middleware', () => {
         const capsGUID = '1ACEB939-3622-4281-8A87-8f369fdda654';
         req.get = () => capsGUID;
         const next = () => {
-          req.anonymousId.should.equal(capsGUID);
+          req.anonymousUser.anonymousId.should.equal(capsGUID);
           done();
         }
         checkGuestStatus(req, null, next);

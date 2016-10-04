@@ -73,7 +73,7 @@ app.delete('/:tripId', isValidUser, (req, res, next) => {
  */
 
 function trackTripEvent(req, event, trip) {
-  analytics.track(req.user, event, { tripId: trip.id });
+  analytics.track(req, event, { tripId: trip.id });
   return trip;
 }
 
@@ -285,7 +285,7 @@ function deleteTripIdea(ideaId, trip) {
 
 function trackAddTripIdeaEvent(req, trip) {
   analytics.track(
-    req.user,
+    req,
     events.ADD_TRIP_IDEA,
     { tripId: trip.id, ideaId: trip.ideas[0].id }
   );
@@ -298,14 +298,14 @@ function trackUpdateTripIdeaEvent(req, trip) {
   const event = typeof index === 'number' ?
     events.REORDER_TRIP_IDEA : events.UPDATE_TRIP_IDEA;
 
-  analytics.track(req.user, event, { tripId, ideaId });
+  analytics.track(req, event, { tripId, ideaId });
   return trip;
 }
 
 function trackDeleteTripIdeaEvent(req, trip) {
   const { ideaId, tripId } = req.params;
 
-  analytics.track(req.user, events.DELETE_TRIP_IDEA, { tripId, ideaId });
+  analytics.track(req, events.DELETE_TRIP_IDEA, { tripId, ideaId });
   return trip;
 }
 

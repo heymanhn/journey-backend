@@ -113,7 +113,7 @@ describe('User Routes', () => {
       it('generates a JSON web token and sends in response', () => {
         const stubReq = {};
         const stubToken = 'abcdefg';
-        const expectedReq = { token: stubToken };
+        const expectedReq = { token: stubToken, user: stubUser };
 
         sandbox.stub(jwt, 'sign').returns(stubToken);
         generateJWT(stubReq, stubUser);
