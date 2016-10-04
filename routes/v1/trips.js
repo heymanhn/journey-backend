@@ -313,7 +313,8 @@ function trackAddTripIdeaEvent(req, trip) {
 function trackUpdateTripIdeaEvent(req, trip) {
   const { ideaId, tripId } = req.params;
   const { index } = req.body;
-  const event = index ? events.REORDER_TRIP_IDEA : events.UPDATE_TRIP_IDEA;
+  const event = typeof index === 'number' ?
+    events.REORDER_TRIP_IDEA : events.UPDATE_TRIP_IDEA;
 
   analytics.track(req.user, event, { tripId, ideaId });
   return trip;
