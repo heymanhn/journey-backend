@@ -10,7 +10,7 @@ const sinon = require('sinon');
 require('sinon-as-promised');
 chai.use(chaiAsPromised);
 
-const s3config = require('../../config/s3');
+const s3config = require('app/config/s3');
 
 describe('Uploads Routes', () => {
   let sandbox;
@@ -25,7 +25,7 @@ describe('Uploads Routes', () => {
       get: sandbox.spy()
     });
 
-    router = rewire('../../routes/v1/uploads');
+    router = rewire('app/routes/v1/uploads');
     s3 = router.__get__('s3');
 
     params = {
@@ -90,7 +90,7 @@ describe('Uploads Routes', () => {
       });
 
       it('generates a random key', () => {
-        router.__set__('guid', () => { return params.Key; });
+        router.__set__('generateGUID', () => { return params.Key; });
         sandbox.stub(s3, 'getObject').returns({
           promise: () => generateNoSuchKeyError()
         });

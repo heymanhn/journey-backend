@@ -3,14 +3,17 @@
 const _ = require('underscore');
 const app = require('express').Router();
 
-const ensureAuth = require('../../utils/auth').ensureAuth;
-const Trip = require('../../models/tripModel');
+const analytics = require('app/utils/analytics');
+const { checkAuthStatus } = require('app/utils/auth');
+const { isValidUser } = require('app/utils/users');
+const { trips: events } = require('app/utils/constants').analytics;
+const Trip = require('app/models/tripModel');
 
 /*
  * Trips
  */
 
-app.post('/', ensureAuth, (req, res, next) => {
+app.post('/', isValidUser, (req, res, next) => {
   let params = {
     creator: req.user._id,
     title: req.body.title
@@ -29,6 +32,7 @@ app.post('/', ensureAuth, (req, res, next) => {
 
   new Trip(params)
     .save()
+    .then(trackTripEvent.bind(null, req, events.CREATE_TRIP))
     .then((trip) => res.json({ trip }))
     .catch(next);
 });
@@ -45,6 +49,7 @@ app.put('/:tripId', (req, res, next) => {
     .then(checkOwnership.bind(null, req, res))
     .then(updateTrip.bind(null, req.body))
     .then(saveTrip)
+    .then(trackTripEvent.bind(null, req, events.UPDATE_TRIP))
     .then((trip) => {
       res.json({
         message: 'Trip updated successfully.',
@@ -54,9 +59,10 @@ app.put('/:tripId', (req, res, next) => {
     .catch(next);
 });
 
-app.delete('/:tripId', ensureAuth, (req, res, next) => {
+app.delete('/:tripId', isValidUser, (req, res, next) => {
   findTripWithOwner(req.params.tripId, req.user._id)
     .then(removeTrip)
+    .then(trackTripEvent.bind(null, req, events.DELETE_TRIP))
     .then(() => res.json({ message: 'Trip deleted.' }))
     .catch(next);
 });
@@ -65,6 +71,11 @@ app.delete('/:tripId', ensureAuth, (req, res, next) => {
 /*
  * Trips - helper functions
  */
+
+function trackTripEvent(req, event, trip) {
+  analytics.track(req, event, { tripId: trip.id });
+  return trip;
+}
 
 function findTripWithOwner(tripId, userId) {
   return findTrip(tripId)
@@ -98,33 +109,19 @@ function findTrip(tripId) {
  */
 function checkOwnership(req, res, trip) {
   const vis = trip.visibility;
+  const { user } = req;
+
   if (vis === 'public') {
     return trip;
-  } else if (vis === 'private') {
-
-    // Construct a promise for the async ensureAuth() call
-    const authPromise = new Promise((resolve, reject) => {
-      const cb = (err) => {
-        if (err) {
-          return reject(err);
-        }
-
-        if (req.user._id.toString() !== trip.creator.toString()) {
-          let newErr = new Error('Not Authorized');
-          newErr.status = 401;
-          return reject(newErr);
-        }
-
-        return resolve(trip);
-      };
-
-      ensureAuth(req, res, cb);
-    });
-
-    return authPromise;
-  } else {
-    return Promise.reject(new Error('Trip has invalid visibility setting'));
   }
+
+  if (!user || user.id !== trip.creator.toString()) {
+    let newErr = new Error('Not Authorized');
+    newErr.status = 401;
+    return Promise.reject(newErr);
+  }
+
+  return trip;
 }
 
 function updateTrip(params, trip) {
@@ -167,6 +164,7 @@ app.post('/:tripId/ideas', (req, res, next) => {
     .then(checkOwnership.bind(null, req, res))
     .then(createTripIdea.bind(null, req.body))
     .then(saveTrip)
+    .then(trackAddTripIdeaEvent.bind(null, req))
     .then((trip) => {
       const { ideas } = trip;
       res.json({ tripId, ideas });
@@ -194,6 +192,7 @@ app.put('/:tripId/ideas/:ideaId', (req, res, next) => {
     .then(checkIdeaExists.bind(null, ideaId))
     .then(updateTripIdea.bind(null, req.body, ideaId))
     .then(saveTrip)
+    .then(trackUpdateTripIdeaEvent.bind(null, req))
     .then((trip) => {
       res.json({
         message: 'Trip idea updated successfully.',
@@ -211,6 +210,7 @@ app.delete('/:tripId/ideas/:ideaId', (req, res, next) => {
     .then(checkIdeaExists.bind(null, ideaId))
     .then(deleteTripIdea.bind(null, ideaId))
     .then(saveTrip)
+    .then(trackDeleteTripIdeaEvent.bind(null, req))
     .then((trip) => {
       res.json({
         message: "Trip idea deleted successfully.",
@@ -225,6 +225,7 @@ app.delete('/:tripId/ideas', (req, res, next) => {
     .then(checkOwnership.bind(null, req, res))
     .then(deleteTripIdeas)
     .then(saveTrip)
+    .then(trackTripEvent.bind(null, req, events.DELETE_TRIP_IDEAS))
     .then(() => res.json({ message: 'Trip ideas deleted.' }))
     .catch(next);
 });
@@ -279,6 +280,32 @@ function deleteTripIdeas(trip) {
 // Use this function in conjunction with checkIdeaExists()
 function deleteTripIdea(ideaId, trip) {
   trip.ideas.id(ideaId).remove();
+  return trip;
+}
+
+function trackAddTripIdeaEvent(req, trip) {
+  analytics.track(
+    req,
+    events.ADD_TRIP_IDEA,
+    { tripId: trip.id, ideaId: trip.ideas[0].id }
+  );
+  return trip;
+}
+
+function trackUpdateTripIdeaEvent(req, trip) {
+  const { ideaId, tripId } = req.params;
+  const { index } = req.body;
+  const event = typeof index === 'number' ?
+    events.REORDER_TRIP_IDEA : events.UPDATE_TRIP_IDEA;
+
+  analytics.track(req, event, { tripId, ideaId });
+  return trip;
+}
+
+function trackDeleteTripIdeaEvent(req, trip) {
+  const { ideaId, tripId } = req.params;
+
+  analytics.track(req, events.DELETE_TRIP_IDEA, { tripId, ideaId });
   return trip;
 }
 

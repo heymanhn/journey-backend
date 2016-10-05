@@ -12,8 +12,8 @@ chai.use(chaiAsPromised);
 require('mongoose').Promise = Promise;
 
 const testUtils = require('./utils');
-const User = require('../../models/userModel');
-const utils = require('../../models/userUtils');
+const User = require('app/models/userModel');
+const utils = require('app/models/userUtils');
 
 describe('User Model', () => {
   let sandbox;

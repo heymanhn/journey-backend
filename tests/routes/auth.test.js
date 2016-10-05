@@ -11,7 +11,7 @@ const sinon = require('sinon');
 require('sinon-as-promised');
 chai.use(chaiAsPromised);
 
-const User = require('../../models/userModel');
+const User = require('app/models/userModel');
 
 describe('Authentication Routes', () => {
   let sandbox;
@@ -20,7 +20,7 @@ describe('Authentication Routes', () => {
   beforeEach(() => {
     sandbox = sinon.sandbox.create();
     sandbox.stub(express, 'Router').returns({ post: sandbox.spy() });
-    router = rewire('../../routes/v1/auth');
+    router = rewire('app/routes/v1/auth');
   });
 
   afterEach(() => sandbox.restore());
@@ -58,6 +58,8 @@ describe('Authentication Routes', () => {
 
       router.__set__('checkValidCredentials', () => Promise.resolve());
       router.__set__('generateJWT', () => Promise.resolve());
+      router.__set__('trackLogin', () => Promise.resolve());
+      router.__set__('sendResponse', () => Promise.resolve());
 
       callPost();
     });
@@ -75,6 +77,8 @@ describe('Authentication Routes', () => {
 
       router.__set__('checkValidCredentials', () => Promise.resolve());
       router.__set__('generateJWT', () => Promise.resolve());
+      router.__set__('trackLogin', () => Promise.resolve());
+      router.__set__('sendResponse', () => Promise.resolve());
 
       callPost();
     });
@@ -116,26 +120,19 @@ describe('Authentication Routes', () => {
     context('#generateJWT:', () => {
       const stubUser = { _doc: { username: 'StubUser' }};
 
-      it('creates a JWT and sends it back in response', (done) => {
+      it('creates a JWT and adds it to the request', () => {
         const stubToken = 'stubtoken';
-        var expectedResponse = {
-          user: stubUser._doc,
-          token: 'JWT ' + stubToken
-        };
+        const expectedReq = { token: stubToken, user: stubUser };
+        let req = {};
 
         sandbox.stub(jwt, 'sign', (obj) => {
           obj.should.equal(stubUser._doc);
           return stubToken;
         });
 
-        const stubRes = {
-          json: (obj) => {
-            obj.should.eql(expectedResponse);
-            done();
-          }
-        };
 
-        generateJWT(stubRes, stubUser);
+        generateJWT(req, stubUser);
+        req.should.eql(expectedReq)
       });
 
       it('returns an error if JWT creation fails', () => {

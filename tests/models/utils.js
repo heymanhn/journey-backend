@@ -1,7 +1,7 @@
 'use strict';
 
 const mongoose = require('mongoose');
-const db = require('../../config/database');
+const db = require('app/config/database');
 require('mocha-mongoose')(db.test.url);
 
 // Workaround to ensure that `mocha --watch` works on subsequent file saves

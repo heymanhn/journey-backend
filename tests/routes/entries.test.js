@@ -12,7 +12,7 @@ require('sinon-as-promised');
 require('mongoose').Promise = Promise;
 chai.use(chaiAsPromised);
 
-const Entry = require('../../models/entryModel');
+const Entry = require('app/models/entryModel');
 
 describe('Entry Routes', () => {
   let sandbox, router, findEntry, deleteS3Contents, removeEntry, s3;
@@ -26,7 +26,7 @@ describe('Entry Routes', () => {
       delete: sandbox.spy()
     });
 
-    router = rewire('../../routes/v1/entries');
+    router = rewire('app/routes/v1/entries');
     findEntry = router.__get__('findEntry');
     deleteS3Contents = router.__get__('deleteS3Contents');
     removeEntry = router.__get__('removeEntry');

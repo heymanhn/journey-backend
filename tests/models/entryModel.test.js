@@ -5,9 +5,9 @@ const chaiAsPromised = require('chai-as-promised');
 const mongoose = require('mongoose');
 const should = chai.should(); // jshint ignore:line
 
-const Entry = require('../../models/entryModel');
+const Entry = require('app/models/entryModel');
 const testUtils = require('./utils');
-const utils = require('../../models/entryUtils');
+const utils = require('app/models/entryUtils');
 
 mongoose.Promise = Promise;
 chai.use(chaiAsPromised);

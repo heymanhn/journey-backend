@@ -1,9 +1,17 @@
 'use strict';
 
 const _ = require('underscore');
-const User = require('../models/userModel');
+const User = require('app/models/userModel');
 
 module.exports = {
+  // Borrowed from Stack Overflow - GUID generator
+  guid() {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+      let r = Math.random()*16|0, v = c == 'x' ? r : (r&0x3|0x8);
+      return v.toString(16);
+    });
+  },
+
   /*
    * Only allows requests where the user in the JSON Web Token matches the user
    * that the operation is intended for.
@@ -17,9 +25,28 @@ module.exports = {
       return next(err);
     }
 
+    if (!req.user) {
+      let err = new Error('Not Authorized');
+      err.status = 401;
+      return next(err);
+    }
+
     if (req.params.userId !== req.user.id) {
       let err = new Error('Cannot perform this action on another user');
       err.status = 403;
+      return next(err);
+    }
+
+    next();
+  },
+
+  /*
+   * Only allows requests with a valid user object already inserted
+   */
+  isValidUser(req, res, next) {
+    if (!req.user) {
+      let err = new Error('Not Authorized');
+      err.status = 401;
       return next(err);
     }
 

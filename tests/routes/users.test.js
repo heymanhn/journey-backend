@@ -12,9 +12,10 @@ require('sinon-as-promised');
 require('mongoose').Promise = Promise;
 chai.use(chaiAsPromised);
 
-const database = require('../../config/database');
-const Entry = require('../../models/entryModel');
-const User = require('../../models/userModel');
+const analytics = require('app/utils/analytics');
+const database = require('app/config/database');
+const Entry = require('app/models/entryModel');
+const User = require('app/models/userModel');
 
 describe('User Routes', () => {
   let generateJWT, router, sandbox;
@@ -29,7 +30,7 @@ describe('User Routes', () => {
       delete: sandbox.spy()
     });
 
-    router = rewire('../../routes/v1/users');
+    router = rewire('app/routes/v1/users');
     generateJWT = router.__get__('generateJWT');
   });
 
@@ -52,7 +53,8 @@ describe('User Routes', () => {
           password: 'abc123',
           email: 'amy@journey.com',
           name: 'Amy Doe'
-        }
+        },
+        token: 'abcdefg'
       };
 
       stubUser = { _doc: { username: 'amy' } };
@@ -74,6 +76,28 @@ describe('User Routes', () => {
       callPost();
     });
 
+    it('sends the user and token in response', (done) => {
+      const expectedResponse = {
+        message: 'User created successfully.',
+        user: stubUser._doc,
+        token: 'JWT ' + req.token
+      };
+
+      const res = {
+        json: (obj) => {
+          obj.should.eql(expectedResponse);
+          done();
+        }
+      };
+
+      sandbox.stub(User.prototype, 'save').yields();
+      router.__set__('generateJWT', () => Promise.resolve());
+      router.__set__('identifySignup', () => Promise.resolve());
+      router.__set__('trackSignup', () => Promise.resolve(stubUser));
+
+      callPost(res);
+    });
+
     it('returns an error if something in the chain fails', (done) => {
       const stubError = new Error('some error');
       function next(err) {
@@ -86,22 +110,14 @@ describe('User Routes', () => {
     });
 
     context('#generateJWT:', () => {
-      it('generates a JSON web token and sends in response', (done) => {
+      it('generates a JSON web token and sends in response', () => {
+        const stubReq = {};
         const stubToken = 'abcdefg';
-        const expectedResponse = {
-          message: 'User created successfully.',
-          user: stubUser._doc,
-          token: 'JWT ' + stubToken
-        };
-        const res = {
-          json: (obj) => {
-            obj.should.eql(expectedResponse);
-            done();
-          }
-        };
+        const expectedReq = { token: stubToken, user: stubUser };
 
         sandbox.stub(jwt, 'sign').returns(stubToken);
-        generateJWT(res, stubUser);
+        generateJWT(stubReq, stubUser);
+        stubReq.should.eql(expectedReq);
       });
 
       it('returns an error if JWT creation fails', () => {
@@ -118,7 +134,7 @@ describe('User Routes', () => {
     let req;
 
     const callGet = function(res, next) {
-      router.get.firstCall.args[3](req, res, next);
+      router.get.firstCall.args[2](req, res, next);
     };
 
     beforeEach(() => {
@@ -145,6 +161,7 @@ describe('User Routes', () => {
           done();
         }
       };
+      sandbox.stub(analytics, 'track').returns();
       callGet(res);
     });
   });
@@ -153,7 +170,7 @@ describe('User Routes', () => {
     let req;
 
     const callPut = function(res, next) {
-      router.put.firstCall.args[3](req, res, next);
+      router.put.firstCall.args[2](req, res, next);
     };
 
     beforeEach(() => {
@@ -219,15 +236,15 @@ describe('User Routes', () => {
         user: stubUser._doc
       };
       const res = {
-        json: function(obj) {
+        json(obj) {
           obj.should.eql(expectedResponse);
           done();
         }
       };
 
-      req.user.save = () => {
-        return Promise.resolve(stubUser);
-      };
+      req.user.save = () => Promise.resolve();
+      router.__set__('identifySignup', () => Promise.resolve());
+      router.__set__('trackUpdateUser', () => Promise.resolve(stubUser));
 
       callPut(res);
     });
@@ -249,7 +266,7 @@ describe('User Routes', () => {
   describe('#delete /', () => {
     let req = {};
     const callDelete = function(res, next) {
-      router.delete.firstCall.args[3](req, res, next);
+      router.delete.firstCall.args[2](req, res, next);
     };
 
     it('registers a URI for DELETE: /:userId', () => {
@@ -266,6 +283,8 @@ describe('User Routes', () => {
         }
       };
       req.user = { remove() { return Promise.resolve(); } };
+      router.__set__('trackDeleteUser', () => Promise.resolve());
+
       callDelete(res);
     });
 
@@ -290,7 +309,7 @@ describe('User Routes', () => {
       query: {}
     };
     const callGet = function(res, next) {
-      router.get.thirdCall.args[3](req, res, next);
+      router.get.thirdCall.args[2](req, res, next);
     };
 
     it('registers a URI for GET: /:userId/entries', () => {
