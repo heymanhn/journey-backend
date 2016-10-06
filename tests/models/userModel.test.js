@@ -4,6 +4,7 @@
 const bcrypt = require('bcrypt');
 const chai = require('chai');
 const chaiAsPromised = require('chai-as-promised');
+const gravatar = require('gravatar');
 const should = chai.should();
 const sinon = require('sinon');
 
@@ -11,6 +12,7 @@ require('sinon-as-promised');
 chai.use(chaiAsPromised);
 require('mongoose').Promise = Promise;
 
+const { defaultPic } = require('app/utils/constants').gravatar;
 const testUtils = require('./utils');
 const User = require('app/models/userModel');
 const utils = require('app/models/userUtils');
@@ -193,6 +195,52 @@ describe('User Model', () => {
         });
 
         utils.hashPassword.bind(stubModel)(next);
+      });
+    });
+
+    context('#generate gravatar:', () => {
+      let stubModel;
+
+      beforeEach(() => {
+        stubModel = {
+          email: 'abc@123.com',
+          isModified: () => true
+        };
+      });
+
+      it('generates the gravatar URL based on the email', (done) => {
+        sandbox.stub(gravatar, 'url', (email, options, protocol) => {
+          email.should.equal(stubModel.email);
+          protocol.should.equal(true);
+          done();
+        });
+
+        utils.generateGravatar.bind(stubModel)(next);
+      });
+
+      it('generates a URL with the right format', () => {
+        const encodedDefaultPic = encodeURIComponent(defaultPic);
+        const stubURL = 'https://s.gravatar.com/avatar/' +
+          '7c99b0d72a58c0539022bdadd887f167?s=200&d=' + encodedDefaultPic;
+
+        utils.generateGravatar.bind(stubModel)(next);
+        stubModel.gravatar.should.equal(stubURL);
+      });
+
+      it('only runs if the email has changed', () => {
+        stubModel.isModified = () => { return false; };
+
+        utils.generateGravatar.bind(stubModel)(next);
+        next.calledOnce.should.equal(true);
+      });
+
+      it('returns an error if gravatar url generation fails', () => {
+        const stubError = new Error('Unable to create gravatar URL');
+        sandbox.stub(gravatar, 'url').returns(false);
+
+        utils.generateGravatar.bind(stubModel)(next);
+        next.calledOnce.should.equal(true);
+        next.calledWith(stubError).should.equal(true);
       });
     });
   });

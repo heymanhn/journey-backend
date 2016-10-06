@@ -1,6 +1,8 @@
 'use strict';
 
 const bcrypt = require('bcrypt');
+const gravatar = require('gravatar');
+const { defaultPic } = require('app/utils/constants').gravatar;
 const saltRounds = 8;
 
 function fieldExistsCheck(field, value, next) {
@@ -64,5 +66,20 @@ module.exports = {
       this.password = hash;
       next();
     }.bind(this));
-  }
+  },
+
+  generateGravatar(next) {
+    if (!this.isModified('email')) {
+      return next();
+    }
+
+    const pic = gravatar.url(this.email, { s: '200', d: defaultPic }, true);
+    if (!pic) {
+      return next(new Error('Unable to create gravatar URL'));
+    }
+
+    this.gravatar = pic;
+    next();
+  },
+
 };

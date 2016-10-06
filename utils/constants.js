@@ -21,5 +21,9 @@ module.exports = {
       UPDATE_USER: 'Update User Information',
       DELETE_USER: 'Delete User'
     }
+  },
+  gravatar: {
+    defaultPic: 'https://s3-us-west-1.amazonaws.com/journey.media/' +
+      'default-profile-picture.png'
   }
 };
