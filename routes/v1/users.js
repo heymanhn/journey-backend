@@ -83,7 +83,7 @@ app.put('/:userId', isCurrentUser, (req, res, next) => {
 
   user
     .save()
-    .then(identifySignup)
+    .then(identifyUpdateUser.bind(null, req))
     .then(trackUpdateUser.bind(null, req, Object.keys(newParams)))
     .then((newUser) => {
       res.json({
@@ -93,6 +93,11 @@ app.put('/:userId', isCurrentUser, (req, res, next) => {
     })
     .catch(next);
 });
+
+function identifyUpdateUser(req, user) {
+  analytics.identify(req);
+  return user;
+}
 
 function trackUpdateUser(req, params, user) {
   analytics.track(req, events.UPDATE_USER, { fields: params.toString() });
