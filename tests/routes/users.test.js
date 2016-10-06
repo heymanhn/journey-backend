@@ -243,7 +243,7 @@ describe('User Routes', () => {
       };
 
       req.user.save = () => Promise.resolve();
-      router.__set__('identifySignup', () => Promise.resolve());
+      router.__set__('identifyUpdateUser', () => Promise.resolve());
       router.__set__('trackUpdateUser', () => Promise.resolve(stubUser));
 
       callPut(res);
