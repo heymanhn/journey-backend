@@ -23,7 +23,7 @@ function generateOpts(req) {
   let opts = userId ? { userId } : { anonymousId };
 
   // Log the environment to differentiate events from production vs dev
-  opts.context = { environment: env, platform: 'Web' };
+  opts.properties = { environment: env, platform: 'Web' };
 
   return opts;
 }
@@ -43,13 +43,15 @@ module.exports = {
 
   // https://segment.com/docs/sources/server/node/#track
   track(req, event, properties) {
-    let opts = _.extend(generateOpts(req), { event, properties });
+    let opts = _.extend(generateOpts(req), { event });
+    _.extend(opts.properties, properties);
     analytics.track(opts);
   },
 
   // https://segment.com/docs/sources/server/node/#page
   page(req, category, name, properties) {
-    let opts = _.extend(generateOpts(req), { category, name, properties });
+    let opts = _.extend(generateOpts(req), { category, name });
+    _.extend(opts.properties, properties);
     analytics.page(opts);
   },
 
