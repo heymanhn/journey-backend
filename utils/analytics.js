@@ -43,14 +43,15 @@ module.exports = {
 
   // https://segment.com/docs/sources/server/node/#track
   track(req, event, properties) {
-    let opts = _.extend(generateOpts(req), { event, properties });
+    let opts = _.extend(generateOpts(req), { event });
+    _.extend(opts.properties, properties);
     analytics.track(opts);
   },
 
   // https://segment.com/docs/sources/server/node/#page
   page(req, category, name, properties) {
     let opts = _.extend(generateOpts(req), { category, name });
-    opts.properties = _.extend(opts.properties, properties);
+    _.extend(opts.properties, properties);
     analytics.page(opts);
   },
 
