@@ -129,8 +129,8 @@ function updateTrip(params, trip) {
   const newParams = {
     destination,
     title,
-    startDate: new Date(startDate),
-    endDate: new Date(endDate),
+    startDate: startDate && new Date(startDate),
+    endDate: endDate && new Date(endDate),
     visibility
   };
 
