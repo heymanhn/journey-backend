@@ -125,12 +125,6 @@ app.get('/:userId/trips', isCurrentUser, (req, res, next) => {
   Trip
     .findTrips(params, count, page)
     .then((trips) => {
-      if (trips.length === 0) {
-        let err = new Error('No trips found');
-        err.status = 404;
-        return Promise.reject(err);
-      }
-
       res.json({
         page,
         results: trips.length,
