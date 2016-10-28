@@ -83,11 +83,13 @@ app.put('/:userId', isCurrentUser, (req, res, next) => {
 
   user
     .save()
+    .then(generateJWT.bind(null, req))
     .then(identifyUpdateUser.bind(null, req))
     .then(trackUpdateUser.bind(null, req, Object.keys(newParams)))
     .then((newUser) => {
       res.json({
         message: 'User updated successfully.',
+        token: 'JWT ' + req.token,
         user: _.omit(newUser._doc, 'password')
       });
     })
