@@ -224,6 +224,7 @@ describe('User Routes', () => {
     });
 
     it('updates the user and sends object in response', (done) => {
+      const stubToken = 'abc123';
       const stubUser = {
         _doc: {
           username: 'amy',
@@ -233,6 +234,7 @@ describe('User Routes', () => {
       };
       const expectedResponse = {
         message: 'User updated successfully.',
+        token: 'JWT ' + stubToken,
         user: stubUser._doc
       };
       const res = {
@@ -243,6 +245,8 @@ describe('User Routes', () => {
       };
 
       req.user.save = () => Promise.resolve();
+      req.token = stubToken;
+      router.__set__('generateJWT', () => Promise.resolve());
       router.__set__('identifyUpdateUser', () => Promise.resolve());
       router.__set__('trackUpdateUser', () => Promise.resolve(stubUser));
 
