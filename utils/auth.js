@@ -18,7 +18,7 @@ module.exports = {
       }
 
       if (!user) {
-        err = new Error('Not Authorized');
+        err = new Error('Invalid JWT Token');
         err.status = 401;
         return next(err);
       }
