@@ -7,8 +7,8 @@ const cors = require('cors');
 const debug = require('debug')('journey-backend');
 const express = require('express');
 const fs = require('fs');
-const https = require('https');
 const http = require('http');
+const https = require('https');
 const logger = require('morgan');
 const mongoose = require('mongoose');
 const passport = require('passport');
@@ -91,17 +91,20 @@ if (env === 'production') {
 }
 
 /*
- * Create HTTPS server
+ * Create HTTPS server for local development
  */
 
-// NOTE: HTTPS disabled until we go into a more serious production mode
-// const options = {
-//   key: fs.readFileSync('key.pem'),
-//   cert: fs.readFileSync('cert.pem')
-// };
-// const server = http.createServer(options, app);
+let server;
+if (env === 'development') {
+  const options = {
+    key: fs.readFileSync('key.pem'),
+    cert: fs.readFileSync('cert.pem')
+  };
+  server = https.createServer(options, app);
+} else {
+  server = http.createServer(app);
+}
 
-const server = http.createServer(app);
 server.listen(port);
 server.on('error', onError);
 server.on('listening', onListening);
