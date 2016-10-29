@@ -33,6 +33,18 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
 /*
+ * Redirect all calls to HTTPS
+ */
+app.enable('trust proxy');
+app.all('*', (req, res, next) => {
+  if (req.secure) {
+    return next();
+  }
+
+  return res.redirect(`https://${req.hostname}${req.url}`);
+});
+
+/*
  * Connect to Mongo
  */
 mongoose.connect(config.database[env].url);
