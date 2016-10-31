@@ -104,24 +104,27 @@ function findTrip(tripId) {
 }
 
 /*
- * Allow public trips to pass through; only allow private trips to pass through
- * if the trip is created by the currently authenticated user
+ * 1. Allows public trips to pass through.
+ * 2. Only allows private trips to pass through if the trip is created by the
+ *    currently authenticated user
+ * 3. Only allows view-only trips to pass through if the API method is GET
  */
 function checkOwnership(req, res, trip) {
-  const vis = trip.visibility;
-  const { user } = req;
+  const { visibility: vis } = trip;
+  const { method, user } = req;
 
-  if (vis === 'public') {
+  if (user && user.id === trip.creator.toString()) {
     return trip;
   }
 
-  if (!user || user.id !== trip.creator.toString()) {
-    let newErr = new Error('Not Authorized');
-    newErr.status = 401;
-    return Promise.reject(newErr);
+  if (vis === 'public' || (vis === 'viewOnly' && method === 'GET')) {
+    return trip;
   }
 
-  return trip;
+  // Return an error as catch-all
+  let newErr = new Error('Not Authorized');
+  newErr.status = 401;
+  return Promise.reject(newErr);
 }
 
 function updateTrip(params, trip) {
