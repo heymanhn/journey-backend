@@ -39,14 +39,14 @@ app.post('/', isValidUser, (req, res, next) => {
 
 app.get('/:tripId', (req, res, next) => {
   findTrip(req.params.tripId)
-    .then(checkOwnership.bind(null, req, res))
+    .then(checkOwnership.bind(null, req))
     .then((trip) => res.json({ trip }))
     .catch(next);
 });
 
-app.put('/:tripId', (req, res, next) => {
+app.put('/:tripId', isValidUser, (req, res, next) => {
   findTrip(req.params.tripId)
-    .then(checkOwnership.bind(null, req, res))
+    .then(checkTripOwner.bind(null, req.user.id))
     .then(updateTrip.bind(null, req.body))
     .then(saveTrip)
     .then(trackTripEvent.bind(null, req, events.UPDATE_TRIP))
@@ -60,7 +60,8 @@ app.put('/:tripId', (req, res, next) => {
 });
 
 app.delete('/:tripId', isValidUser, (req, res, next) => {
-  findTripWithOwner(req.params.tripId, req.user._id)
+  findTrip(req.params.tripId)
+    .then(checkTripOwner.bind(null, req.user.id))
     .then(removeTrip)
     .then(trackTripEvent.bind(null, req, events.DELETE_TRIP))
     .then(() => res.json({ message: 'Trip deleted.' }))
@@ -77,15 +78,22 @@ function trackTripEvent(req, event, trip) {
   return trip;
 }
 
-function findTripWithOwner(tripId, userId) {
-  return findTrip(tripId)
-    .then((trip) => {
-      if (userId.toString() !== trip.creator.toString()) {
-        return Promise.reject(new Error('Not Authorized'));
-      } else {
-        return trip;
-      }
-    });
+/*
+ * For API methods that use this middleware, it will only allow calls that come
+ * from the trip's creator.
+ */
+function checkTripOwner(userId, trip) {
+  if (userId !== trip.creator.toString()) {
+    return Promise.reject(createUnauthorizedError());
+  }
+
+  return trip;
+}
+
+function createUnauthorizedError() {
+  let newErr = new Error('Not Authorized');
+  newErr.status = 401;
+  return newErr;
 }
 
 function findTrip(tripId) {
@@ -109,7 +117,7 @@ function findTrip(tripId) {
  *    currently authenticated user
  * 3. Only allows view-only trips to pass through if the API method is GET
  */
-function checkOwnership(req, res, trip) {
+function checkOwnership(req, trip) {
   const { visibility: vis } = trip;
   const { method, user } = req;
 
@@ -122,9 +130,7 @@ function checkOwnership(req, res, trip) {
   }
 
   // Return an error as catch-all
-  let newErr = new Error('Not Authorized');
-  newErr.status = 401;
-  return Promise.reject(newErr);
+  return Promise.reject(createUnauthorizedError());
 }
 
 function updateTrip(params, trip) {
@@ -164,7 +170,7 @@ app.post('/:tripId/ideas', (req, res, next) => {
   const tripId = req.params.tripId;
 
   findTrip(tripId)
-    .then(checkOwnership.bind(null, req, res))
+    .then(checkOwnership.bind(null, req))
     .then(createTripIdea.bind(null, req.body))
     .then(saveTrip)
     .then(trackAddTripIdeaEvent.bind(null, req))
@@ -179,7 +185,7 @@ app.get('/:tripId/ideas', (req, res, next) => {
   const tripId = req.params.tripId;
 
   findTrip(tripId)
-    .then(checkOwnership.bind(null, req, res))
+    .then(checkOwnership.bind(null, req))
     .then((trip) => {
       const { ideas } = trip;
       res.json({ tripId, ideas });
@@ -191,7 +197,7 @@ app.put('/:tripId/ideas/:ideaId', (req, res, next) => {
   const { ideaId, tripId } = req.params;
 
   findTrip(tripId)
-    .then(checkOwnership.bind(null, req, res))
+    .then(checkOwnership.bind(null, req))
     .then(checkIdeaExists.bind(null, ideaId))
     .then(updateTripIdea.bind(null, req.body, ideaId))
     .then(saveTrip)
@@ -209,7 +215,7 @@ app.delete('/:tripId/ideas/:ideaId', (req, res, next) => {
   const { ideaId, tripId } = req.params;
 
   findTrip(tripId)
-    .then(checkOwnership.bind(null, req, res))
+    .then(checkOwnership.bind(null, req))
     .then(checkIdeaExists.bind(null, ideaId))
     .then(deleteTripIdea.bind(null, ideaId))
     .then(saveTrip)
@@ -225,7 +231,7 @@ app.delete('/:tripId/ideas/:ideaId', (req, res, next) => {
 
 app.delete('/:tripId/ideas', (req, res, next) => {
   findTrip(req.params.tripId)
-    .then(checkOwnership.bind(null, req, res))
+    .then(checkOwnership.bind(null, req))
     .then(deleteTripIdeas)
     .then(saveTrip)
     .then(trackTripEvent.bind(null, req, events.DELETE_TRIP_IDEAS))
@@ -321,7 +327,7 @@ app.get('/:tripId/plan', (req, res, next) => {
   const { tripId } = req.params;
 
   findTrip(tripId)
-    .then(checkOwnership.bind(null, req, res))
+    .then(checkOwnership.bind(null, req))
     .then((trip) => {
       const { plan } = trip;
       res.json({ tripId, plan });
@@ -333,7 +339,7 @@ app.post('/:tripId/plan', (req, res, next) => {
   const { tripId } = req.params;
 
   findTrip(tripId)
-    .then(checkOwnership.bind(null, req, res))
+    .then(checkOwnership.bind(null, req))
     .then(createTripDay)
     .then(saveTrip)
     .then((trip) => {
@@ -347,7 +353,7 @@ app.get('/:tripId/plan/:dayId', (req, res, next) => {
   const { dayId, tripId } = req.params;
 
   findTrip(tripId)
-    .then(checkOwnership.bind(null, req, res))
+    .then(checkOwnership.bind(null, req))
     .then(checkDayExists.bind(null, dayId))
     .then(findTripDay.bind(null, dayId))
     .then((tripDay) => res.json({ tripDay }))
@@ -358,7 +364,7 @@ app.put('/:tripId/plan/:dayId', (req, res, next) => {
   const { dayId, tripId } = req.params;
 
   findTrip(tripId)
-    .then(checkOwnership.bind(null, req, res))
+    .then(checkOwnership.bind(null, req))
     .then(checkDayExists.bind(null, dayId))
     .then(updateTripDay.bind(null, req.body, dayId))
     .then(saveTrip)
@@ -375,7 +381,7 @@ app.delete('/:tripId/plan/:dayId', (req, res, next) => {
   const { dayId, tripId } = req.params;
 
   findTrip(tripId)
-    .then(checkOwnership.bind(null, req, res))
+    .then(checkOwnership.bind(null, req))
     .then(checkDayExists.bind(null, dayId))
     .then(removeTripDay.bind(null, dayId))
     .then(saveTrip)
@@ -431,7 +437,7 @@ app.post('/:tripId/plan/:dayId/entries', (req, res, next) => {
   const { dayId, tripId } = req.params;
 
   findTrip(tripId)
-    .then(checkOwnership.bind(null, req, res))
+    .then(checkOwnership.bind(null, req))
     .then(checkDayExists.bind(null, dayId))
     .then(createTripEntry.bind(null, req.body, dayId))
     .then(saveTrip)
@@ -446,7 +452,7 @@ app.put('/:tripId/plan/:dayId/entries/:entryId', (req, res, next) => {
   const { dayId, entryId, tripId } = req.params;
 
   findTrip(tripId)
-    .then(checkOwnership.bind(null, req, res))
+    .then(checkOwnership.bind(null, req))
     .then(checkDayExists.bind(null, dayId))
     .then(checkEntryExists.bind(null, dayId, entryId))
     .then(updateTripEntry.bind(null, req.body, dayId, entryId))
@@ -463,7 +469,7 @@ app.delete('/:tripId/plan/:dayId/entries/:entryId', (req, res, next) => {
   const { ignoreIdeaCreate } = req.query;
 
   findTrip(tripId)
-    .then(checkOwnership.bind(null, req, res))
+    .then(checkOwnership.bind(null, req))
     .then(checkDayExists.bind(null, dayId))
     .then(checkEntryExists.bind(null, dayId, entryId))
     .then(deleteTripEntry.bind(null, dayId, entryId, ignoreIdeaCreate))
