@@ -21,8 +21,10 @@ module.exports = {
     }
 
     const vis = this.visibility;
-    if (vis && vis !== 'public' && vis !== 'private') {
-      return next(new Error('Trip has invalid visibility set'));
+    if (vis) {
+      if (vis !== 'public' && vis !== 'private' && vis !== 'viewOnly') {
+        return next(new Error('Trip has invalid visibility set'));
+      }
     }
 
     next();

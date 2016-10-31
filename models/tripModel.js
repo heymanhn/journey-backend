@@ -83,7 +83,7 @@ const tripSchema = new mongoose.Schema({
   destination: destinationSchema,
   ideas: [ideaSchema],
   plan: [daySchema],
-  visibility: { type: String, default: 'private' }
+  visibility: { type: String, default: 'public', required: true }
 });
 
 tripSchema.pre('validate', utils.validateFields);
