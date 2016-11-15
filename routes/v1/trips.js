@@ -276,6 +276,10 @@ function updateTripIdea(params, ideaId, trip) {
     idea.comment = params.comment;
   }
 
+  if (params.category !== undefined && params.category !== idea.category) {
+    idea.category = params.category;
+  }
+
   // Re-order the idea within the list
   const result = reorderInArray(trip.ideas, idea, params.index);
   return result || trip;
