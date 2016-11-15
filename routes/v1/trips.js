@@ -248,7 +248,7 @@ function createTripIdea(params, trip) {
   let newParams = _.pick(params, ['googlePlaceId', 'loc', 'name']);
 
   const optionalParams = [
-    'address', 'phone', 'types', 'photo', 'url', 'comment'
+    'category', 'address', 'phone', 'types', 'photo', 'url', 'comment'
   ];
 
   optionalParams.forEach((field) => {
@@ -274,6 +274,10 @@ function updateTripIdea(params, ideaId, trip) {
 
   if (params.comment !== undefined && params.comment !== idea.comment) {
     idea.comment = params.comment;
+  }
+
+  if (params.category !== undefined && params.category !== idea.category) {
+    idea.category = params.category;
   }
 
   // Re-order the idea within the list

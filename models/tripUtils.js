@@ -1,6 +1,17 @@
 'use strict';
 
 module.exports = {
+  validateIdeaFields(next) {
+    const tripIdeaCategories = ['Food', 'Lodging', 'Nightlife', 'Place',
+      'Recreation', 'Shopping', 'Sightseeing', 'Transportation'];
+
+    if (this.category && !tripIdeaCategories.includes(this.category)) {
+      return next(new Error('Invalid trip idea category'));
+    }
+
+    next();
+  },
+
   validateFields(next) {
     if (!this.title) {
       return next(new Error('Trip is missing a title'));

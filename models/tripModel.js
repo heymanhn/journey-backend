@@ -37,6 +37,7 @@ const ideaSchema = new mongoose.Schema({
   googlePlaceId: { type: String, required: true },
   date: { type: Date, default: Date.now },
   name: { type: String, required: true },
+  category: { type: String, default: 'Place' },
   loc: {
     type: { type: String, required: true },
     coordinates: { type: [Number], required: true }
@@ -86,6 +87,7 @@ const tripSchema = new mongoose.Schema({
   visibility: { type: String, default: 'public', required: true }
 });
 
+ideaSchema.pre('validate', utils.validateIdeaFields);
 tripSchema.pre('validate', utils.validateFields);
 tripSchema.pre('save', utils.createDefaultTripDay);
 tripSchema.statics.findTrips = utils.findTrips;
