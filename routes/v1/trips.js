@@ -248,7 +248,7 @@ function createTripIdea(params, trip) {
   let newParams = _.pick(params, ['googlePlaceId', 'loc', 'name']);
 
   const optionalParams = [
-    'address', 'phone', 'types', 'photo', 'url', 'comment'
+    'category', 'address', 'phone', 'types', 'photo', 'url', 'comment'
   ];
 
   optionalParams.forEach((field) => {
