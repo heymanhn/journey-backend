@@ -83,12 +83,14 @@ const tripSchema = new mongoose.Schema({
   endDate: { type: Date },
   destination: destinationSchema,
   ideas: [ideaSchema],
+  ideaCategories: { type: [String], required: true },
   plan: [daySchema],
   visibility: { type: String, default: 'public', required: true }
 });
 
 ideaSchema.pre('validate', utils.validateIdeaFields);
 tripSchema.pre('validate', utils.validateFields);
+tripSchema.pre('save', utils.updateIdeaCategories);
 tripSchema.pre('save', utils.createDefaultTripDay);
 tripSchema.statics.findTrips = utils.findTrips;
 

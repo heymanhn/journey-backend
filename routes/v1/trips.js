@@ -175,8 +175,8 @@ app.post('/:tripId/ideas', (req, res, next) => {
     .then(saveTrip)
     .then(trackAddTripIdeaEvent.bind(null, req))
     .then((trip) => {
-      const { ideas } = trip;
-      res.json({ tripId, ideas });
+      const { ideas, ideaCategories } = trip;
+      res.json({ tripId, ideas, ideaCategories });
     })
     .catch(next);
 });
@@ -187,8 +187,8 @@ app.get('/:tripId/ideas', (req, res, next) => {
   findTrip(tripId)
     .then(checkOwnership.bind(null, req))
     .then((trip) => {
-      const { ideas } = trip;
-      res.json({ tripId, ideas });
+      const { ideas, ideaCategories } = trip;
+      res.json({ tripId, ideas, ideaCategories });
     })
     .catch(next);
 });
@@ -205,7 +205,8 @@ app.put('/:tripId/ideas/:ideaId', (req, res, next) => {
     .then((trip) => {
       res.json({
         message: 'Trip idea updated successfully.',
-        ideas: trip.ideas
+        ideas: trip.ideas,
+        ideaCategories: trip.ideaCategories
       });
     })
     .catch(next);
@@ -223,7 +224,8 @@ app.delete('/:tripId/ideas/:ideaId', (req, res, next) => {
     .then((trip) => {
       res.json({
         message: "Trip idea deleted successfully.",
-        ideas: trip.ideas
+        ideas: trip.ideas,
+        ideaCategories: trip.ideaCategories
       });
     })
     .catch(next);
