@@ -1,4 +1,5 @@
 'use strict';
+const _ = require('underscore');
 
 module.exports = {
   validateIdeaFields(next) {
@@ -38,6 +39,18 @@ module.exports = {
       }
     }
 
+    next();
+  },
+
+  // Keep up-to-date the set of idea categories for each trip
+  updateIdeaCategories(next) {
+    const { ideas } = this;
+    if (!this.isModified('ideas')) {
+      return next();
+    }
+
+    const categories = _.pluck(ideas, 'category');
+    this.ideaCategories = _.uniq(categories.sort(), true);
     next();
   },
 
