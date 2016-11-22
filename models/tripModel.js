@@ -83,7 +83,7 @@ const tripSchema = new mongoose.Schema({
   endDate: { type: Date },
   destination: destinationSchema,
   ideas: [ideaSchema],
-  ideaCategories: { type: [String], required: true },
+  ideaCategories: { type: [String], default: [] },
   plan: [daySchema],
   visibility: { type: String, default: 'public', required: true }
 });
