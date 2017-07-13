@@ -1,6 +1,6 @@
 {
   "engines": {
-    "node": ">=6.0 <6.7.1"
+    "node": "6.11.1"
   },
   "name": "journey-backend",
   "version": "0.0.1",
